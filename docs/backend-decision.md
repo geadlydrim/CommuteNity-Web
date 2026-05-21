@@ -94,7 +94,7 @@ Reasons:
 | **MapLibre + OpenStreetMap** | Free (OSM tiles from public servers; or self-host) | Open-source, no API key, no quota. Slightly less polished UX. **Recommended for MVP.** |
 | **Mapbox** | 50K free map loads/month | Generous free tier; commercial license required above threshold |
 
-**Recommendation for MVP: MapLibre GL Android with OSM tile source.** Zero cost, no quota surprise, full feature set for drawing polylines and markers. Switch to Google Maps or Mapbox later if UX requires it.
+**Recommendation for MVP: MapLibre GL JS with OSM tile source.** Zero cost, no quota surprise, full feature set for drawing polylines and markers. Switch to Google Maps or Mapbox later if UX requires it.
 
 > Note: Geocoding (text → coordinates for origin/destination search) still needs a provider. **Nominatim** (free OSM geocoder, rate-limited to 1 req/s) works for MVP; move to Photon or a paid geocoder under load.
 
@@ -106,9 +106,10 @@ Reasons:
 |---|---|
 | Backend | Supabase (Postgres + PostGIS) |
 | Auth | Supabase Auth (email/password + Google OAuth) |
-| Android SDK | `supabase-kt` |
-| Maps | MapLibre GL Android + OSM tiles |
-| Geocoding | Nominatim (free, rate-limited) |
-| Offline storage | Room |
-| Background sync | WorkManager |
-| Analytics / crash | Firebase Crashlytics (free, separate from Firestore) |
+| Client SDK | `@supabase/supabase-js` + `@supabase/ssr` |
+| Maps | MapLibre GL JS + OSM tiles |
+| Geocoding | Nominatim via Next.js API route proxy (free, rate-limited) |
+| Offline storage | IndexedDB via Dexie.js |
+| Background sync | Service Worker + Background Sync API (foreground fallback for Safari) |
+| Hosting | Vercel (free tier, preview deploys per PR) |
+| Analytics / crash | Sentry (free tier, 5k errors/month) + Vercel Web Analytics |

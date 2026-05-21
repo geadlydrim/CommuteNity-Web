@@ -35,7 +35,7 @@ These are the minimum features that make CommuteNity useful and differentiated. 
 - Reputation gate: minimum score required to submit (prevents anonymous spam).
 
 ### 6. Offline-Ready Browsing
-- Recently viewed routes and stops are cached locally (Room).
+- Recently viewed routes and stops are cached locally (**IndexedDB** via Dexie.js).
 - User can browse cached content without an internet connection.
 - Sync on reconnect.
 

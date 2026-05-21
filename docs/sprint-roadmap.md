@@ -25,12 +25,12 @@ High-level plan from current scaffold to a usable community-navigation MVP. Each
 **Goal:** A working app that lets users sign in and browse approved routes/stops. No contributions yet. Establishes all architectural patterns for subsequent sprints.
 
 **Architecture decisions to lock in this sprint:**
-- App architecture: **MVI** (unidirectional data flow; pairs well with Compose)
-- DI: **Hilt**
-- Navigation: **Compose Navigation** (type-safe routes)
-- Networking: **Supabase-kt** (PostgREST client + Auth)
-- Local DB: **Room** (offline cache)
-- Maps: **MapLibre GL Android**
+- Framework: **Next.js 15 App Router** (file-based routing, Server + Client Components)
+- State (server): **TanStack Query** (caches Supabase reads, handles loading/error states)
+- State (client): **Zustand** (search input, UI state, draft forms)
+- Auth: **Supabase Auth + `@supabase/ssr`** (HTTP-only cookie sessions, Google OAuth redirect)
+- Networking: **`@supabase/supabase-js`** (PostgREST client)
+- Maps: **MapLibre GL JS + react-map-gl**
 
 **User Stories:** US-013, US-014 (auth), US-005, US-006 (route/stop detail), US-004 (browse by mode), US-001 (route search — basic text match, no multi-mode graph yet)
 
@@ -47,7 +47,7 @@ High-level plan from current scaffold to a usable community-navigation MVP. Each
 - Row-Level Security (RLS) policies: anyone reads `approved` rows; authenticated users write `pending` rows.
 - Seed data: ~10 Metro Manila routes for testing
 
-**Sprint 1 Done when:** A signed-in user can search for and view a Metro Manila jeepney route end-to-end on a physical device or emulator.
+**Sprint 1 Done when:** A signed-in user can search for and view a Metro Manila jeepney route end-to-end in a browser via the Vercel preview URL.
 
 ---
 
@@ -80,7 +80,7 @@ High-level plan from current scaffold to a usable community-navigation MVP. Each
 **User Stories:** US-003 (offline), US-015 (profile), US-016 (offline cache)
 
 **Scope:**
-- Room entities wired to all screens; WorkManager sync on reconnect
+- Dexie (IndexedDB) entities wired to all pages; Service Worker sync on reconnect
 - Profile screen: reputation, contribution count, breakdown of approved vs pending vs rejected
 - Report flow: flag → reason selection → report submitted; Supabase dashboard for manual moderator review
 - Empty states, error states, loading states across all screens
