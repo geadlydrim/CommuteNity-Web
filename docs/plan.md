@@ -24,7 +24,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Google OAuth sign-in (US-014)
 - Password reset flow
 - ✅ Edit username / display_name with conflict check (30-day username cooldown enforced by DB trigger)
-- Username NOT NULL migration (after backfill complete)
+- ~~Username NOT NULL migration~~ — not feasible; OAuth trigger INSERTs NULL username before onboarding. Middleware gate enforces presence instead.
 
 **Open:**
 - Reserved-username blocklist? (avoided so far via `/u/` prefix)
@@ -63,7 +63,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Case-insensitive username lookup
 - ✅ Signed-in header links to own profile
 - ✅ Onboarding page `/onboarding/username` — OAuth users pick handle + display_name after first sign-in
-- Avatar upload (Supabase Storage bucket)
+- ✅ Avatar upload (Supabase Storage bucket)
 - Bio field
 - Joined date, post count, follower/following counts
 - Reputation score (+1 approval, -1 rejection on contributions)

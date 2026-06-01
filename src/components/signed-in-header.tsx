@@ -1,12 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
 
-export function SignedInHeader({ username }: { username: string | null }) {
+export function SignedInHeader({
+  username,
+  avatarUrl,
+  displayName,
+}: {
+  username: string | null;
+  avatarUrl: string | null;
+  displayName: string | null;
+}) {
   return (
     <header className="flex items-center justify-end gap-3 p-4">
       {username ? (
-        <Link href={`/u/${username}`} className="text-sm font-medium hover:underline">
-          @{username}
+        <Link href={`/u/${username}`} className="flex items-center gap-2 hover:underline">
+          <UserAvatar src={avatarUrl} name={displayName ?? username} className="h-7 w-7" />
+          <span className="text-sm font-medium">@{username}</span>
         </Link>
       ) : (
         <span className="text-sm text-muted-foreground">No handle set</span>

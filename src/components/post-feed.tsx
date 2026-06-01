@@ -5,7 +5,7 @@ export async function PostFeed() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("id, body, created_at, users(username, display_name)")
+    .select("id, body, created_at, users(username, display_name, avatar_url)")
     .eq("visibility", "public")
     .order("created_at", { ascending: false })
     .limit(50);

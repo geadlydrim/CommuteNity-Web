@@ -43,15 +43,19 @@ async function AuthArea() {
     const supabase = await createClient();
     const { data: me } = await supabase
       .from("users")
-      .select("username")
+      .select("username, display_name, avatar_url")
       .eq("id", user.id)
       .maybeSingle();
 
     return (
       <>
-        <SignedInHeader username={me?.username ?? null} />
+        <SignedInHeader
+          username={me?.username ?? null}
+          avatarUrl={me?.avatar_url ?? null}
+          displayName={me?.display_name ?? null}
+        />
         <div className="flex flex-col items-center gap-6 px-8 pt-8 pb-16">
-          <PostComposer />
+          <PostComposer avatarUrl={me?.avatar_url ?? null} displayName={me?.display_name ?? null} />
           <Suspense fallback={<FeedSkeleton />}>
             <PostFeed />
           </Suspense>

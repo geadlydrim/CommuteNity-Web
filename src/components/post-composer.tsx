@@ -4,10 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export function PostComposer() {
+export function PostComposer({
+  avatarUrl,
+  displayName,
+}: {
+  avatarUrl: string | null;
+  displayName: string | null;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +37,7 @@ export function PostComposer() {
 
   return (
     <div className="w-[40vw] rounded-xl border bg-card p-3 flex items-center gap-3 shadow-sm">
-      <div className="size-10 shrink-0 rounded-full bg-muted" aria-hidden />
+      <UserAvatar src={avatarUrl} name={displayName} className="size-10 shrink-0" />
       <Input
         value={text}
         onChange={(e) => setText(e.target.value)}
