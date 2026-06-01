@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { withTimeout } from "@/lib/supabase/with-timeout";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -25,8 +26,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh the session — do not remove this call.
-  await supabase.auth.getUser();
+  try {
+    await withTimeout(supabase.auth.getUser(), 2000, "middleware getUser");
+  } catch (err) {
+    console.error("[Supabase] Middleware auth refresh failed:", err);
+  }
 
   return supabaseResponse;
 }

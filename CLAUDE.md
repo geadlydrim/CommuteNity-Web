@@ -65,5 +65,5 @@ src/
 See `docs/` for living product decisions:
 - `docs/mvp-scope.md` — what is and isn't in MVP
 - `docs/data-model.md` — DB entities, fields, relationships, moderation state machine
-- `docs/sprint-roadmap.md` — Sprint 1–3 plan
+- `docs/plan.md` — module-based roadmap
 - `docs/user-stories.md` — acceptance criteria per feature

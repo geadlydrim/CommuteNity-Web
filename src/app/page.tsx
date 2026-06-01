@@ -1,25 +1,67 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { withTimeout } from "@/lib/supabase/with-timeout";
 import { Button } from "@/components/ui/button";
+import { PostComposer } from "@/components/post-composer";
+import { SignedInHeader } from "@/components/signed-in-header";
+import { PostFeed } from "@/components/post-feed";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+function FeedSkeleton() {
+  return (
+    <ul className="w-[40vw] space-y-3">
+      {[1, 2, 3].map((i) => (
+        <li key={i} className="rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex justify-between">
+            <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+          </div>
+          <div className="mt-3 h-4 w-full rounded bg-muted animate-pulse" />
+          <div className="mt-2 h-4 w-3/4 rounded bg-muted animate-pulse" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+async function AuthArea() {
+  let user = null;
+
+  try {
+    const supabase = await createClient();
+    const { data } = await withTimeout(
+      supabase.auth.getUser(),
+      2000,
+      "landing getUser",
+    );
+    user = data.user;
+  } catch (err) {
+    console.error("[Supabase] Landing auth check failed:", err);
+  }
 
   if (user) {
+    const supabase = await createClient();
+    const { data: me } = await supabase
+      .from("users")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-8">
-        <h1 className="text-4xl font-bold">CommuteNity</h1>
-        <p className="mt-2 text-muted-foreground">Welcome, {user.email}</p>
-        <form action="/auth/sign-out" method="post" className="mt-6">
-          <Button type="submit" variant="outline">Sign out</Button>
-        </form>
-      </main>
+      <>
+        <SignedInHeader username={me?.username ?? null} />
+        <div className="flex flex-col items-center gap-6 px-8 pt-8 pb-16">
+          <PostComposer />
+          <Suspense fallback={<FeedSkeleton />}>
+            <PostFeed />
+          </Suspense>
+        </div>
+      </>
     );
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
+    <div className="flex flex-col items-center px-8 pt-16 pb-16">
       <h1 className="text-4xl font-bold">CommuteNity</h1>
       <p className="mt-2 text-lg text-muted-foreground text-center max-w-md">
         Community-driven commute navigation for the Philippines.
@@ -33,6 +75,37 @@ export default async function Home() {
           <Link href="/sign-in">Sign in</Link>
         </Button>
       </div>
+      <div className="mt-10 flex flex-col items-center gap-6">
+        <Suspense fallback={<FeedSkeleton />}>
+          <PostFeed />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+function AuthAreaSkeleton() {
+  return (
+    <div className="flex flex-col items-center px-8 pt-16 pb-16">
+      <h1 className="text-4xl font-bold">CommuteNity</h1>
+      <p className="mt-2 text-lg text-muted-foreground text-center max-w-md">
+        Community-driven commute navigation for the Philippines.
+        Find jeepney routes, stops, and fares — contributed by riders like you.
+      </p>
+      <div className="mt-8 flex gap-4">
+        <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
+        <div className="h-8 w-20 rounded-lg bg-muted animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <main className="min-h-screen">
+      <Suspense fallback={<AuthAreaSkeleton />}>
+        <AuthArea />
+      </Suspense>
     </main>
   );
 }

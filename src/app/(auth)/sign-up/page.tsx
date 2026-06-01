@@ -26,6 +26,14 @@ import {
 } from "@/components/ui/card";
 
 const schema = z.object({
+  username: z
+    .string()
+    .regex(/^[a-z0-9_]{3,20}$/, "3–20 lowercase letters, numbers, or underscores")
+    .transform((s) => s.toLowerCase()),
+  display_name: z
+    .string()
+    .min(1, "Enter a display name")
+    .max(40, "Display name must be 40 characters or less"),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
@@ -38,16 +46,29 @@ export default function SignUpPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { username: "", display_name: "", email: "", password: "" },
   });
 
   async function onSubmit(values: FormValues) {
     setServerError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp(values);
+    const { error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          username: values.username,
+          display_name: values.display_name,
+        },
+      },
+    });
 
     if (error) {
-      setServerError(error.message);
+      if (error.message.toLowerCase().includes("username")) {
+        setServerError("Username is taken.");
+      } else {
+        setServerError(error.message);
+      }
       return;
     }
 
@@ -67,6 +88,32 @@ export default function SignUpPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="yourhandle" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="display_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"
