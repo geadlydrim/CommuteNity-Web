@@ -10,6 +10,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -17,13 +23,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 const schema = z.object({
   username: usernameSchema,
@@ -32,19 +31,42 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function OnboardingForm({
-  defaultDisplayName,
+function canChangeUsername(usernameChangedAt: string | null): boolean {
+  if (!usernameChangedAt) return true;
+  const changed = new Date(usernameChangedAt);
+  const cooldownEnd = new Date(changed.getTime() + 30 * 24 * 60 * 60 * 1000);
+  return new Date() >= cooldownEnd;
+}
+
+function cooldownEndDate(usernameChangedAt: string): string {
+  const changed = new Date(usernameChangedAt);
+  const cooldownEnd = new Date(changed.getTime() + 30 * 24 * 60 * 60 * 1000);
+  return cooldownEnd.toLocaleDateString();
+}
+
+export function ProfileEditDialog({
   userId,
+  currentUsername,
+  currentDisplayName,
+  usernameChangedAt,
 }: {
-  defaultDisplayName: string;
   userId: string;
+  currentUsername: string;
+  currentDisplayName: string;
+  usernameChangedAt: string | null;
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const usernameEditable = canChangeUsername(usernameChangedAt);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { username: "", display_name: defaultDisplayName },
+    defaultValues: {
+      username: currentUsername,
+      display_name: currentDisplayName,
+    },
   });
 
   async function onSubmit(values: FormValues) {
@@ -66,30 +88,39 @@ export function OnboardingForm({
       .eq("id", userId);
 
     if (dbError) {
-      if (
-        dbError.code === "23505" ||
-        dbError.message.toLowerCase().includes("username")
-      ) {
+      if (dbError.code === "23505") {
         setServerError("Username is taken.");
+      } else if (dbError.message.includes("username_cooldown")) {
+        setServerError(
+          usernameChangedAt
+            ? `You can change your username again on ${cooldownEndDate(usernameChangedAt)}.`
+            : "Username can only be changed once every 30 days."
+        );
       } else {
         setServerError(dbError.message);
       }
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    setOpen(false);
+
+    if (values.username !== currentUsername) {
+      router.replace(`/u/${values.username}`);
+    } else {
+      router.refresh();
+    }
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Pick a username</CardTitle>
-        <CardDescription>
-          Choose a unique handle for your CommuteNity profile.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        Edit profile
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+        </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -99,8 +130,17 @@ export function OnboardingForm({
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="yourhandle" {...field} />
+                    <Input
+                      placeholder="yourhandle"
+                      disabled={!usernameEditable}
+                      {...field}
+                    />
                   </FormControl>
+                  {!usernameEditable && usernameChangedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Available to change on {cooldownEndDate(usernameChangedAt)}.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -126,11 +166,12 @@ export function OnboardingForm({
               className="w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Saving…" : "Continue"}
+              {form.formState.isSubmitting ? "Saving…" : "Save"}
             </Button>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

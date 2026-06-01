@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,14 +28,8 @@ import {
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 const schema = z.object({
-  username: z
-    .string()
-    .regex(/^[a-z0-9_]{3,20}$/, "3–20 lowercase letters, numbers, or underscores")
-    .transform((s) => s.toLowerCase()),
-  display_name: z
-    .string()
-    .min(1, "Enter a display name")
-    .max(40, "Display name must be 40 characters or less"),
+  username: usernameSchema,
+  display_name: displayNameSchema,
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });

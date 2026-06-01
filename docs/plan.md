@@ -23,7 +23,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ `handle_new_user` trigger backfills `public.users` row
 - ✅ Google OAuth sign-in (US-014)
 - Password reset flow
-- Edit username / display_name with conflict check
+- ✅ Edit username / display_name with conflict check (30-day username cooldown enforced by DB trigger)
 - Username NOT NULL migration (after backfill complete)
 
 **Open:**
@@ -68,8 +68,8 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - Joined date, post count, follower/following counts
 - Reputation score (+1 approval, -1 rejection on contributions)
 - Approved / pending / rejected contribution breakdown (US-015)
-- Own-profile vs other-profile UX (e.g. "Edit profile" only when self)
-- Edit display_name / username UI
+- ✅ Own-profile vs other-profile UX — "Edit profile" button only when viewing self
+- ✅ Edit display_name / username UI (inline dialog on profile page)
 
 **Open:**
 - Reputation tiers + privileges (Senior Contributor auto-approve)? — post-MVP

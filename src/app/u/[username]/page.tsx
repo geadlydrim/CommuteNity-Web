@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PostCard, type PostCardData } from "@/components/post-card";
+import { ProfileEditDialog } from "@/components/profile-edit-dialog";
 
 export default async function ProfilePage({
   params,
@@ -11,13 +12,19 @@ export default async function ProfilePage({
   const handle = username.toLowerCase();
 
   const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id, username, display_name")
-    .eq("username", handle)
-    .maybeSingle();
+
+  const [{ data: profile }, { data: { user: viewer } }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, username, display_name, username_changed_at")
+      .eq("username", handle)
+      .maybeSingle(),
+    supabase.auth.getUser(),
+  ]);
 
   if (!profile) notFound();
+
+  const isSelf = viewer?.id === profile.id;
 
   const { data: posts, error } = await supabase
     .from("posts")
@@ -34,8 +41,22 @@ export default async function ProfilePage({
   return (
     <main className="min-h-screen flex flex-col items-center px-8 pt-12 pb-16 gap-6">
       <header className="w-[40vw]">
-        <h1 className="text-2xl font-bold">{profile.display_name ?? "Unknown user"}</h1>
-        <p className="text-muted-foreground">@{profile.username}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {profile.display_name ?? "Unknown user"}
+            </h1>
+            <p className="text-muted-foreground">@{profile.username}</p>
+          </div>
+          {isSelf && (
+            <ProfileEditDialog
+              userId={profile.id}
+              currentUsername={profile.username ?? ""}
+              currentDisplayName={profile.display_name ?? ""}
+              usernameChangedAt={profile.username_changed_at ?? null}
+            />
+          )}
+        </div>
       </header>
       {posts && posts.length > 0 ? (
         <ul className="w-[40vw] space-y-3">
