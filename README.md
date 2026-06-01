@@ -42,10 +42,15 @@ Open [http://localhost:3000](http://localhost:3000).
 | `@tanstack/react-query` | Server state caching and refetching |
 | `zustand` | Client-side state (search, drafts) |
 | `react-hook-form` + `zod` | Forms and validation |
+| `@hookform/resolvers` | Zod adapter for react-hook-form |
+| `sonner` | Toast notifications |
+| `radix-ui` | Headless UI primitives (via shadcn radix-nova style) |
+| `next-themes` | Dark/light theme switching |
 | `maplibre-gl` + `react-map-gl` | Maps (OpenStreetMap tiles, free) |
-| `dexie` | IndexedDB wrapper for offline cache |
+| `dexie` + `dexie-react-hooks` | IndexedDB wrapper for offline cache |
 | `next-pwa` | Service worker — makes app installable and offline-capable |
 | `lucide-react` | Icons |
+| `tailwind-merge` + `clsx` + `class-variance-authority` | Tailwind class utilities |
 
 ## Deployment
 

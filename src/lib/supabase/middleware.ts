@@ -26,10 +26,34 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  let user = null;
   try {
-    await withTimeout(supabase.auth.getUser(), 2000, "middleware getUser");
+    const { data } = await withTimeout(
+      supabase.auth.getUser(),
+      2000,
+      "middleware getUser"
+    );
+    user = data?.user ?? null;
   } catch (err) {
     console.error("[Supabase] Middleware auth refresh failed:", err);
+  }
+
+  if (user) {
+    const path = request.nextUrl.pathname;
+    const allowedWithoutHandle =
+      path.startsWith("/auth/") ||
+      path.startsWith("/onboarding/") ||
+      path === "/sign-in" ||
+      path === "/sign-up";
+
+    if (!allowedWithoutHandle) {
+      const username = user.user_metadata?.username as string | undefined;
+      if (!username) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding/username";
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   return supabaseResponse;

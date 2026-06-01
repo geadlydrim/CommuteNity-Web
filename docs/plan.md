@@ -21,7 +21,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ `username` column with regex + uniqueness, captured at sign-up
 - ✅ `display_name` captured at sign-up
 - ✅ `handle_new_user` trigger backfills `public.users` row
-- Google OAuth sign-in (US-014)
+- ✅ Google OAuth sign-in (US-014)
 - Password reset flow
 - Edit username / display_name with conflict check
 - Username NOT NULL migration (after backfill complete)
@@ -62,6 +62,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ `/u/{username}` route — display_name + @handle + posts list
 - ✅ Case-insensitive username lookup
 - ✅ Signed-in header links to own profile
+- ✅ Onboarding page `/onboarding/username` — OAuth users pick handle + display_name after first sign-in
 - Avatar upload (Supabase Storage bucket)
 - Bio field
 - Joined date, post count, follower/following counts

@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -63,6 +64,17 @@ export default function SignInPage() {
           <CardDescription>Welcome back to CommuteNity.</CardDescription>
         </CardHeader>
         <CardContent>
+          <GoogleSignInButton />
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or continue with email
+              </span>
+            </div>
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
