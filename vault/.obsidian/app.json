@@ -1,0 +1,13 @@
+{
+  "defaultViewMode": "preview",
+  "livePreview": true,
+  "showLineNumber": false,
+  "foldHeading": false,
+  "useTab": false,
+  "tabSize": 2,
+  "newFileLocation": "current",
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "alwaysUpdateLinks": true,
+  "theme": "obsidian"
+}

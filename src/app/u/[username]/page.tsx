@@ -27,16 +27,29 @@ export default async function ProfilePage({
 
   const isSelf = viewer?.id === profile.id;
 
-  const { data: posts, error } = await supabase
+  const { data: posts, error: postsError } = await supabase
     .from("posts")
-    .select("id, body, created_at, users(username, display_name, avatar_url)")
+    .select("id, body, created_at, net_votes, users(username, display_name, avatar_url), comments(count)")
     .eq("user_id", profile.id)
     .eq("visibility", "public")
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (error) {
-    console.error("[Profile] posts fetch failed:", error);
+  if (postsError) {
+    console.error("[Profile] posts fetch failed:", postsError);
+  }
+
+  const userVotes: Record<string, 1 | -1> = {};
+  if (viewer && posts?.length) {
+    const postIds = posts.map((p) => p.id);
+    const { data: votes } = await supabase
+      .from("post_votes")
+      .select("post_id, value")
+      .eq("user_id", viewer.id)
+      .in("post_id", postIds);
+    votes?.forEach((v) => {
+      userVotes[v.post_id] = v.value as 1 | -1;
+    });
   }
 
   return (
@@ -70,7 +83,12 @@ export default async function ProfilePage({
       {posts && posts.length > 0 ? (
         <ul className="w-[40vw] space-y-3">
           {(posts as PostCardData[]).map((p) => (
-            <PostCard key={p.id} post={p} />
+            <PostCard
+              key={p.id}
+              post={p}
+              initialUserVote={userVotes[p.id] ?? null}
+              currentUserId={viewer?.id ?? null}
+            />
           ))}
         </ul>
       ) : (

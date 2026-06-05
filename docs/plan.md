@@ -42,8 +42,9 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Global public feed on landing (anon + auth)
 - ✅ `PostCard` shared component, linked author → `/u/{username}`
 - ✅ Profile feed at `/u/{username}` (own posts)
-- Likes (new `likes` table + heart on `PostCard`)
-- Comments / replies (new `comments` table + thread under each post)
+- ✅ Upvotes / downvotes (new `post_votes` table + thumb buttons on `PostCard`, toggle support)
+- ✅ Comments (new `comments` table + expandable thread under each post, inline compose)
+- ✅ Share post (Web Share API with clipboard fallback)
 - Delete-own-post button on `PostCard` (RLS already supports)
 - Friends visibility — `friends` table + `posts_read_friends` RLS + composer visibility selector
 - Feed pagination / infinite scroll past 50
