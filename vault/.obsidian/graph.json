@@ -9,19 +9,31 @@
   "colorGroups": [
     {
       "query": "tag:#module",
-      "color": { "a": 1, "rgb": 4278219520 }
+      "color": {
+        "a": 1,
+        "rgb": 0
+      }
     },
     {
       "query": "tag:#entity",
-      "color": { "a": 1, "rgb": 16744272 }
+      "color": {
+        "a": 1,
+        "rgb": 16744272
+      }
     },
     {
       "query": "tag:#code",
-      "color": { "a": 1, "rgb": 11184895 }
+      "color": {
+        "a": 1,
+        "rgb": 11184895
+      }
     },
     {
       "query": "tag:#doc",
-      "color": { "a": 1, "rgb": 16760832 }
+      "color": {
+        "a": 1,
+        "rgb": 16760832
+      }
     }
   ],
   "collapse-display": false,
@@ -34,6 +46,6 @@
   "repelStrength": 10,
   "linkStrength": 1,
   "linkDistance": 250,
-  "scale": 1,
-  "close": false
+  "scale": 1.3193027187384943,
+  "close": true
 }

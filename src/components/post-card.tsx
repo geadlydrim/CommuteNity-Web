@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -34,9 +35,12 @@ type Props = {
   post: PostCardData;
   initialUserVote: 1 | -1 | null;
   currentUserId: string | null;
+  /** Focus mode: content not clickable, comments expanded on mount. */
+  focusMode?: boolean;
 };
 
-export function PostCard({ post, initialUserVote, currentUserId }: Props) {
+export function PostCard({ post, initialUserVote, currentUserId, focusMode = false }: Props) {
+  const router = useRouter();
   const raw = post.users;
   const u = Array.isArray(raw) ? raw[0] : raw;
   const display = u?.display_name ?? "Unknown user";
@@ -46,7 +50,7 @@ export function PostCard({ post, initialUserVote, currentUserId }: Props) {
   const [userVote, setUserVote] = useState<1 | -1 | null>(initialUserVote);
   const [votePending, setVotePending] = useState(false);
 
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(focusMode);
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [commentCount, setCommentCount] = useState(post.comments?.[0]?.count ?? 0);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -54,6 +58,14 @@ export function PostCard({ post, initialUserVote, currentUserId }: Props) {
   const [commentPending, setCommentPending] = useState(false);
 
   const supabase = createClient();
+
+  // Auto-load comments when in focus mode
+  useEffect(() => {
+    if (focusMode) {
+      loadComments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusMode]);
 
   async function vote(value: 1 | -1) {
     if (!currentUserId) {
@@ -91,7 +103,6 @@ export function PostCard({ post, initialUserVote, currentUserId }: Props) {
         if (error) throw error;
       }
     } catch {
-      // Rollback
       setNetVotes(prevVotes);
       setUserVote(prevUserVote);
       toast.error("Vote failed. Try again.");
@@ -166,14 +177,22 @@ export function PostCard({ post, initialUserVote, currentUserId }: Props) {
     </span>
   );
 
-  return (
-    <li className="rounded-xl border bg-card p-4 shadow-sm">
+  // Header + body — clickable in feed mode, plain in focus mode
+  const contentRegion = (
+    <div
+      onClick={!focusMode ? () => router.push(`/p/${post.id}`) : undefined}
+      className={cn(!focusMode && "cursor-pointer")}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <UserAvatar src={u?.avatar_url ?? null} name={display} className="h-8 w-8" />
           <p className="text-sm">
             {handle ? (
-              <Link href={`/u/${handle}`} className="hover:underline">
+              <Link
+                href={`/u/${handle}`}
+                className="hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {authorNode}
               </Link>
             ) : (
@@ -185,36 +204,46 @@ export function PostCard({ post, initialUserVote, currentUserId }: Props) {
           {new Date(post.created_at).toLocaleString()}
         </p>
       </div>
-
       <p className="mt-2 whitespace-pre-wrap text-sm">{post.body}</p>
+    </div>
+  );
 
-      {/* Action bar */}
+  return (
+    <li className="rounded-xl border bg-card p-4 shadow-sm">
+      {contentRegion}
+
+      {/* Action bar — outside click region, so no stopPropagation needed */}
       <div className="mt-3 flex items-center gap-4 text-muted-foreground">
-        {/* Upvote */}
-        <button
-          onClick={() => vote(1)}
-          disabled={votePending}
-          className={cn(
-            "flex items-center gap-1 text-xs hover:text-foreground transition-colors",
-            userVote === 1 && "text-green-500"
-          )}
-        >
-          <ThumbsUp className="h-4 w-4" />
-          <span>{netVotes > 0 ? netVotes : netVotes === 0 ? "" : netVotes}</span>
-        </button>
-
-        {/* Downvote */}
-        <button
-          onClick={() => vote(-1)}
-          disabled={votePending}
-          className={cn(
-            "flex items-center gap-1 text-xs hover:text-foreground transition-colors",
-            userVote === -1 && "text-red-500"
-          )}
-        >
-          <ThumbsDown className="h-4 w-4" />
-          {netVotes < 0 && <span>{netVotes}</span>}
-        </button>
+        {/* Votes: [up] count [down] */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => vote(1)}
+            disabled={votePending}
+            className={cn(
+              "flex items-center text-xs hover:text-foreground transition-colors",
+              userVote === 1 && "text-green-500"
+            )}
+          >
+            <ThumbsUp className="h-4 w-4" />
+          </button>
+          <span className={cn(
+            "min-w-[1.5rem] text-center text-xs tabular-nums",
+            netVotes > 0 && "text-green-500",
+            netVotes < 0 && "text-red-500",
+          )}>
+            {netVotes}
+          </span>
+          <button
+            onClick={() => vote(-1)}
+            disabled={votePending}
+            className={cn(
+              "flex items-center text-xs hover:text-foreground transition-colors",
+              userVote === -1 && "text-red-500"
+            )}
+          >
+            <ThumbsDown className="h-4 w-4" />
+          </button>
+        </div>
 
         {/* Comments */}
         <button

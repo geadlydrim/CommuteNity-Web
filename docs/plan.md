@@ -45,6 +45,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Upvotes / downvotes (new `post_votes` table + thumb buttons on `PostCard`, toggle support)
 - ✅ Comments (new `comments` table + expandable thread under each post, inline compose)
 - ✅ Share post (Web Share API with clipboard fallback)
+- ✅ Post focus-mode overlay (intercepting route `@modal/(.)p/[id]`, URL sync, dark backdrop, comments expanded; canonical `/p/[id]` for shared links)
 - Delete-own-post button on `PostCard` (RLS already supports)
 - Friends visibility — `friends` table + `posts_read_friends` RLS + composer visibility selector
 - Feed pagination / infinite scroll past 50

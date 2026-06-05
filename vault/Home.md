@@ -37,9 +37,9 @@ Stack: [[Tech Stack]] — Next.js 15 · Supabase · Tailwind v4 · shadcn/ui · 
 
 ---
 
-## Code Structure
+## Code Map (Feature → File → Method)
 
-[[src-app]] · [[src-components]] · [[src-lib]] · [[Tech Stack]]
+[[Code Map]] · [[Tech Stack]]
 
 ---
 
