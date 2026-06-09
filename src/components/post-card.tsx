@@ -96,7 +96,14 @@ function FocusMapView({ pins }: { pins: import("@/lib/schemas/post-map").MapPin[
             closeButton={false}
             anchor="bottom"
           >
-            <p className="text-xs max-w-[180px]">{pins[activePopup].label}</p>
+            <p className="text-xs font-medium max-w-[180px] leading-tight">
+              {pins[activePopup].label}
+            </p>
+            {pins[activePopup].sublabel && (
+              <p className="text-[10px] text-muted-foreground max-w-[180px] leading-tight mt-0.5">
+                {pins[activePopup].sublabel}
+              </p>
+            )}
           </Popup>
         )}
       </MapView>

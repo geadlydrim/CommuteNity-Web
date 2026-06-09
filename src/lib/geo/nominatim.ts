@@ -37,6 +37,89 @@ export function cacheSet(key: string, data: unknown): void {
   cache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
 }
 
+// ---------------------------------------------------------------------------
+// Two-tier PH-aware label builder
+// ---------------------------------------------------------------------------
+
+export interface LabelParts {
+  /** Landmark / POI name — primary bold line. */
+  primary: string;
+  /** Full address minus postcode/country — shown in search dropdown grey sub-line. */
+  detail: string;
+  /** Simplified barangay, city, province — stored as pin sublabel. */
+  secondary: string;
+  /** Raw Nominatim display_name — tooltip / fallback. */
+  full: string;
+}
+
+// Address keys to walk in order for the detail line (postcode/country excluded).
+const DETAIL_KEY_ORDER = [
+  "road",
+  "quarter", "neighbourhood", "suburb", "village", "hamlet",
+  "city_district", "district",
+  "city", "town", "municipality",
+  "county", "province", "state",
+] as const;
+
+/**
+ * Derive Google-Maps-style label parts from a Nominatim result object.
+ *
+ * `raw` must be a single Nominatim feature (from `/search` array items or the
+ * `/reverse` root object). Requires `addressdetails=1` in the upstream call.
+ *
+ * Two secondary strings are produced:
+ *   detail    — full address chain, no postcode/country (for search dropdown)
+ *   secondary — simplified barangay, city, province (stored as pin sublabel)
+ */
+export function buildLabelParts(raw: Record<string, unknown>): LabelParts {
+  const a = ((raw.address ?? {}) as Record<string, string>);
+  const name = typeof raw.name === "string" ? raw.name.trim() : "";
+
+  const rawPoi =
+    name || a.amenity || a.shop || a.tourism || a.leisure ||
+    a.historic || a.office || a.building;
+  const rawRoad = a.road;
+  const rawBarangay =
+    a.quarter || a.neighbourhood || a.suburb ||
+    a.city_district || a.village || a.hamlet;
+  const rawCity = a.city || a.town || a.municipality;
+  const rawProvince = a.province || a.state;
+
+  // Primary: prefer landmark → road → barangay → city
+  const primaryVal =
+    rawPoi || rawRoad || rawBarangay || rawCity || "";
+
+  // Detail: all address keys in order, skipping the value already used as primary
+  const primaryLower = primaryVal.toLowerCase();
+  const detailSeen = new Set<string>([primaryLower].filter(Boolean));
+  const detailParts: string[] = [];
+  for (const key of DETAIL_KEY_ORDER) {
+    const v = a[key];
+    if (v && !detailSeen.has(v.toLowerCase())) {
+      detailSeen.add(v.toLowerCase());
+      detailParts.push(v);
+    }
+  }
+
+  // Secondary (simplified): barangay → city → province, de-duped against primary
+  const secondarySeen = new Set<string>([primaryLower].filter(Boolean));
+  const secondaryParts = ([rawBarangay, rawCity, rawProvince] as (string | undefined)[])
+    .filter((v): v is string => {
+      if (!v || secondarySeen.has(v.toLowerCase())) return false;
+      secondarySeen.add(v.toLowerCase());
+      return true;
+    });
+
+  const full = typeof raw.display_name === "string" ? raw.display_name : "";
+  const primary = primaryVal || full;
+  return {
+    primary,
+    detail: detailParts.join(", "),
+    secondary: secondaryParts.join(", "),
+    full,
+  };
+}
+
 /**
  * Fire a Nominatim request, respecting the shared 1 req/s throttle.
  * Returns parsed JSON or throws an Error (with a `.status` property on

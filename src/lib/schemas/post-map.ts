@@ -11,8 +11,10 @@ export const pinSchema = z.object({
   /** Latitude (WGS-84). Uses "lng" not "lon" to match react-map-gl vocabulary. */
   lat: z.number().min(PH_LAT_RANGE.min).max(PH_LAT_RANGE.max),
   lng: z.number().min(PH_LNG_RANGE.min).max(PH_LNG_RANGE.max),
-  /** Human-readable place name — filled via reverse geocoding. */
+  /** Primary display name — landmark / POI (bold line). */
   label: z.string().trim().min(1, "Label is required").max(120),
+  /** Secondary display name — barangay, city, province (grey sub-line). */
+  sublabel: z.string().trim().max(160).optional(),
 });
 
 /**

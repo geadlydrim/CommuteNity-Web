@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { latSchema, lonSchema } from "@/lib/schemas/geocode";
-import { fetchNominatim, cacheGet, cacheSet } from "@/lib/geo/nominatim";
+import { fetchNominatim, cacheGet, cacheSet, buildLabelParts } from "@/lib/geo/nominatim";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       format: "jsonv2",
       lat: String(lat),
       lon: String(lon),
+      addressdetails: "1",
     })) as Record<string, unknown>;
 
     // Nominatim reverse returns a single object (not an array).
@@ -45,8 +46,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const p = buildLabelParts(raw);
     const result = {
-      displayName: raw.display_name as string,
+      displayName: p.primary,
+      detailName: p.detail || undefined,
+      secondaryName: p.secondary || undefined,
+      fullName: p.full || undefined,
       lat: Number(raw.lat),
       lon: Number(raw.lon),
     };

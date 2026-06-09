@@ -42,7 +42,7 @@ export async function reverseGeocode(
   lat: number,
   lon: number,
   opts?: { signal?: AbortSignal }
-): Promise<{ displayName: string; lat: number; lon: number }> {
+): Promise<{ displayName: string; secondaryName?: string; fullName?: string; lat: number; lon: number }> {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),

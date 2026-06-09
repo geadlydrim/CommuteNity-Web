@@ -48,7 +48,10 @@ interface Slot {
   id: string;
   lat: number | null;
   lng: number | null;
+  /** Primary display name — landmark / POI (bold). */
   label: string;
+  /** Secondary display name — barangay, city, province (grey sub-line). */
+  sublabel: string;
 }
 
 interface Props {
@@ -83,11 +86,16 @@ function roleLabel(index: number, total: number): string {
 }
 
 function newSlot(): Slot {
-  return { id: crypto.randomUUID(), lat: null, lng: null, label: "" };
+  return { id: crypto.randomUUID(), lat: null, lng: null, label: "", sublabel: "" };
 }
 
 function hasCoords(s: Slot): s is Slot & { lat: number; lng: number } {
   return s.lat !== null && s.lng !== null;
+}
+
+/** Nominatim display_name can exceed 120 chars — clamp before storing. */
+function clampLabel(s: string): string {
+  return s.trim().slice(0, 120);
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +117,7 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
           lat: p.lat,
           lng: p.lng,
           label: p.label,
+          sublabel: p.sublabel ?? "",
         }))
       );
     } else {
@@ -129,30 +138,32 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
   // --- Slot mutations ---
 
   const setSlotLocation = useCallback(
-    (id: string, lat: number, lng: number, label: string) => {
+    (id: string, lat: number, lng: number, label: string, sublabel = "") => {
       setSlots((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, lat, lng, label } : s))
+        prev.map((s) => (s.id === id ? { ...s, lat, lng, label, sublabel } : s))
       );
     },
     []
   );
 
-  /** Set coords immediately, then reverse-geocode to fill the label. */
+  /** Set coords immediately, then reverse-geocode to fill the label + sublabel. */
   const setSlotLocationWithReverse = useCallback(
     async (id: string, lat: number, lng: number) => {
       setSlots((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, lat, lng, label: "Locating…" } : s))
+        prev.map((s) => (s.id === id ? { ...s, lat, lng, label: "Locating…", sublabel: "" } : s))
       );
       let label: string;
+      let sublabel = "";
       try {
         const result = await reverseGeocode(lat, lng);
-        label = result.displayName;
+        label = clampLabel(result.displayName);
+        sublabel = clampLabel(result.secondaryName ?? "");
       } catch {
         label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       }
       setSlots((prev) =>
         prev.map((s) =>
-          s.id === id && s.label === "Locating…" ? { ...s, label } : s
+          s.id === id && s.label === "Locating…" ? { ...s, label, sublabel } : s
         )
       );
     },
@@ -210,9 +221,15 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     void setSlotLocationWithReverse(id, lngLat.lat, lngLat.lng);
   }
 
-  /** Search-result pick for a slot: set coords + label and fly there. */
+  /** Search-result pick for a slot: set coords + label + sublabel and fly there. */
   function handleSlotPick(id: string, result: GeocodeResult) {
-    setSlotLocation(id, result.lat, result.lon, result.displayName);
+    setSlotLocation(
+      id,
+      result.lat,
+      result.lon,
+      clampLabel(result.displayName),
+      clampLabel(result.secondaryName ?? "")
+    );
     setActiveId(id);
     mapRef.current?.flyTo({
       center: [result.lon, result.lat],
@@ -233,7 +250,8 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     const pins: MapPin[] = slots.filter(hasCoords).map((s) => ({
       lat: s.lat,
       lng: s.lng,
-      label: s.label.trim() || `${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}`,
+      label: clampLabel(s.label) || `${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}`,
+      sublabel: clampLabel(s.sublabel) || undefined,
     }));
 
     const result = mapDataSchema.safeParse({ version: 1, pins });
@@ -250,6 +268,7 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     lat: s.lat,
     lng: s.lng,
     label: s.label,
+    sublabel: s.sublabel || undefined,
   }));
   const fitView = placedPins.length >= 2 ? fitPinsToView(placedPins, 560, 420) : undefined;
   const lineData = placedPins.length >= 2 ? lineStringFromPins(placedPins) : null;
@@ -515,19 +534,25 @@ function SlotRow({
               <button
                 key={i}
                 className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors"
+                title={r.fullName}
                 onClick={(e) => {
                   e.stopPropagation();
                   pick(r);
                 }}
               >
-                {r.displayName}
+                <span className="block font-medium leading-tight">{r.displayName}</span>
+                {(r.detailName || r.secondaryName) && (
+                  <span className="block text-muted-foreground leading-tight mt-0.5">
+                    {r.detailName ?? r.secondaryName}
+                  </span>
+                )}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Placed location: editable label + coords */}
+      {/* Placed location: editable label + sublabel + coords */}
       {placed ? (
         <>
           <input
@@ -538,6 +563,11 @@ function SlotRow({
             maxLength={120}
             className="w-full rounded border bg-background px-2 py-1 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
+          {slot.sublabel && (
+            <p className="text-[10px] text-muted-foreground leading-tight px-0.5">
+              {slot.sublabel}
+            </p>
+          )}
           <p className="text-[10px] text-muted-foreground tabular-nums">
             {slot.lat.toFixed(5)}, {slot.lng.toFixed(5)}
           </p>

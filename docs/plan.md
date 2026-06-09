@@ -130,10 +130,21 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Geocoding proxy at `src/app/api/geocode/` (Nominatim, 1 req/s throttle + 5-min cache, PH-restricted)
 - ✅ Reverse geocoding `src/app/api/geocode/reverse/` (shared throttle via `src/lib/geo/nominatim.ts`)
 - ✅ Typed browser wrapper `src/lib/geo/index.ts` — `geocode(q, opts?)`, `reverseGeocode(lat, lon, opts?)`
+- ✅ PH-aware two-line geocode labels — POI primary + simplified barangay/city/province sublabel (`buildLabelParts` in `src/lib/geo/nominatim.ts`); persisted as `label` + `sublabel` on each pin (`src/lib/schemas/post-map.ts`)
+- ✅ Query-name similarity re-rank — `src/app/api/geocode/route.ts` reorders Nominatim hits by fraction of query words matched in the POI name, importance as tiebreaker (fixes "wrong terminal ranks first")
 - "Stops near me" map UI
+
+**Search quality & performance (roadmap):**
+- Personalized result ranking — boost the user's previously-picked / frequently-used places. Needs a per-user recent-places store (Supabase table or local Dexie cache) keyed by place coords; blend a recency/frequency score into the existing `route.ts` re-rank.
+- Activity-based suggestion ordering — surface recent searches and saved home/work locations in the dropdown *before* the user types; weight live results by these.
+- Viewport / proximity bias — pass Nominatim `viewbox` + `bounded` (or sort by distance) from the current map center / GPS so nearby matches outrank far ones with the same name.
+- Dropdown UX — keyboard navigation (↑/↓/Enter), bold matched query substring in results, recent-searches list on empty focus, explicit loading / empty / error states, "Use my location" button.
+- Loading-time optimization — client-side query cache + stale-while-revalidate via TanStack Query (server already caches 5 min); tune the 350 ms debounce; prefetch on focus; trim default `limit`.
 
 **Open:**
 - Stop location input: MapLibre click vs lat/lng fields?
+- Where to store per-user place history — Supabase table (cross-device, needs RLS + migration) vs Dexie local cache (offline-friendly, single-device)?
+- Personalized ranking server-side (in `route.ts`, shared cache leaks across users) vs client-side re-rank after fetch (per-user, no cache contamination)?
 
 ---
 
