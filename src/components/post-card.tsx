@@ -8,12 +8,18 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
+import { mapDataSchema, type MapData } from "@/lib/schemas/post-map";
+import { StaticRouteMap } from "@/components/map/static-route-map";
+import { MapView, Marker, Popup, Source, Layer } from "@/components/map";
+import { lineStringFromPins, fitPinsToView } from "@/components/map/route-geometry";
 
 export type PostCardData = {
   id: string;
   body: string;
   created_at: string;
   net_votes: number;
+  /** Unvalidated from DB — always safeParse before use. */
+  map_data?: unknown;
   comments: { count: number }[] | null;
   users:
     | { username: string | null; display_name: string | null; avatar_url: string | null }
@@ -39,10 +45,76 @@ type Props = {
   focusMode?: boolean;
 };
 
+// ---------------------------------------------------------------------------
+// FocusMapView — interactive map rendered only in focus mode (1 WebGL context)
+// ---------------------------------------------------------------------------
+
+function FocusMapView({ pins }: { pins: import("@/lib/schemas/post-map").MapPin[] }) {
+  const [activePopup, setActivePopup] = useState<number | null>(null);
+  const fit = fitPinsToView(pins, 600, 320);
+  const lineData = pins.length >= 2 ? lineStringFromPins(pins) : null;
+
+  return (
+    <div className="mt-3">
+      <MapView
+        className="h-[320px] rounded-lg overflow-hidden"
+        interactive
+        showNavigationControl
+        initialViewState={fit}
+      >
+        {lineData && (
+          <Source id="focus-route-line" type="geojson" data={lineData}>
+            <Layer
+              id="focus-route-line-layer"
+              type="line"
+              paint={{
+                "line-color": "#3b82f6",
+                "line-width": 3,
+                "line-opacity": 0.85,
+              }}
+              layout={{ "line-join": "round", "line-cap": "round" }}
+            />
+          </Source>
+        )}
+        {pins.map((pin, i) => (
+          <Marker
+            key={i}
+            longitude={pin.lng}
+            latitude={pin.lat}
+            color={i === 0 ? "#22c55e" : i === pins.length - 1 ? "#ef4444" : "#6b7280"}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setActivePopup(activePopup === i ? null : i);
+            }}
+          />
+        ))}
+        {activePopup !== null && pins[activePopup] && (
+          <Popup
+            longitude={pins[activePopup].lng}
+            latitude={pins[activePopup].lat}
+            onClose={() => setActivePopup(null)}
+            closeButton={false}
+            anchor="bottom"
+          >
+            <p className="text-xs max-w-[180px]">{pins[activePopup].label}</p>
+          </Popup>
+        )}
+      </MapView>
+    </div>
+  );
+}
+
 export function PostCard({ post, initialUserVote, currentUserId, focusMode = false }: Props) {
   const router = useRouter();
   const raw = post.users;
   const u = Array.isArray(raw) ? raw[0] : raw;
+
+  // Parse map_data defensively — a bad row renders no map instead of crashing the feed
+  const mapData: MapData | null = (() => {
+    if (!post.map_data) return null;
+    const result = mapDataSchema.safeParse(post.map_data);
+    return result.success ? result.data : null;
+  })();
   const display = u?.display_name ?? "Unknown user";
   const handle = u?.username ?? null;
 
@@ -205,6 +277,16 @@ export function PostCard({ post, initialUserVote, currentUserId, focusMode = fal
         </p>
       </div>
       <p className="mt-2 whitespace-pre-wrap text-sm">{post.body}</p>
+
+      {/* Map — static preview in feed, interactive in focus view */}
+      {mapData && !focusMode && (
+        <div className="mt-3">
+          <StaticRouteMap pins={mapData.pins} width={560} height={220} />
+        </div>
+      )}
+      {mapData && focusMode && (
+        <FocusMapView pins={mapData.pins} />
+      )}
     </div>
   );
 

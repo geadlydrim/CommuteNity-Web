@@ -29,7 +29,7 @@ export default async function ProfilePage({
 
   const { data: posts, error: postsError } = await supabase
     .from("posts")
-    .select("id, body, created_at, net_votes, users(username, display_name, avatar_url), comments(count)")
+    .select("id, body, created_at, net_votes, map_data, users(username, display_name, avatar_url), comments(count)")
     .eq("user_id", profile.id)
     .eq("visibility", "public")
     .order("created_at", { ascending: false })

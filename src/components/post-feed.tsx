@@ -10,7 +10,7 @@ export async function PostFeed() {
   ] = await Promise.all([
     supabase
       .from("posts")
-      .select("id, body, created_at, net_votes, users(username, display_name, avatar_url), comments(count)")
+      .select("id, body, created_at, net_votes, map_data, users(username, display_name, avatar_url), comments(count)")
       .eq("visibility", "public")
       .order("created_at", { ascending: false })
       .limit(50),

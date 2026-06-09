@@ -14,7 +14,7 @@ export async function getPostById(id: string): Promise<PostByIdResult> {
     supabase
       .from("posts")
       .select(
-        "id, body, created_at, net_votes, users(username, display_name, avatar_url), comments(count)"
+        "id, body, created_at, net_votes, map_data, users(username, display_name, avatar_url), comments(count)"
       )
       .eq("id", id)
       .eq("visibility", "public")

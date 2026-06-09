@@ -46,6 +46,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Comments (new `comments` table + expandable thread under each post, inline compose)
 - ✅ Share post (Web Share API with clipboard fallback)
 - ✅ Post focus-mode overlay (intercepting route `@modal/(.)p/[id]`, URL sync, dark backdrop, comments expanded; canonical `/p/[id]` for shared links)
+- ✅ Route map on posts — `map_data` JSONB on `posts`, ordered pin list (origin→waypoints→destination); composer "Add map" builder (geocode search + click/drag + reverse-geocode labels); static tile preview in feed (no WebGL), interactive `MapView` in focus view
 - Delete-own-post button on `PostCard` (RLS already supports)
 - Friends visibility — `friends` table + `posts_read_friends` RLS + composer visibility selector
 - Feed pagination / infinite scroll past 50
@@ -120,12 +121,15 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 **Purpose:** Spatial UX for stops, routes, and pin-dropping.
 
 **Requirements:**
-- MapLibre GL JS + react-map-gl wrapper in `src/components/map/`
-- OSM tile source (no API key)
-- Map pin drop for stop submission
-- Route line rendering on detail screen
+- ✅ MapLibre GL JS + react-map-gl wrapper (`MapView`, barrel, OSM raster style, Metro Manila defaults) in `src/components/map/`
+- ✅ OSM tile source (no API key)
+- ✅ Map pin drop (click/drag) — built in `RouteMapBuilder`; reusable for stop submission
+- ✅ Route line rendering (`lineStringFromPins` + Source/Layer; also static SVG polyline)
+- ✅ Static no-WebGL tile preview (`StaticRouteMap`) — Web Mercator tile stitch for feed thumbnails
 - Stops layer (clustered markers)
-- Geocoding proxy at `src/app/api/geocode/` (Nominatim, 1 req/s rate limit)
+- ✅ Geocoding proxy at `src/app/api/geocode/` (Nominatim, 1 req/s throttle + 5-min cache, PH-restricted)
+- ✅ Reverse geocoding `src/app/api/geocode/reverse/` (shared throttle via `src/lib/geo/nominatim.ts`)
+- ✅ Typed browser wrapper `src/lib/geo/index.ts` — `geocode(q, opts?)`, `reverseGeocode(lat, lon, opts?)`
 - "Stops near me" map UI
 
 **Open:**
