@@ -54,7 +54,7 @@ export default async function ProfilePage({
 
   return (
     <main className="min-h-screen flex flex-col items-center px-8 pt-12 pb-16 gap-6">
-      <header className="w-[40vw]">
+      <header className="w-full max-w-[--content-sm]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <UserAvatar
@@ -81,7 +81,7 @@ export default async function ProfilePage({
         </div>
       </header>
       {posts && posts.length > 0 ? (
-        <ul className="w-[40vw] space-y-3">
+        <ul className="w-full max-w-[--content-sm] space-y-3">
           {(posts as PostCardData[]).map((p) => (
             <PostCard
               key={p.id}
