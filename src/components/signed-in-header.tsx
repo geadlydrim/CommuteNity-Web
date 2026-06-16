@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SignedInHeader({
   username,
@@ -21,6 +22,7 @@ export function SignedInHeader({
       ) : (
         <span className="text-sm text-muted-foreground">No handle set</span>
       )}
+      <ThemeToggle />
       <form action="/auth/sign-out" method="post">
         <Button type="submit" variant="outline" size="sm">Sign out</Button>
       </form>

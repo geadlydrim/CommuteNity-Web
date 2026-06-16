@@ -9,7 +9,7 @@ import { PostFeed } from "@/components/post-feed";
 
 function FeedSkeleton() {
   return (
-    <ul className="w-[40vw] space-y-3">
+    <ul className="w-full max-w-[--content-sm] space-y-3">
       {[1, 2, 3].map((i) => (
         <li key={i} className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex justify-between">
@@ -79,7 +79,7 @@ async function AuthArea() {
           <Link href="/sign-in">Sign in</Link>
         </Button>
       </div>
-      <div className="mt-10 flex flex-col items-center gap-6">
+      <div className="mt-10 w-full flex flex-col items-center gap-6">
         <Suspense fallback={<FeedSkeleton />}>
           <PostFeed />
         </Suspense>

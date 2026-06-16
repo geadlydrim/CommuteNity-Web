@@ -51,7 +51,7 @@ export function PostComposer({
 
   return (
     <>
-      <div className="w-[40vw] rounded-xl border bg-card p-3 shadow-sm flex flex-col gap-2">
+      <div className="w-full max-w-[--content-sm] rounded-xl border bg-card p-3 shadow-sm flex flex-col gap-2">
         {/* Input row */}
         <div className="flex items-center gap-3">
           <UserAvatar

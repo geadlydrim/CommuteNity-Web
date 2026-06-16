@@ -9,7 +9,7 @@ body {
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-heading);
   --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -49,6 +49,20 @@ body {
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* CommuteNity brand tokens — register for Tailwind utility generation */
+  --color-mode-jeepney: var(--mode-jeepney);
+  --color-mode-bus: var(--mode-bus);
+  --color-mode-mrt: var(--mode-mrt);
+  --color-mode-lrt: var(--mode-lrt);
+  --color-mode-uv: var(--mode-uv);
+  --color-mode-p2p: var(--mode-p2p);
+  --color-mode-tricycle: var(--mode-tricycle);
+  --color-mode-walking: var(--mode-walking);
+  --color-status-pending: var(--status-pending);
+  --color-status-approved: var(--status-approved);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-cached: var(--status-cached);
 }
 
 :root {
@@ -58,32 +72,61 @@ body {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Jeepney Gold — warm amber replaces stock near-black primary */
+  --primary: oklch(0.72 0.17 55);
+  --primary-foreground: oklch(0.10 0.02 55);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Accent: light amber tint for hover surfaces / selected tabs */
+  --accent: oklch(0.96 0.04 75);
+  --accent-foreground: oklch(0.30 0.08 55);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Focus ring follows primary amber */
+  --ring: oklch(0.72 0.17 55);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.72 0.17 55);
+  --sidebar-primary-foreground: oklch(0.10 0.02 55);
+  --sidebar-accent: oklch(0.96 0.04 75);
+  --sidebar-accent-foreground: oklch(0.30 0.08 55);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.72 0.17 55);
+
+  /* CommuteNity brand tokens */
+
+  /* Transit mode palette — also used as MapLibre line-color values.
+     All chosen to contrast on OSM raster tiles (light beige/tan base). */
+  --mode-jeepney:  oklch(0.72 0.17 55);   /* amber/gold  */
+  --mode-bus:      oklch(0.55 0.18 255);  /* blue        */
+  --mode-mrt:      oklch(0.55 0.18 305);  /* purple      */
+  --mode-lrt:      oklch(0.60 0.20 35);   /* red-orange  */
+  --mode-uv:       oklch(0.62 0.14 195);  /* teal        */
+  --mode-p2p:      oklch(0.58 0.16 145);  /* green       */
+  --mode-tricycle: oklch(0.80 0.16 90);   /* yellow      */
+  --mode-walking:  oklch(0.60 0 0);       /* gray        */
+
+  /* Status palette */
+  --status-pending:  oklch(0.72 0.17 55);    /* amber — same as jeepney/primary */
+  --status-approved: oklch(0.65 0.18 145);   /* green  */
+  --status-rejected: oklch(0.577 0.245 27.325); /* red — reuses --destructive */
+  --status-cached:   oklch(0.60 0.08 240);   /* blue-gray, distinct from pending */
+
+  /* Layout shell tokens */
+  --content-sm: min(40rem, 100%);   /* feed / form columns    */
+  --content-md: min(56rem, 100%);   /* route lists / wide layouts */
+  --nav-height: 56px;               /* reserved for bottom nav PWA shell */
+
+  /* --tier-* namespace reserved for reputation tiers (post-MVP) */
 }
 
 .dark {
@@ -93,18 +136,19 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  /* Amber lifted in dark so it pops against dark bg — same hue, higher lightness */
+  --primary: oklch(0.78 0.17 55);
+  --primary-foreground: oklch(0.10 0.02 55);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.28 0.06 65);
+  --accent-foreground: oklch(0.90 0.10 60);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.78 0.17 55);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -112,12 +156,35 @@ body {
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.78 0.17 55);
+  --sidebar-primary-foreground: oklch(0.10 0.02 55);
+  --sidebar-accent: oklch(0.28 0.06 65);
+  --sidebar-accent-foreground: oklch(0.90 0.10 60);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.78 0.17 55);
+
+  /* CommuteNity brand tokens — dark variants */
+
+  /* Mode colors — slightly lighter for dark backgrounds */
+  --mode-jeepney:  oklch(0.78 0.17 55);
+  --mode-bus:      oklch(0.65 0.16 255);
+  --mode-mrt:      oklch(0.65 0.16 305);
+  --mode-lrt:      oklch(0.68 0.18 35);
+  --mode-uv:       oklch(0.68 0.13 195);
+  --mode-p2p:      oklch(0.65 0.15 145);
+  --mode-tricycle: oklch(0.84 0.14 90);
+  --mode-walking:  oklch(0.70 0 0);
+
+  /* Status */
+  --status-pending:  oklch(0.78 0.17 55);
+  --status-approved: oklch(0.70 0.17 145);
+  --status-rejected: oklch(0.704 0.191 22.216);
+  --status-cached:   oklch(0.68 0.08 240);
+
+  /* Layout shell — same values, no change needed in dark */
+  --content-sm: min(40rem, 100%);
+  --content-md: min(56rem, 100%);
+  --nav-height: 56px;
 }
 
 @layer base {
@@ -129,5 +196,8 @@ body {
   }
   html {
     @apply font-sans;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-heading), var(--font-sans), system-ui, sans-serif;
   }
 }
