@@ -40,7 +40,7 @@ export async function PostFeed() {
   }
 
   return (
-    <ul className="w-full max-w-[--content-sm] space-y-3">
+    <ul className="w-full space-y-3">
       {(data as PostCardData[]).map((p) => (
         <PostCard
           key={p.id}

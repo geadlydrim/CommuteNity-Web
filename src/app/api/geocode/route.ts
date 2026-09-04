@@ -55,25 +55,6 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Re-rank: Nominatim orders by OSM node importance, not query-name similarity.
-    // A result whose POI name contains the query words is more relevant than one
-    // where the words only appear in its address (e.g. it sits in a barangay
-    // named after something in the query). Score = fraction of query words found
-    // in displayName; ties broken by Nominatim importance.
-    const queryWords = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
-    if (queryWords.length > 0) {
-      results.sort((a, b) => {
-        const scoreOf = (r: GeocodeResult) => {
-          const name = r.displayName.toLowerCase();
-          const hits = queryWords.filter((w) => name.includes(w)).length;
-          return hits / queryWords.length;
-        };
-        const diff = scoreOf(b) - scoreOf(a);
-        if (diff !== 0) return diff;
-        return (b.importance ?? 0) - (a.importance ?? 0);
-      });
-    }
-
     cacheSet(cacheKey, results);
     return NextResponse.json(results);
   } catch (err) {

@@ -9,7 +9,7 @@ import { PostFeed } from "@/components/post-feed";
 
 function FeedSkeleton() {
   return (
-    <ul className="w-full max-w-[--content-sm] space-y-3">
+    <ul className="w-full space-y-3">
       {[1, 2, 3].map((i) => (
         <li key={i} className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex justify-between">
@@ -54,7 +54,7 @@ async function AuthArea() {
           avatarUrl={me?.avatar_url ?? null}
           displayName={me?.display_name ?? null}
         />
-        <div className="flex flex-col items-center gap-6 px-8 pt-8 pb-16">
+        <div className="feed-col flex flex-col gap-6 pt-4 pb-12 lg:pt-8 lg:pb-16">
           <PostComposer avatarUrl={me?.avatar_url ?? null} displayName={me?.display_name ?? null} />
           <Suspense fallback={<FeedSkeleton />}>
             <PostFeed />
@@ -65,21 +65,21 @@ async function AuthArea() {
   }
 
   return (
-    <div className="flex flex-col items-center px-8 pt-16 pb-16">
-      <h1 className="text-4xl font-bold">CommuteNity</h1>
-      <p className="mt-2 text-lg text-muted-foreground text-center max-w-md">
+    <div className="feed-col flex flex-col items-center pt-10 pb-12 lg:pt-16 lg:pb-16">
+      <h1 className="text-3xl font-bold sm:text-4xl">CommuteNity</h1>
+      <p className="mt-2 text-center text-base text-muted-foreground sm:text-lg">
         Community-driven commute navigation for the Philippines.
         Find jeepney routes, stops, and fares — contributed by riders like you.
       </p>
-      <div className="mt-8 flex gap-4">
-        <Button asChild>
+      <div className="mt-8 flex w-full max-w-sm gap-3">
+        <Button asChild className="flex-1">
           <Link href="/sign-up">Get started</Link>
         </Button>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="flex-1">
           <Link href="/sign-in">Sign in</Link>
         </Button>
       </div>
-      <div className="mt-10 w-full flex flex-col items-center gap-6">
+      <div className="mt-10 flex w-full flex-col gap-6">
         <Suspense fallback={<FeedSkeleton />}>
           <PostFeed />
         </Suspense>
@@ -90,15 +90,15 @@ async function AuthArea() {
 
 function AuthAreaSkeleton() {
   return (
-    <div className="flex flex-col items-center px-8 pt-16 pb-16">
-      <h1 className="text-4xl font-bold">CommuteNity</h1>
-      <p className="mt-2 text-lg text-muted-foreground text-center max-w-md">
+    <div className="feed-col flex flex-col items-center pt-10 pb-12 lg:pt-16 lg:pb-16">
+      <h1 className="text-3xl font-bold sm:text-4xl">CommuteNity</h1>
+      <p className="mt-2 text-center text-base text-muted-foreground sm:text-lg">
         Community-driven commute navigation for the Philippines.
         Find jeepney routes, stops, and fares — contributed by riders like you.
       </p>
-      <div className="mt-8 flex gap-4">
-        <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
-        <div className="h-8 w-20 rounded-lg bg-muted animate-pulse" />
+      <div className="mt-8 flex w-full max-w-sm gap-3">
+        <div className="h-8 flex-1 rounded-lg bg-muted animate-pulse" />
+        <div className="h-8 flex-1 rounded-lg bg-muted animate-pulse" />
       </div>
     </div>
   );

@@ -101,10 +101,21 @@ export function StaticRouteMap({
 
   return (
     <div
-      className={cn("relative overflow-hidden rounded-lg bg-muted", className)}
-      style={{ width, height }}
+      className={cn(
+        "@container relative w-full overflow-hidden rounded-lg bg-muted",
+        className,
+      )}
+      style={{ aspectRatio: `${width} / ${height}`, containerType: "inline-size" }}
       aria-label="Route map preview"
     >
+      <div
+        className="absolute top-0 left-0 origin-top-left overflow-hidden"
+        style={{
+          width,
+          height,
+          transform: `scale(calc(100cqw / ${width}))`,
+        }}
+      >
       {/* OSM raster tiles */}
       {tiles.map(({ tx, ty, left, top }) => (
         // eslint-disable-next-line @next/next/no-img-element
@@ -193,6 +204,7 @@ export function StaticRouteMap({
           OpenStreetMap
         </a>{" "}
         contributors
+      </div>
       </div>
     </div>
   );

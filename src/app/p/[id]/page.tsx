@@ -14,8 +14,8 @@ export default async function PostPage({
   if (!post) notFound();
 
   return (
-    <main className="min-h-screen flex flex-col items-center px-8 pt-12 pb-16 gap-6">
-      <div className="w-full max-w-[--content-sm] flex items-center">
+    <main className="flex min-h-screen flex-col items-center gap-6 pt-8 pb-12 lg:pt-12 lg:pb-16">
+      <div className="feed-col flex items-center">
         <Link
           href="/"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -23,7 +23,7 @@ export default async function PostPage({
           ← Back to feed
         </Link>
       </div>
-      <ul className="w-full max-w-[--content-sm]">
+      <ul className="feed-col">
         <PostCard
           post={post}
           initialUserVote={initialUserVote}

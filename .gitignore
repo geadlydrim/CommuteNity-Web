@@ -33,3 +33,8 @@ yarn-error.log*
 
 # Obsidian vault
 /vault/
+
+# Agent board packets (local handoffs). Skills, rules, protocol,
+# templates, STATUS, PIPELINE, and BACKLOG stay tracked.
+.cursor/agents/inbox/*
+!.cursor/agents/inbox/.gitkeep

@@ -28,6 +28,12 @@ export interface MapViewProps {
   children?: React.ReactNode;
   /** Allow pan / zoom / rotate. Default: true. */
   interactive?: boolean;
+  /**
+   * When true, one-finger / wheel scroll passes through to the page;
+   * the map only pans with two fingers (mobile) or ctrl+wheel (desktop).
+   * Use inside scrollable sheets (post focus, comments). Leave off in builders.
+   */
+  cooperativeGestures?: boolean;
   /** Render the built-in NavigationControl. Default: true. */
   showNavigationControl?: boolean;
   /** Ref forwarded to the underlying MapLibre map instance for imperative control (flyTo, etc.). */
@@ -47,6 +53,7 @@ export function MapView({
   onClick,
   children,
   interactive = true,
+  cooperativeGestures = false,
   showNavigationControl = true,
   mapRef,
 }: MapViewProps) {
@@ -61,6 +68,7 @@ export function MapView({
         initialViewState={{ ...DEFAULT_VIEW_STATE, ...initialViewState }}
         style={{ width: "100%", height: "100%" }}
         interactive={interactive}
+        cooperativeGestures={cooperativeGestures}
         onClick={onClick}
         // Leave attributionControl on (default) — it surfaces the legally-required
         // OSM attribution string from the raster source.

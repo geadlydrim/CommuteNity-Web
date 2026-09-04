@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PostCard, type PostCardData } from "@/components/post-card";
 import { ProfileEditDialog } from "@/components/profile-edit-dialog";
@@ -53,20 +54,26 @@ export default async function ProfilePage({
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center px-8 pt-12 pb-16 gap-6">
-      <header className="w-full max-w-[--content-sm]">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
+    <main className="flex min-h-screen flex-col items-center gap-6 pt-8 pb-12 lg:pt-12 lg:pb-16">
+      <header className="feed-col">
+        <Link
+          href="/"
+          className="mb-6 inline-block text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          ← Back to feed
+        </Link>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <UserAvatar
               src={profile.avatar_url ?? null}
               name={profile.display_name ?? profile.username}
-              className="h-16 w-16"
+              className="h-12 w-12 shrink-0 sm:h-16 sm:w-16"
             />
-            <div>
-              <h1 className="text-2xl font-bold">
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold sm:text-2xl">
                 {profile.display_name ?? "Unknown user"}
               </h1>
-              <p className="text-muted-foreground">@{profile.username}</p>
+              <p className="truncate text-muted-foreground">@{profile.username}</p>
             </div>
           </div>
           {isSelf && (
@@ -81,7 +88,7 @@ export default async function ProfilePage({
         </div>
       </header>
       {posts && posts.length > 0 ? (
-        <ul className="w-full max-w-[--content-sm] space-y-3">
+        <ul className="feed-col space-y-3">
           {(posts as PostCardData[]).map((p) => (
             <PostCard
               key={p.id}

@@ -1,0 +1,16 @@
+---
+description: CommuteNity multi-agent board — default Orchestrator, named-role switch.
+alwaysApply: true
+---
+
+# Agent ops
+
+Default role: **Orchestrator**. If the user names coordinator, planner, design engineer, software engineer, schema engineer, orchestrator, or verifier, read `.cursor/skills/<role>/SKILL.md` and follow it.
+
+Before planning or implementing a feature, read:
+
+- `.cursor/agents/PROTOCOL.md`
+- `.cursor/agents/STATUS.md`
+- `.cursor/agents/PIPELINE.md`
+
+Handoffs live in `.cursor/agents/inbox/`. Do not invent architecture in prompts. Do not implement when the user asked for a brief, spec, work plan, or prompt.

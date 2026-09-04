@@ -1,43 +1,96 @@
 # Data Model
 
-Entities, fields, relationships, and notes on moderation state and cacheability. Targets Supabase (Postgres + PostGIS) but is backend-agnostic until the backend decision is confirmed.
+Supabase (Postgres + PostGIS). Source of truth for columns is `supabase/migrations/`. JSONB shapes are enforced in the app with Zod (`src/lib/schemas/`), not CHECK constraints beyond “object or null.”
+
+There is **no** `route_stops` table and **no** `friends` table. `posts.visibility` allows `'friends'` but nothing implements it.
+
+There is **no** client cache. Dexie is unused. Do not describe Room or WorkManager.
 
 ---
 
-## Entities
+## Live (used by the web UI)
 
 ### `users`
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | uuid (PK) | Supabase Auth UID |
-| `display_name` | text | Shown publicly |
-| `avatar_url` | text? | Optional profile photo |
-| `reputation` | int | Default 0; increases on approval, decreases on rejection |
+| `username` | text? | `^[a-z0-9_]{3,20}$`, unique. Null until OAuth onboarding. Middleware requires it for app use. |
+| `username_changed_at` | timestamptz? | 30-day cooldown trigger |
+| `display_name` | text? | Shown publicly |
+| `avatar_url` | text? | Storage |
+| `reputation` | int | Default 0. Column exists; **no profile UI** |
 | `created_at` | timestamptz | |
 
-**Notes:**
-- Email and auth credentials live in Supabase Auth, not this table.
-- `reputation` gates contribution access (minimum threshold TBD, e.g. 0 for MVP).
+Email lives in Auth, not this table. `handle_new_user` inserts a `public.users` row on signup.
+
+### `posts`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid (PK) | |
+| `user_id` | uuid (FK → users) | Default `auth.uid()` |
+| `body` | text | Length 1–500 |
+| `visibility` | text | `'public'` \| `'friends'`. Only public is readable today |
+| `net_votes` | int | Maintained by trigger on `post_votes` |
+| `map_data` | jsonb? | Pin-list envelope; null = no map |
+| `created_at` | timestamptz | |
+
+RLS: read public; insert/delete own. No update policy (no edit-post).
+
+`map_data` (Zod `src/lib/schemas/post-map.ts`): `{ version: 1, pins: Pin[] }` with 2–10 pins. Each pin: `lat`, `lng` (PH bounds), `label`, optional `sublabel`. `pins[0]` is origin, last is destination; roles are not stored.
+
+### `post_votes`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid (PK) | |
+| `post_id` | uuid (FK → posts) | |
+| `user_id` | uuid (FK → users) | |
+| `value` | smallint | `+1` or `-1` |
+| `created_at` | timestamptz | |
+
+Unique `(post_id, user_id)`. RLS: read all; write own.
+
+### `comments`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid (PK) | |
+| `post_id` | uuid (FK → posts) | |
+| `author_id` | uuid (FK → users) | |
+| `body` | text | Length 1–500 |
+| `map_data` | jsonb? | Guide-map envelope when present |
+| `created_at` | timestamptz | |
+
+RLS: read all; insert/delete own.
+
+`map_data` (Zod `src/lib/schemas/guide-map.ts`): versioned `kind: "guide"` document (legs + connectors). In flight; do not treat as Coordinator-closed.
+
+### Storage
+
+Avatars bucket (see `20260601120000_avatar_storage.sql`).
 
 ---
+
+## Parked catalog (SQL exists, no screens)
+
+Do not brief UI against these tables until Coordinator approves a route/stop feature.
 
 ### `stops`
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | uuid (PK) | |
-| `name` | text | Human-readable stop name |
-| `location` | geography(Point, 4326) | PostGIS point; lat/lng |
-| `mode` | text (enum) | `jeepney`, `bus`, `mrt`, `lrt`, `uv_express`, `p2p`, `tricycle`, `walking` |
-| `status` | text (enum) | `pending`, `approved`, `rejected` |
+| `name` | text | |
+| `location` | geography(Point, 4326) | |
+| `mode` | text | `jeepney`, `bus`, `mrt`, `lrt`, `uv_express`, `p2p`, `tricycle`, `walking` |
+| `status` | text | `pending`, `approved`, `rejected` |
+| `net_votes` | int | |
 | `created_by` | uuid (FK → users) | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| `created_at` / `updated_at` | timestamptz | |
 
-**Indexes:** `location` (GIST), `mode`, `status`.
-
----
+Anon RLS reads **`approved` only**.
 
 ### `routes`
 
@@ -45,149 +98,58 @@ Entities, fields, relationships, and notes on moderation state and cacheability.
 |---|---|---|
 | `id` | uuid (PK) | |
 | `name` | text | e.g. "Cubao–Divisoria via España" |
-| `mode` | text (enum) | Primary mode for the route |
-| `status` | text (enum) | `pending`, `approved`, `rejected` |
-| `notes` | text? | Community notes on the route overall |
-| `net_votes` | int | Denormalized; updated by trigger on `votes` table |
+| `mode` | text | Same enum as stops |
+| `status` | text | pending / approved / rejected |
+| `notes` | text? | |
+| `net_votes` | int | |
 | `created_by` | uuid (FK → users) | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-
----
+| `created_at` / `updated_at` | timestamptz | |
 
 ### `route_segments`
 
-Ordered list of stop-to-stop legs within a route.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | uuid (PK) | |
-| `route_id` | uuid (FK → routes) | |
-| `sequence` | int | Order of this segment in the route (0-indexed) |
-| `from_stop_id` | uuid (FK → stops) | Boarding stop |
-| `to_stop_id` | uuid (FK → stops) | Alighting stop |
-| `fare` | numeric(8,2)? | In PHP; null if unknown |
-| `duration_minutes` | int? | Estimated travel time |
-| `notes` | text? | Segment-specific tips |
-
-**Constraint:** `(route_id, sequence)` unique.
-
-**Derived:** The full polyline of a route is assembled by walking `route_segments` in `sequence` order and resolving `from_stop.location` / `to_stop.location`.
-
----
+Ordered stop-to-stop legs. Unique `(route_id, sequence)`. Fares in PHP. Polyline would be derived from stop points — **not used in UI**.
 
 ### `edit_proposals`
 
-Tracks community edits to existing routes/stops before they're applied.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | uuid (PK) | |
-| `target_type` | text (enum) | `route`, `stop`, `segment` |
-| `target_id` | uuid | FK to the target table |
-| `proposed_by` | uuid (FK → users) | |
-| `change_payload` | jsonb | Partial object of the proposed field changes |
-| `status` | text (enum) | `pending`, `approved`, `rejected` |
-| `reviewed_by` | uuid? (FK → users) | Null = auto-approved by votes |
-| `net_votes` | int | Denormalized |
-| `created_at` | timestamptz | |
-| `resolved_at` | timestamptz? | |
-
-**On approval:** The backend applies `change_payload` to the target row. `resolved_at` is set.
-
----
+`target_type`: `route` \| `stop` \| `segment`. `change_payload` jsonb. Status pending / approved / rejected. Approval merge is **not built**.
 
 ### `votes`
 
-One row per user per target. Supports both route/stop votes and edit-proposal votes.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | uuid (PK) | |
-| `user_id` | uuid (FK → users) | |
-| `target_type` | text (enum) | `route`, `stop`, `edit_proposal` |
-| `target_id` | uuid | FK to the target table |
-| `value` | smallint | `+1` (upvote) or `-1` (downvote) |
-| `created_at` | timestamptz | |
-
-**Constraint:** `(user_id, target_type, target_id)` unique — one vote per user per target.
-**Trigger:** After insert/update/delete, recalculate `net_votes` on the target row and check auto-approve threshold.
-
----
+Catalog votes (not `post_votes`). Unique `(user_id, target_type, target_id)`. Trigger: net ≥ 5 auto-approve, ≤ −3 auto-reject.
 
 ### `reports`
 
-User flags on any content.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | uuid (PK) | |
-| `reported_by` | uuid (FK → users) | |
-| `target_type` | text (enum) | `route`, `stop`, `edit_proposal` |
-| `target_id` | uuid | |
-| `reason` | text (enum) | `wrong_fare`, `outdated`, `duplicate`, `spam`, `other` |
-| `notes` | text? | Optional elaboration |
-| `status` | text (enum) | `open`, `resolved`, `dismissed` |
-| `created_at` | timestamptz | |
+Flags on catalog targets: `wrong_fare`, `outdated`, `duplicate`, `spam`, `other`. **No UI.**
 
 ---
 
-## Entity Relationships
+## Relationships
 
 ```
-users ──< routes (created_by)
-users ──< stops (created_by)
-users ──< edit_proposals (proposed_by, reviewed_by)
-users ──< votes (user_id)
-users ──< reports (reported_by)
+users ──< posts
+users ──< post_votes
+users ──< comments
+posts ──< post_votes
+posts ──< comments
 
-routes ──< route_segments (route_id)
+users ──< routes, stops, edit_proposals, votes, reports   (parked)
+routes ──< route_segments
 stops ──< route_segments (from_stop_id, to_stop_id)
-
-routes }──< votes (target_type='route')
-stops }──< votes (target_type='stop')
-edit_proposals }──< votes (target_type='edit_proposal')
-
-routes }──< edit_proposals (target_type='route')
-stops }──< edit_proposals (target_type='stop')
-route_segments }──< edit_proposals (target_type='segment')
-
-routes }──< reports
-stops }──< reports
-edit_proposals }──< reports
 ```
 
 ---
 
-## Moderation State Machine
+## Catalog moderation (parked)
 
 ```
-              submit
-[Draft] ──────────────> [Pending]
-                            │
-              vote threshold │ +5 net votes
-              OR moderator  ▼
-              approval ──> [Approved]  ──> visible in app
-                            │
-              vote threshold │ –3 net votes
-              OR moderator  ▼
-              rejection ──> [Rejected]  ──> hidden, stays for audit
+submit → pending → approved (net votes ≥ 5 or moderator)
+                 → rejected (net votes ≤ −3 or moderator)
 ```
 
-Thresholds are app config, not hardcoded. Start conservative (e.g. 5 upvotes to approve, 3 net-negative to reject).
+Feed posts are **not** in this machine. They are public on insert.
 
 ---
 
-## Offline Cacheability
+## Cache
 
-| Entity | Cache strategy | Notes |
-|---|---|---|
-| `routes` (approved) | Cache on view; prefetch top-N by area | TTL: 24h |
-| `stops` | Cache on view and as part of route | TTL: 24h |
-| `route_segments` | Always cached with parent route | |
-| `votes` | Write-through; queue vote if offline | Sync on reconnect |
-| `edit_proposals` | Read: cache recent; Write: queue offline | |
-| `reports` | Write-only; queue if offline | |
-| `users` | Cache own profile; read-others on demand | |
-
-Local storage: **Room** with entities mirroring the above schema. Sync via **WorkManager** periodic sync + foreground sync on app open.
+None shipped. A web PWA/Dexie cache is parked with the offline module. Do not add IndexedDB in a work plan unless that module is approved.

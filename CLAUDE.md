@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for agents in this repository.
 
 ## Commands
 
@@ -11,59 +11,58 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript check without emitting files
 ```
 
-No test suite yet — testing setup is a future sprint task.
+No test suite yet.
 
-## Architecture
+## Product
 
-**Framework:** Next.js 15 App Router. All pages live under `src/app/` using file-based routing. `src/app/layout.tsx` is the root layout — add global providers (QueryClient, Supabase session) here.
+This is the **web app**. Native Android/iOS are out of scope. Follow `.cursor/agents/STATUS.md` over older memory. Social feed is the live foundation. Route/stop UI is parked (tables exist; no screens). Do not create `src/app/routes/`, `stops/`, `contribute/`, `src/lib/db/`, `src/lib/sync/`, `src/hooks/`, or `src/stores/` unless an approved work plan says to.
 
-**Styling:** Tailwind CSS v4 + shadcn/ui (style: `radix-nova`, base color: `neutral`). Theme tokens are CSS variables defined in `src/app/globals.css` under `:root` / `.dark`. The `cn()` helper at `src/lib/utils.ts` merges Tailwind classes safely — always use it when combining conditional classes.
+## Architecture (as it is)
 
-**Adding shadcn components:** `npx shadcn@latest add <component>` — drops generated source into `src/components/ui/`. Do not hand-edit those files; re-generate instead.
+**Framework:** Next.js 15 App Router under `src/app/`. Root layout: `src/app/layout.tsx`.
 
-**Planned directory structure** (not yet built — guides where new code goes):
+**Styling:** Tailwind CSS v4 + shadcn/ui (`radix-nova`, neutral). Tokens in `src/app/globals.css`. Combine classes with `cn()` from `src/lib/utils.ts`.
+
+**Adding shadcn:** `npx shadcn@latest add <component>` → `src/components/ui/`. Do not hand-edit those files.
+
+**Data:** RSC and client components call Supabase via `@/lib/supabase/server` and `@/lib/supabase/client`. Zod in `src/lib/schemas/`. TanStack Query and Zustand are installed and **unused**.
+
+**Maps:** import only from `@/components/map`. Geocode via `/api/geocode` and `/api/geocode/reverse` (`src/lib/geo`).
+
+**Offline / PWA:** Dexie and `next-pwa` are unused. `next.config.ts` has no service worker.
+
+**Path alias:** `@/*` → `src/*`.
+
+### Layout that exists
 
 ```
 src/
 ├── app/
-│   ├── (auth)/         # sign-in, sign-up routes
-│   ├── routes/         # browse + route detail pages
-│   ├── stops/          # stop detail pages
-│   ├── contribute/     # contribution submission flows
-│   ├── profile/        # user profile page
-│   └── api/            # API route handlers (geocoding proxy, etc.)
+│   ├── (auth)/              # sign-in, sign-up
+│   ├── api/geocode/         # Nominatim proxy (+ reverse)
+│   ├── auth/                # callback, sign-out
+│   ├── onboarding/username/
+│   ├── p/[id]/              # post permalink
+│   ├── u/[username]/        # profile
+│   ├── @modal/(.)p/[id]/    # focus overlay
+│   ├── layout.tsx
+│   └── page.tsx             # landing feed
 ├── components/
-│   ├── ui/             # shadcn/ui generated components (do not hand-edit)
-│   ├── map/            # MapLibre GL JS wrappers
-│   ├── route/          # route-specific components (RouteCard, SegmentList, etc.)
-│   └── stop/           # stop-specific components
-├── lib/
-│   ├── supabase/       # Supabase client helpers (browser client, server client, middleware)
-│   ├── db/             # Dexie schema for offline IndexedDB cache
-│   ├── sync/           # background sync queue
-│   └── geo/            # geocoding wrapper (proxied Nominatim calls)
-├── hooks/              # custom React hooks
-├── stores/             # Zustand stores
-└── types/              # shared TypeScript types mirroring the DB schema
+│   ├── ui/                  # shadcn (do not hand-edit)
+│   ├── map/                 # MapView, builders, static maps
+│   └── post-*.tsx           # feed, card, composer, modal
+└── lib/
+    ├── supabase/
+    ├── geo/
+    ├── schemas/
+    ├── posts.ts
+    └── transit/modes.ts
 ```
 
-**State management split:**
-- Server/remote data → TanStack Query (`@tanstack/react-query`). Wrap the app in `QueryClientProvider` in `layout.tsx`.
-- Client UI state → Zustand stores in `src/stores/`.
-- Forms → `react-hook-form` + Zod schemas. Resolvers via `@hookform/resolvers/zod`.
+## Docs
 
-**Backend:** Supabase (Postgres + PostGIS). Use `@supabase/supabase-js` for client-side calls and `@supabase/ssr` for server components and middleware (cookie-based sessions). See `docs/data-model.md` for the full DB schema and `docs/backend-decision.md` for all backend/tooling decisions.
-
-**Maps:** MapLibre GL JS via `react-map-gl`. Uses free OSM tiles — no API key needed. Geocoding (text → coordinates) goes through a Next.js API route (`src/app/api/geocode/`) that proxies Nominatim to respect the 1 req/s rate limit.
-
-**Offline:** IndexedDB via Dexie.js (`src/lib/db/`). Service worker via `next-pwa` (configured in `next.config.ts`). `next-pwa@5.6.0` has known friction with Next.js 15 App Router — treat PWA config as a Sprint 3 task.
-
-**Path alias:** `@/*` maps to `src/*` (defined in `tsconfig.json`).
-
-## Product context
-
-See `docs/` for living product decisions:
-- `docs/mvp-scope.md` — what is and isn't in MVP
-- `docs/data-model.md` — DB entities, fields, relationships, moderation state machine
-- `docs/plan.md` — module-based roadmap
-- `docs/user-stories.md` — acceptance criteria per feature
+- `.cursor/agents/STATUS.md` — what is true
+- `docs/mvp-scope.md` — current MVP vs parked catalog
+- `docs/plan.md` — modules and checkmarks (Coordinator-owned)
+- `docs/data-model.md` — tables
+- `docs/user-stories.md` — US-100+ live; US-001–016 parked
