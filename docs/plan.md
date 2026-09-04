@@ -1,11 +1,14 @@
 # Plan
 
-Module-based roadmap. Pick any module, ship requirements in any order. Status tags:
-- ✅ done
+Module-based roadmap for the **Next.js web app** (this repo). Native Android/iOS are out of scope.
+
+Status tags:
+- ✅ done (UI + schema in this repo)
+- 📦 schema only (SQL/RLS exist; no screens — not done)
 - 🚧 in progress
 - blank = not started
 
-Stories reference `user-stories.md`. Schema reference `data-model.md`.
+`.cursor/agents/STATUS.md` wins when this file and the repo disagree. Stories: `docs/user-stories.md` (US-100+ live; US-001–016 parked). Schema: `docs/data-model.md`.
 
 ---
 
@@ -47,6 +50,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Share post (Web Share API with clipboard fallback)
 - ✅ Post focus-mode overlay (intercepting route `@modal/(.)p/[id]`, URL sync, dark backdrop, comments expanded; canonical `/p/[id]` for shared links)
 - ✅ Route map on posts — `map_data` JSONB on `posts`, ordered pin list (origin→waypoints→destination); composer "Add map" builder (geocode search + click/drag + reverse-geocode labels); static tile preview in feed (no WebGL), interactive `MapView` in focus view
+- 🚧 Guide maps on comments — `kind: "guide"` JSONB on `comments`, multi-leg builder (not Coordinator-closed)
 - Delete-own-post button on `PostCard` (RLS already supports)
 - Friends visibility — `friends` table + `posts_read_friends` RLS + composer visibility selector
 - Feed pagination / infinite scroll past 50
@@ -84,8 +88,8 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 **Purpose:** Submit and browse community-maintained transit routes.
 
 **Requirements:**
-- Schema migration: `routes`, `route_segments`, `route_stops` tables (per `data-model.md`)
-- RLS: anon reads `approved`; auth users insert `pending`
+- 📦 Schema: `routes`, `route_segments` (there is no `route_stops` table)
+- 📦 RLS: anon reads `approved`; auth users insert `pending`
 - Add Route wizard (name, mode, stops picker, fare entry) (US-007)
 - Route detail screen (stops in order, per-segment fares, notes, last updated) (US-005)
 - Browse routes by mode filter (US-004)
@@ -96,7 +100,8 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 
 **Open:**
 - Edit-route proposals MVP or later? (currently in Edit Proposals module)
-- Route search: text match only or routing graph? (graph deferred per mvp-scope)
+- Route search: text match only or routing graph? (graph not in current MVP)
+- Unused `routes` / `stops` tables are **not** a decision to build UI. Needs a Coordinator-approved brief.
 
 ---
 
@@ -105,8 +110,8 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 **Purpose:** Geocoded transit stops as building blocks for routes.
 
 **Requirements:**
-- Schema migration: `stops` table (lat/lng, mode, name) (per `data-model.md`)
-- RLS: anon reads `approved`; auth users insert `pending`
+- 📦 Schema: `stops` table (lat/lng, mode, name)
+- 📦 RLS: anon reads `approved`; auth users insert `pending`
 - Add Stop screen — name + map pin + mode (US-009)
 - Stop detail screen — pin, mode, routes serving it (US-006)
 - Geospatial "stops near me" (PostGIS `ST_DWithin`)
@@ -153,13 +158,13 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 **Purpose:** Crowd verification of contributions. Threshold-based auto-decisions.
 
 **Requirements:**
-- Schema: `votes` table (per-user, per-target, up/down)
+- 📦 Schema: `votes` table (per-user, per-target, up/down)
 - Upvote / downvote on routes (US-010)
 - Vote toggle on second tap
-- Postgres trigger: `net_votes >= 5` auto-approve; `<= -3` auto-reject (US-012)
+- 📦 Postgres trigger: `net_votes >= 5` auto-approve; `<= -3` auto-reject (US-012)
 - Pending badge on route/stop detail
 - Flag content with reason — wrong fare / outdated / duplicate / spam (US-011)
-- `reports` table
+- 📦 `reports` table
 - "My Submissions" / contribution status view
 - Moderator review via Supabase dashboard (no in-app UI for MVP)
 
@@ -174,7 +179,7 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 **Purpose:** Field-level corrections without overwriting approved data.
 
 **Requirements:**
-- Schema: `edit_proposals` table with `change_payload` JSON
+- 📦 Schema: `edit_proposals` table with `change_payload` JSON
 - "Suggest Edit" sheet on route detail (US-008)
 - Approved edits merge `change_payload` into target row
 - Reputation effect on approval/rejection (+1 / -1)
@@ -187,18 +192,15 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 
 ## 9. Offline / PWA
 
-**Purpose:** Mid-commute reliability when connection drops.
+**Parked.** Not current MVP. Web-only if ever approved. Android Room / WorkManager is dead.
 
-**Requirements:**
-- Dexie (IndexedDB) schema in `src/lib/db/`
-- Cache routes + stops on view
-- Service Worker via `next-pwa` (known Next 15 friction per CLAUDE.md)
-- "Cached" indicator + last-synced timestamp on offline view (US-016)
-- Offline notice on search attempt with no connection (US-003)
-- Background sync queue for pending writes on reconnect
+**Requirements (if unparked):**
+- Dexie (IndexedDB) — package installed, unused
+- Service Worker — `next-pwa` installed, **not** wired in `next.config.ts`
+- Cache and offline notice stories: US-003, US-016
 
 **Open:**
-- `next-pwa@5.6.0` vs alternative (`@serwist/next`) given Next 15 friction?
+- `next-pwa@5.6.0` vs `@serwist/next` (Next 15 friction) — only if this module is approved
 
 ---
 
@@ -210,19 +212,16 @@ Stories reference `user-stories.md`. Schema reference `data-model.md`.
 - ✅ Tailwind v4 + shadcn radix-nova
 - ✅ Supabase project + `@supabase/ssr` cookie sessions + middleware
 - ✅ Sonner toaster wired in layout
-- TanStack Query provider in `layout.tsx`
-- Zustand stores in `src/stores/`
-- Error / loading / empty states across all screens
-- App icon, splash screen
-- Onboarding slides for new users
-- Testing setup (none yet — deferred per CLAUDE.md)
-- Beta user can sign up → find route → submit correction → track status unassisted
+- TanStack Query / Zustand — installed, unused; do not add unless a work plan says why
+- Error / loading / empty states across screens that exist
+- Testing setup (none yet)
+- Catalog milestone (later, not this module’s done-when): sign up → find route → submit correction
 
 ---
 
 ## Cross-module notes
 
 - Schema reference: `docs/data-model.md`
-- User story IDs: `docs/user-stories.md`
+- User story IDs: `docs/user-stories.md` (US-100+ live feed; US-001–016 parked catalog)
 - Scope boundary: `docs/mvp-scope.md`
-- Out of scope (no module): real-time GPS tracking, in-app chat, payments, iOS, MRT/LRT live boards, accessibility tags (post-MVP)
+- Out of scope (no module): real-time GPS, in-app chat, payments, native Android, native iOS, ride-hailing, MRT/LRT live boards

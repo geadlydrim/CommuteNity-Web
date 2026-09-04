@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "next-themes";
@@ -15,6 +15,12 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "CommuteNity",
   description: "Community-driven commute navigation for the Philippines",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

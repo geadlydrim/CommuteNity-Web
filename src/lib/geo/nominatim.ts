@@ -14,6 +14,11 @@
 const CACHE_MAX = 200;
 const CACHE_TTL_MS = 300_000; // 5 min
 
+// Retry config — only for transient network / timeout failures
+const MAX_ATTEMPTS = 3;
+const ATTEMPT_TIMEOUT_MS = 8000; // up from 5000 — more room on slow networks
+const RETRY_BACKOFF_MS = 600;    // linear: 600 ms, 1200 ms between retries
+
 let lastRequestAt = 0;
 const cache = new Map<string, { data: unknown; expires: number }>();
 
@@ -121,9 +126,31 @@ export function buildLabelParts(raw: Record<string, unknown>): LabelParts {
 }
 
 /**
+ * Returns true for transient connection/timeout errors that are worth retrying.
+ * HTTP errors (carry `.status`) are never retried — they won't self-heal.
+ */
+function isRetryable(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  if ("status" in err) return false; // upstream HTTP error — don't retry
+  if (err.name === "TimeoutError" || err.name === "AbortError") return true;
+  // ETIMEDOUT from undici surfaces as TypeError: fetch failed, cause has `code`
+  const code =
+    (err as { cause?: { code?: string } }).cause?.code ??
+    (err as { code?: string }).code;
+  return (
+    code === "ETIMEDOUT" ||
+    code === "ECONNRESET" ||
+    code === "ECONNREFUSED" ||
+    code === "EAI_AGAIN" ||
+    err.message.includes("fetch failed") // generic undici rejection
+  );
+}
+
+/**
  * Fire a Nominatim request, respecting the shared 1 req/s throttle.
+ * Retries up to MAX_ATTEMPTS times on timeout / connection failures.
  * Returns parsed JSON or throws an Error (with a `.status` property on
- * upstream HTTP failures; `TimeoutError` name on timeout).
+ * upstream HTTP failures; `TimeoutError` name on final timeout).
  */
 export async function fetchNominatim(
   path: "search" | "reverse",
@@ -134,27 +161,51 @@ export async function fetchNominatim(
     url.searchParams.set(k, v);
   }
 
-  const wait = 1000 - (Date.now() - lastRequestAt);
-  if (wait > 0) {
-    await new Promise<void>((r) => setTimeout(r, wait));
+  let lastErr: unknown;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    // Re-apply throttle inside the loop so retries also respect 1 req/s
+    const wait = 1000 - (Date.now() - lastRequestAt);
+    if (wait > 0) {
+      await new Promise<void>((r) => setTimeout(r, wait));
+    }
+    lastRequestAt = Date.now();
+
+    try {
+      const res = await fetch(url.toString(), {
+        headers: {
+          "User-Agent":
+            process.env.GEOCODER_USER_AGENT ?? "CommuteNity/0.1 (dev)",
+          "Accept-Language": "en-PH,en",
+        },
+        signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+      });
+
+      if (!res.ok) {
+        // HTTP error — not retried; keep .status so routes can map to 504/502
+        throw Object.assign(
+          new Error(`Nominatim ${path} returned HTTP ${res.status}`),
+          { status: res.status }
+        );
+      }
+
+      return res.json();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < MAX_ATTEMPTS && isRetryable(err)) {
+        console.warn(
+          `[Geocode] attempt ${attempt} failed (${err instanceof Error ? err.message : err}); retrying in ${RETRY_BACKOFF_MS * attempt}ms`
+        );
+        await new Promise<void>((r) =>
+          setTimeout(r, RETRY_BACKOFF_MS * attempt)
+        );
+        continue;
+      }
+      // Final attempt exhausted, or non-retryable — preserve original shape
+      throw err;
+    }
   }
-  lastRequestAt = Date.now();
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      "User-Agent": process.env.GEOCODER_USER_AGENT ?? "CommuteNity/0.1 (dev)",
-      "Accept-Language": "en-PH,en",
-    },
-    signal: AbortSignal.timeout(5000),
-  });
-
-  if (!res.ok) {
-    const err = Object.assign(
-      new Error(`Nominatim ${path} returned HTTP ${res.status}`),
-      { status: res.status }
-    );
-    throw err;
-  }
-
-  return res.json();
+  // Unreachable; satisfies TS control-flow
+  throw lastErr;
 }

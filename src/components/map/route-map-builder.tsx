@@ -14,7 +14,6 @@ import {
   ArrowUp,
   ArrowDown,
   X,
-  Search,
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,8 +25,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { geocode, reverseGeocode } from "@/lib/geo";
+import { reverseGeocode } from "@/lib/geo";
 import type { GeocodeResult } from "@/lib/geo/types";
+import { LocationSearch } from "./location-search";
 import { mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
 import {
   MapView,
@@ -277,12 +277,12 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[92vw] sm:max-w-4xl max-h-[90vh] p-0 gap-0 overflow-hidden"
+        className="flex min-h-0 flex-col gap-0 overflow-hidden p-0 inset-0 h-auto max-h-none w-full max-w-none translate-x-0 translate-y-0 rounded-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[min(80vh,700px)] sm:max-h-[90vh] sm:w-[92vw] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl"
         showCloseButton={false}
       >
-        <div className="flex flex-col h-[80vh] max-h-[700px]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Header */}
-          <DialogHeader className="px-4 pt-4 pb-2 border-b shrink-0">
+          <DialogHeader className="shrink-0 border-b px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
             <DialogTitle className="flex items-center gap-2">
               <MapPinIcon className="h-4 w-4" />
               Add route map
@@ -293,15 +293,16 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
             </p>
           </DialogHeader>
 
-          {/* Body: map + sidebar */}
-          <div className="flex flex-1 min-h-0">
+          {/* Body: one scroll on mobile (map + slots); side-by-side on md+ */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] md:flex-row md:overflow-hidden">
             {/* Map */}
-            <div className="flex-1 min-w-0">
+            <div className="h-[38vh] shrink-0 md:h-auto md:min-h-0 md:flex-1">
               <MapView
                 mapRef={mapRef}
                 className="h-full w-full rounded-none"
                 onClick={handleMapClick}
                 interactive
+                cooperativeGestures
                 showNavigationControl
                 initialViewState={fitView ?? undefined}
               >
@@ -336,8 +337,8 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
             </div>
 
             {/* Sidebar — slot list */}
-            <div className="w-80 shrink-0 flex flex-col border-l bg-background overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            <div className="flex min-h-0 flex-col border-t bg-background md:w-80 md:flex-none md:overflow-hidden md:border-t-0 md:border-l">
+              <div className="p-2 space-y-2 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-contain">
                 {slots.map((slot, i) => (
                   <SlotRow
                     key={slot.id}
@@ -369,7 +370,7 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
           </div>
 
           {/* Footer — plain div (DialogFooter's negative margins break under p-0 parent) */}
-          <div className="flex justify-end gap-2 border-t bg-muted/50 px-4 py-3 shrink-0">
+          <div className="flex shrink-0 justify-end gap-2 border-t bg-muted/50 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
@@ -412,46 +413,8 @@ function SlotRow({
   onMove,
   onRemove,
 }: SlotRowProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<GeocodeResult[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-
   const color = roleColor(index, total);
   const placed = hasCoords(slot);
-
-  function handleQueryChange(text: string) {
-    setQuery(text);
-    setShowDropdown(false);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (text.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      setIsSearching(true);
-      abortRef.current?.abort();
-      abortRef.current = new AbortController();
-      try {
-        const r = await geocode(text.trim(), { limit: 6, signal: abortRef.current.signal });
-        setResults(r);
-        setShowDropdown(r.length > 0);
-      } catch {
-        // aborted / network — ignore
-      } finally {
-        setIsSearching(false);
-      }
-    }, 350);
-  }
-
-  function pick(result: GeocodeResult) {
-    onPick(result);
-    setQuery("");
-    setResults([]);
-    setShowDropdown(false);
-  }
 
   return (
     <div
@@ -511,45 +474,12 @@ function SlotRow({
       </div>
 
       {/* Location search */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => handleQueryChange(e.target.value)}
-          onFocus={() => {
-            onSelect();
-            if (results.length > 0) setShowDropdown(true);
-          }}
-          onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-          onClick={(e) => e.stopPropagation()}
+      <div onClick={(e) => e.stopPropagation()}>
+        <LocationSearch
           placeholder={`Search ${roleLabel(index, total).toLowerCase()}…`}
-          className="w-full rounded border bg-background pl-8 pr-6 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          onPick={onPick}
+          onFocus={onSelect}
         />
-        {isSearching && (
-          <span className="absolute right-2.5 top-2 text-xs text-muted-foreground">…</span>
-        )}
-        {showDropdown && results.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
-            {results.map((r, i) => (
-              <button
-                key={i}
-                className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors"
-                title={r.fullName}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  pick(r);
-                }}
-              >
-                <span className="block font-medium leading-tight">{r.displayName}</span>
-                {(r.detailName || r.secondaryName) && (
-                  <span className="block text-muted-foreground leading-tight mt-0.5">
-                    {r.detailName ?? r.secondaryName}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Placed location: editable label + sublabel + coords */}

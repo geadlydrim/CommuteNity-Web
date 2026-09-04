@@ -51,66 +51,74 @@ export function PostComposer({
 
   return (
     <>
-      <div className="w-full max-w-[--content-sm] rounded-xl border bg-card p-3 shadow-sm flex flex-col gap-2">
-        {/* Input row */}
-        <div className="flex items-center gap-3">
+      <div className="flex w-full flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm">
+        <div className="flex items-start gap-3">
           <UserAvatar
             src={avatarUrl}
             name={displayName}
-            className="size-10 shrink-0"
+            className="size-9 shrink-0 sm:size-10"
           />
-          <Input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="What's happening on your commute?"
-            className="flex-1"
-            disabled={submitting}
-          />
-          <Button onClick={handlePost} disabled={!trimmed || submitting}>
-            {submitting ? "Posting…" : "Post"}
-          </Button>
-        </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <Input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="What's happening on your commute?"
+              className="w-full"
+              disabled={submitting}
+            />
 
-        {/* Map section */}
-        {mapData && origin && dest ? (
-          /* Summary chip */
-          <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-xs">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="flex-1 truncate text-foreground">
-              <span className="font-medium">{origin.label}</span>
-              {" → "}
-              <span className="font-medium">{dest.label}</span>
-              {waypointCount > 0 && (
-                <span className="text-muted-foreground ml-1">
-                  • +{waypointCount} stop{waypointCount > 1 ? "s" : ""}
+            {mapData && origin && dest && (
+              <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-xs">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate text-foreground">
+                  <span className="font-medium">{origin.label}</span>
+                  {" → "}
+                  <span className="font-medium">{dest.label}</span>
+                  {waypointCount > 0 && (
+                    <span className="ml-1 text-muted-foreground">
+                      • +{waypointCount} stop{waypointCount > 1 ? "s" : ""}
+                    </span>
+                  )}
                 </span>
+                <button
+                  onClick={() => setBuilderOpen(true)}
+                  className="shrink-0 text-muted-foreground underline transition-colors hover:text-foreground"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setMapData(null)}
+                  className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                  title="Remove map"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              {mapData ? (
+                <span />
+              ) : (
+                <button
+                  onClick={() => setBuilderOpen(true)}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 self-start py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                >
+                  <MapPin className="h-3.5 w-3.5" />
+                  Add map
+                </button>
               )}
-            </span>
-            <button
-              onClick={() => setBuilderOpen(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0 underline"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setMapData(null)}
-              className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-              title="Remove map"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+              <Button
+                onClick={handlePost}
+                disabled={!trimmed || submitting}
+                className="ml-auto"
+              >
+                {submitting ? "Posting…" : "Post"}
+              </Button>
+            </div>
           </div>
-        ) : (
-          /* Add map button */
-          <button
-            onClick={() => setBuilderOpen(true)}
-            disabled={submitting}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors self-start pl-1 disabled:opacity-50"
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            Add map
-          </button>
-        )}
+        </div>
       </div>
 
       <RouteMapBuilder

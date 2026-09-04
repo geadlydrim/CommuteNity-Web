@@ -1,80 +1,67 @@
 # MVP Scope
 
-## In Scope
+CommuteNity is a **Next.js web app** in this repo. Native Android and iOS are out of scope.
 
-These are the minimum features that make CommuteNity useful and differentiated. Each is load-bearing — removing any breaks the core community-navigation promise.
+`.cursor/agents/STATUS.md` wins if this file and the repo disagree.
 
-### 1. Route Search
-- User enters origin and destination (text search against known stops).
-- App returns one or more commute plans composed of transit legs.
-- Each leg shows: transit mode, boarding stop, alighting stop, approximate fare, estimated travel time.
-- Supports mixed-mode routes (e.g. tricycle → jeepney → MRT → walking).
+## Current promise (this MVP)
 
-### 2. Route & Stop Browsing
-- Browse all approved routes by mode or geographic area.
-- View route detail: full stop sequence, fares per segment, community notes, last updated.
-- View stop detail: name, coordinates, routes that serve it, community tips.
-- Anonymous access allowed — no account required to read.
+Share commute knowledge for Metro Manila on a **public web feed**. Riders post tips, maps, and comments. Anyone can read without an account. Signing in lets you post, vote, and comment.
 
-### 3. Community Contribution
-- Authenticated users can:
-  - Submit a new route (name, mode, stop sequence, per-segment fares).
-  - Submit a new stop (name, map pin, mode).
-  - Propose an edit to an existing route or stop.
-- Submissions enter a **pending** state until approved by community vote or a moderator.
+This is **not** a turn-by-turn navigator and **not** a searchable route catalog yet.
 
-### 4. Voting & Trust Signals
-- Authenticated users can upvote or downvote any route, stop, or edit proposal.
-- Contributions above a vote threshold auto-approve; below a threshold auto-reject.
-- Users can flag content for moderator review (wrong fare, duplicate, spam, outdated).
+### In scope (load-bearing now)
 
-### 5. User Accounts
-- Sign-up / sign-in via email+password and Google OAuth.
-- Profile page: display name, contribution count, reputation score.
-- Reputation grows with approved contributions and shrinks with rejected ones.
-- Reputation gate: minimum score required to submit (prevents anonymous spam).
+1. **Public feed** — landing page of public posts (anon + signed-in). Composer 1–500 characters. Post cards, comments, up/down votes, share.
+2. **Identity** — email + password and Google OAuth. Public username + display name. Profile at `/u/{username}`. Avatar.
+3. **Maps on posts** — optional ordered pin list (origin → waypoints → destination) with static preview in the feed and an interactive map in focus.
+4. **Post focus** — overlay and permalink `/p/{id}` so a post can be shared.
 
-### 6. Offline-Ready Browsing
-- Recently viewed routes and stops are cached locally (**IndexedDB** via Dexie.js).
-- User can browse cached content without an internet connection.
-- Sync on reconnect.
+Guide maps on comments (`kind: "guide"`) are **in flight**. They attach to this MVP; they are not a new product.
+
+### Geography and modes
+
+**Metro Manila (NCR)** first.
+
+Modes the product already names (badges, guide-map builder, parked route tables): jeepney, city bus, MRT, LRT, UV Express, P2P, tricycle, walking. E-bike / pedicab later. Grab / ride-hailing out of scope.
 
 ---
 
-## Transit Modes Supported at MVP
+## Parked (later modules — not this MVP)
 
-> **ASSUMPTION — confirm with owner.** Proposed MVP-required modes:
+Postgres already has `routes`, `stops`, `route_segments`, `votes`, `edit_proposals`, `reports`. **Schema is not a product.** Do not treat those tables as a decision to build UI.
 
-| Mode | MVP? | Notes |
-|---|---|---|
-| Jeepney | Yes | Highest volume informal transit |
-| Bus (city) | Yes | EDSA and major corridors |
-| MRT/LRT | Yes | Fixed routes, easily verified |
-| UV Express / FX | Yes | Major origin-destination routes |
-| P2P Bus | Yes | Increasingly popular |
-| Tricycle | Yes | Last-mile — common but hyperlocal |
-| Walking leg | Yes | Required to connect modes |
-| E-bike / pedicab | Nice-to-have | Defer to later sprint |
-| Grab / ride-hailing | Out of scope | Separate product category |
+Parked until Coordinator approves a brief:
+
+- Route search / multi-leg commute plans
+- Browse routes and stop detail
+- Submit or edit community routes and stops
+- Route/stop voting and flags UI
+- Offline / PWA (Dexie and `next-pwa` are installed, unused)
+- Password reset, delete-own-post UI, friends visibility, feed pagination, reputation UI
 
 ---
 
-## Explicitly Out of Scope for MVP
+## Out of scope
 
 | Feature | Reason |
 |---|---|
-| Turn-by-turn live navigation | Requires real-time GPS tracking, far more complex, higher infra cost |
-| Real-time bus/jeepney location | Requires vehicle GPS hardware or integrations; not feasible at startup |
-| Payments / fare collection | Regulatory complexity, out of product lane |
-| In-app chat or social feed | Community focus is on route data, not social networking |
-| iOS app | Kotlin/Android-first; iOS is post-MVP |
-| Web app | Same; mobile-first |
-| Admin dashboard UI | Manual moderation via Supabase dashboard in MVP |
+| Native Android or iOS app | This repo is the product |
+| Turn-by-turn live navigation | Needs real-time GPS; different product |
+| Real-time vehicle location | Needs hardware or third-party feeds |
+| Payments / fare collection | Regulatory, out of lane |
+| In-app chat | Feed comments are enough |
+| Ride-hailing | Separate category |
+| Admin dashboard UI | Supabase dashboard for now |
+
+The sibling folder `../CommuteNity/` is a Compose Hello World scaffold. It is not a client and not a TWA.
 
 ---
 
-## Definition of Done for MVP
+## Definition of done (current MVP)
 
-- All five In-Scope feature areas have at least one happy-path user story with passing acceptance criteria.
-- A beta user can find a valid Metro Manila commute route without speaking to the developer.
-- A beta user can submit a route correction and see it reflected after community approval.
+- A visitor can read the Metro Manila feed without signing in.
+- A new user can sign up (email or Google), pick a username, and publish a post others can open via `/p/{id}`.
+- A signed-in user can attach a pin-list map to a post and see it in the feed and in focus.
+
+**Not** this MVP’s done-when: a beta user finding a commute by origin/destination, or submitting a route correction into `routes` / `stops`. That is the parked catalog milestone.

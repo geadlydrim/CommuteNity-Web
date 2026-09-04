@@ -1,5 +1,7 @@
 # Claude Design Prompt — CommuteNity UI Baseline
 
+> **Historical (executed).** Jeepney Gold tokens and heading font shipped. Bottom-nav / PWA shell is **parked**; `--nav-height` exists. Do not treat this prompt as current scope. Product: web feed, not native.
+
 **Project:** CommuteNity — community-driven transit navigation app for Metro Manila (Philippines). Built with Next.js 15 App Router, Tailwind CSS v4, shadcn/ui (radix-nova, neutral base). Font: Geist (sans). Backend: Supabase + PostGIS.
 
 **Your task:** Design the baseline UI system — color tokens, typography scale, layout shell, and component primitives. Output as concrete CSS variable overrides for `globals.css` (`:root` and `.dark` blocks) plus any new Tailwind utility patterns needed. Do not redesign components — only establish the token layer and layout shell that components inherit.

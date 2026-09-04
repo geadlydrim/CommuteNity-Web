@@ -1,149 +1,116 @@
 # User Stories
 
-Stories are grouped by feature area, then by persona. Format: *As a [persona], I want [capability] so that [outcome].* Acceptance criteria use **Given/When/Then**.
+Format: *As a [persona], I want [capability] so that [outcome].* Acceptance uses Given/When/Then.
+
+Personas: Daily Rider, New Arrival, Knowledge Holder, Occasional Commuter — see `docs/product-vision.md`.
+
+There is **no sprint map**. Work is feature-by-feature via Coordinator.
 
 ---
 
-## 1. Route Search
+## A. Live product (web feed)
 
-**US-001 — Basic route lookup**
-> As a **New Arrival**, I want to enter an origin and destination and get a step-by-step commute plan so that I can reach an unfamiliar place without asking strangers.
+These describe the current app. Gaps that are only backlog (password reset, delete post, pagination, reputation counts) are listed under Backlog in `.cursor/agents/BACKLOG.md`, not as P0 stories here.
 
-Acceptance Criteria:
-- Given I am on the search screen, when I type an origin and destination and tap Search, then I see at least one route result within 3 seconds.
-- Given a result exists, when I view it, then I see each leg with: mode, board stop, alight stop, approximate fare, estimated duration.
-- Given no route exists for my query, when results load, then I see a clear "no routes found" message with a prompt to contribute.
+**US-100 — Sign up with email**
+> As a **Knowledge Holder**, I want to create an account with email, password, username, and display name so that I can post under a public handle.
 
-**US-002 — Multi-mode route**
-> As a **Daily Rider**, I want routes that combine multiple transit modes so that I can plan end-to-end trips, not just single-mode legs.
+- Given I am on sign-up, when I submit valid email, password, username, and display name, then I am signed in.
+- Given that email is already used, when I submit, then I see an error to sign in instead.
 
-Acceptance Criteria:
-- Given a route requires jeepney then MRT then walking, when I view the result, then all three legs are shown in order with a transfer instruction at each interchange.
+**US-101 — Sign in with Google**
+> As an **Occasional Commuter**, I want to sign in with Google so that I do not keep another password.
 
-**US-003 — Offline route access**
-> As an **Occasional Commuter**, I want to access a route I already looked up even when I have no data signal so that I can navigate without worrying about connectivity.
+- Given I complete Google OAuth without a username, when I land, then I am sent to `/onboarding/username` before using the app.
+- Given I already have a username, when I finish OAuth, then I reach the home feed.
 
-Acceptance Criteria:
-- Given I have previously searched and viewed a route, when I open the app with no network connection, then I can still see that route from local cache.
-- Given I am offline, when I try to search a new route, then I see a clear offline notice and only cached results.
+**US-102 — Read the public feed**
+> As a **New Arrival**, I want to read commute posts without an account so that I can learn before I trust the community enough to sign up.
 
----
+- Given I am signed out on `/`, when the page loads, then I see public posts.
+- Given I am signed out, when I try to compose, then I am prompted to sign in.
 
-## 2. Route & Stop Browsing
+**US-103 — Publish a post**
+> As a **Knowledge Holder**, I want to publish a short post so that riders see a tip I would otherwise only tell in person.
 
-**US-004 — Browse routes by mode**
-> As a **Daily Rider**, I want to filter routes by transit mode so that I can find all jeepney routes in my area without seeing MRT lines.
+- Given I am signed in, when I submit a body of 1–500 characters, then the post appears on the landing feed and on `/u/{my-username}`.
+- Given the save fails, when I submit, then I see an error toast and can retry.
 
-Acceptance Criteria:
-- Given I am on the browse screen, when I select a mode filter (e.g. "Jeepney"), then only routes of that mode are shown.
+**US-104 — Vote on a post**
+> As a **Daily Rider**, I want to upvote or downvote a post so that useful tips rise.
 
-**US-005 — Route detail view**
-> As a **New Arrival**, I want to see the full stop sequence and per-segment fares for a route so that I know exactly where to board, where to alight, and how much to pay.
+- Given I am signed in, when I tap up or down, then my vote is stored and the count updates.
+- Given I vote again the same way, when I tap, then the vote is cleared.
 
-Acceptance Criteria:
-- Given I tap a route, when the detail screen loads, then I see: route name, mode, all stops in order, fare for each segment, community notes (if any), last updated date.
+**US-105 — Comment**
+> As a **Daily Rider**, I want to comment on a post so that I can add a correction without making a new thread.
 
-**US-006 — Stop detail view**
-> As an **Occasional Commuter**, I want to tap a stop and see which routes pass through it so that I can orient myself when I'm already at a location.
+- Given I am signed in, when I submit a comment of 1–500 characters, then it appears on that post.
+- Given I am on `/p/{id}` or the focus overlay, when comments load, then I can read the thread.
 
-Acceptance Criteria:
-- Given I tap a stop, when the detail screen loads, then I see the stop name, a map pin, the transit mode, and a list of routes that serve it.
+**US-106 — Share a post**
+> As an **Occasional Commuter**, I want a link to one post so that I can send it to a family member.
 
----
+- Given I use Share, when the browser supports Web Share, then I can share the permalink `/p/{id}`.
+- Given it does not, when I share, then the link is copied.
 
-## 3. Community Contribution
+**US-107 — Attach a pin-list map to a post**
+> As a **Knowledge Holder**, I want to drop origin and destination (and optional waypoints) so that readers see the path, not only text.
 
-**US-007 — Submit a new route**
-> As a **Knowledge Holder**, I want to submit a new jeepney route I know so that other commuters can benefit from my local knowledge.
+- Given I add a map in the composer, when I save a valid pin list, then the feed shows a static map preview (no WebGL).
+- Given I open that post in focus, when the map loads, then I see the interactive map with the same pins.
 
-Acceptance Criteria:
-- Given I am signed in, when I tap "Add Route" and fill in name, mode, and at least two stops, then I can submit it.
-- Given I submit, when the submission is saved, then I see a confirmation that it is pending review.
-- Given I am not signed in, when I attempt to submit, then I am prompted to sign in first.
+**US-108 — Public profile**
+> As a **New Arrival**, I want to open `/u/{username}` so that I can see who wrote a post.
 
-**US-008 — Propose a route edit**
-> As a **Daily Rider**, I want to correct a wrong fare on an existing route so that other commuters aren't misled.
+- Given the username exists, when I open the profile, then I see display name, @handle, and that user’s posts.
+- Given I am viewing my own profile, when the page loads, then I can edit display name / username (30-day username cooldown) and avatar. Given I am viewing someone else, then I do not.
 
-Acceptance Criteria:
-- Given I am on a route detail screen, when I tap "Suggest Edit" and change a fare value, then I can submit the correction.
-- Given I submit a correction, when it is saved, then the existing approved route is unchanged until the correction is approved.
+**US-109 — Open a post in focus**
+> As a **Daily Rider**, I want to open a post without losing the feed so that I can read comments and the map.
 
-**US-009 — Submit a new stop**
-> As a **Knowledge Holder**, I want to add a missing jeepney stop so that routes can reference it.
+- Given I am on the landing feed, when I open a post, then the focus overlay matches `/p/{id}`.
+- Given I load `/p/{id}` cold, when the page renders, then I see that post.
 
-Acceptance Criteria:
-- Given I am signed in, when I tap "Add Stop," enter a name, drop a map pin, and select a mode, then I can submit it.
-- Given I submit, when saved, then the stop enters pending state visible to moderators and high-rep users.
+Guide maps on comments are **in flight**. Do not add acceptance here until Coordinator closes that feature.
 
 ---
 
-## 4. Voting & Trust
+## B. Parked catalog (unbuilt UI)
 
-**US-010 — Upvote an approved route**
-> As a **Daily Rider**, I want to upvote a route that I found accurate so that others can see it's trustworthy.
+Original route/stop/offline stories. **No screens.** Schema for routes/stops/votes exists; that is not done. Do not implement from this section without a new Planner brief and Coordinator approval.
 
-Acceptance Criteria:
-- Given I am signed in and on a route detail screen, when I tap the upvote button, then my vote is recorded and the vote count increments.
-- Given I have already voted, when I tap again, then my vote is toggled off.
+Keep IDs US-001–016 so old plan.md references still resolve.
 
-**US-011 — Flag inaccurate content**
-> As a **New Arrival**, I want to flag a route with a wrong fare so that moderators can review and correct it.
+**US-001 — Basic route lookup** (unbuilt)
+> As a **New Arrival**, I want origin and destination to yield a commute plan so that I can reach an unfamiliar place without asking strangers.
 
-Acceptance Criteria:
-- Given I am signed in, when I tap "Flag" on a route and select a reason (wrong fare, outdated, duplicate, spam), then a report is submitted.
-- Given I am not signed in, when I tap "Flag," then I am prompted to sign in.
+**US-002 — Multi-mode route** (unbuilt)
+> As a **Daily Rider**, I want combined modes so that a result is an end-to-end trip.
 
-**US-012 — Auto-approve high-voted contribution**
-> As a **Knowledge Holder**, I want my accurate submission to go live once enough riders verify it so that I don't have to wait for a manual moderator.
+**US-003 — Offline route access** (unbuilt; offline is not current MVP)
+> As an **Occasional Commuter**, I want a route I already opened when I have no data.
 
-Acceptance Criteria:
-- Given a pending route has received 5 net upvotes (configurable threshold), when the vote threshold is crossed, then its status automatically changes to approved and it appears in search results.
+**US-004 — Browse routes by mode** (unbuilt)
 
----
+**US-005 — Route detail** (unbuilt)
 
-## 5. User Accounts
+**US-006 — Stop detail** (unbuilt)
 
-**US-013 — Sign up with email**
-> As a **Knowledge Holder**, I want to create an account with my email so that I can contribute and build a reputation.
+**US-007 — Submit a new route** (unbuilt)
 
-Acceptance Criteria:
-- Given I am on the sign-up screen, when I enter a valid email, password, and display name and tap Register, then my account is created and I am signed in.
-- Given I enter an email already in use, when I tap Register, then I see an error telling me to sign in instead.
+**US-008 — Propose a route edit** (unbuilt)
 
-**US-014 — Sign in with Google**
-> As an **Occasional Commuter**, I want to sign in with my Google account so that I don't need to remember another password.
+**US-009 — Submit a new stop** (unbuilt)
 
-Acceptance Criteria:
-- Given I am on the sign-in screen, when I tap "Sign in with Google" and complete the OAuth flow, then I am signed in and directed to the home screen.
+**US-010 — Upvote an approved route** (unbuilt; distinct from post votes)
 
-**US-015 — View my profile**
-> As a **Knowledge Holder**, I want to see my contribution count and reputation score so that I can track my impact.
+**US-011 — Flag inaccurate catalog content** (unbuilt)
 
-Acceptance Criteria:
-- Given I am signed in, when I open my profile, then I see my display name, total approved contributions, total pending contributions, and current reputation score.
+**US-012 — Auto-approve high-voted catalog contribution** (SQL trigger exists; no UI)
 
----
+**US-013 / US-014** — superseded by US-100 / US-101.
 
-## 6. Offline
+**US-015 — View contribution counts and reputation** (unbuilt; `reputation` column exists)
 
-**US-016 — View cached content offline**
-> As a **Daily Rider**, I want to see my recently viewed routes even when I have no internet so that I'm not stranded mid-commute.
-
-Acceptance Criteria:
-- Given I have viewed Route X while online, when I go offline and navigate to Route X, then the cached version of that route is displayed with a "Cached" indicator and the last-synced timestamp.
-
----
-
-## Story Map (Priority Order for Sprint 1)
-
-| Priority | Story | Sprint |
-|---|---|---|
-| P0 | US-013, US-014 (Auth) | Sprint 1 |
-| P0 | US-005, US-006 (Route/Stop detail) | Sprint 1 |
-| P0 | US-001 (Route search) | Sprint 1 |
-| P1 | US-004 (Browse by mode) | Sprint 1 |
-| P1 | US-016 (Offline) | Sprint 1 |
-| P1 | US-007, US-008, US-009 (Contributions) | Sprint 2 |
-| P2 | US-010, US-011, US-012 (Voting) | Sprint 2 |
-| P2 | US-002 (Multi-mode routes) | Sprint 2 |
-| P3 | US-003, US-015 | Sprint 3 |
+**US-016 — Cached catalog offline** (unbuilt; same parking as US-003)
