@@ -1,6 +1,6 @@
 # CommuteNity Web
 
-Community web app for sharing commute knowledge in the Philippines (Metro Manila first). This repo **is** the product. Native Android/iOS are out of scope.
+Community web app for sharing commute knowledge in the Philippines (Metro Manila first). This repo **is** the product. Native Android/iOS are out of scope..
 
 ## Prerequisites
 
