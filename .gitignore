@@ -31,13 +31,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# Obsidian vault
-/vault/
-
-# Agent board packets (local handoffs). Skills, rules, protocol,
-# templates, STATUS, PIPELINE, and BACKLOG stay tracked.
-.cursor/agents/inbox/*
-!.cursor/agents/inbox/.gitkeep
-
 # Local-markdown issue tracker (see docs/agents/issue-tracker.md)
 .scratch/

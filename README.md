@@ -1,60 +1,42 @@
-# CommuteNity Web
+# CommuteNity
 
-Community web app for sharing commute knowledge in the Philippines (Metro Manila first). This repo **is** the product. Native Android/iOS are out of scope..
+A community web app where Filipino commuters share how trips actually work, starting with Metro Manila.
 
-## Prerequisites
+Mainstream maps cover highways and rail. Jeepneys, tricycles, and UV Express still live in riders' heads: which corner to stand on, which signboard to look for, what the fare is this month. CommuteNity is a place to write that down, so the next rider doesn't have to ask strangers.
 
-- Node 20 LTS (`fnm install 20 && fnm use 20`)
-- npm 10+
+> **Status: in active development.** Expect frequent changes.
 
-## Setup
+## What you can do
+
+- **Read without an account.** The feed of commute posts is public.
+- **Sign up** with email or Google and pick a public username.
+- **Post a tip** of up to 500 characters, optionally with a map: drop an origin, a destination, and stops in between.
+- **Comment with a guide.** Lay out a trip leg by leg (walk, then jeepney, then bus), with transfers between legs.
+- **Vote and share.** Upvote what's useful, and send anyone a direct link to a post.
+- **Keep a profile** with your display name, avatar, and posts.
+
+## What's coming
+
+Maps whose lines follow the streets, then a searchable catalog of routes and stops that the community builds and verifies together.
+
+## Built with
+
+Next.js, Supabase (Postgres + PostGIS), MapLibre with OpenStreetMap tiles, and Nominatim geocoding.
+
+## Run it locally
+
+You need Node 20+, npm 10+, and a Supabase project.
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Copy env template and fill in your Supabase credentials
-cp .env.example .env.local
-
-# 3. Start dev server
-npm run dev
+cp .env.example .env.local   # fill in your Supabase URL and anon key
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push         # apply supabase/migrations to your project
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+`GEOCODER_USER_AGENT` in `.env.local` must identify your deployment and include a contact, as required by [Nominatim's usage policy](https://operations.osmfoundation.org/policies/nominatim/).
 
-## Scripts
+Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run typecheck`.
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start dev server with Turbopack (fast rebuild) |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build locally |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | TypeScript check without emitting files |
-
-## Key dependencies
-
-| Package | Purpose |
-|---|---|
-| `next` | Framework — App Router, SSR, API routes |
-| `react` + `react-dom` | UI rendering |
-| `@supabase/supabase-js` + `@supabase/ssr` | Database, auth, storage client |
-| `react-hook-form` + `zod` | Forms and validation |
-| `@hookform/resolvers` | Zod adapter for react-hook-form |
-| `sonner` | Toast notifications |
-| `radix-ui` | Headless UI primitives (via shadcn radix-nova style) |
-| `next-themes` | Dark/light theme switching |
-| `maplibre-gl` + `react-map-gl` | Maps (OpenStreetMap tiles, free) |
-| `lucide-react` | Icons |
-| `tailwind-merge` + `clsx` + `class-variance-authority` | Tailwind class utilities |
-
-Installed but unused (do not treat as architecture): `@tanstack/react-query`, `zustand`, `dexie`, `dexie-react-hooks`, `next-pwa`.
-
-## Deployment
-
-Deployed on [Vercel](https://vercel.com). Every push to `main` triggers a production deploy.
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel project settings.
-
-## Docs
-
-Product docs live in `./docs/`. Project truth for agents: `.cursor/agents/STATUS.md`.
+Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
