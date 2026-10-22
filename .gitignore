@@ -38,3 +38,6 @@ yarn-error.log*
 # templates, STATUS, PIPELINE, and BACKLOG stay tracked.
 .cursor/agents/inbox/*
 !.cursor/agents/inbox/.gitkeep
+
+# Local-markdown issue tracker (see docs/agents/issue-tracker.md)
+.scratch/

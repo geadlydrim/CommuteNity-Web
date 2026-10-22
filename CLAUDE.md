@@ -66,3 +66,17 @@ src/
 - `docs/plan.md` — modules and checkmarks (Coordinator-owned)
 - `docs/data-model.md` — tables
 - `docs/user-stories.md` — US-100+ live; US-001–016 parked
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are local markdown files under `.scratch/<feature>/` (gitignored). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.
