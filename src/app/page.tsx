@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { withTimeout } from "@/lib/supabase/with-timeout";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ async function AuthArea() {
     );
     user = data.user;
   } catch (err) {
+    unstable_rethrow(err);
     console.error("[Supabase] Landing auth check failed:", err);
   }
 
