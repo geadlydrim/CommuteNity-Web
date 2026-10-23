@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("geocoderUserAgent", () => {
+  // env.ts caches the validated value at module level, so each case resets the
+  // module registry and imports it fresh after stubbing the environment.
   beforeEach(() => {
     vi.resetModules();
   });
@@ -24,6 +26,13 @@ describe("geocoderUserAgent", () => {
   it("falls back to the dev default when unset outside production", async () => {
     vi.stubEnv("GEOCODER_USER_AGENT", undefined);
     vi.stubEnv("NODE_ENV", "development");
+    const { geocoderUserAgent } = await import("@/lib/env");
+    expect(geocoderUserAgent()).toBe("CommuteNity/0.1 (dev)");
+  });
+
+  it("treats a blank value as unset (CI defines empty variables)", async () => {
+    vi.stubEnv("GEOCODER_USER_AGENT", "");
+    vi.stubEnv("NODE_ENV", "test");
     const { geocoderUserAgent } = await import("@/lib/env");
     expect(geocoderUserAgent()).toBe("CommuteNity/0.1 (dev)");
   });

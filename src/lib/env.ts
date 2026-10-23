@@ -46,7 +46,8 @@ const USER_AGENT_PATTERN = /^\S+\/\S+.*\((?:[^()]*(?:https?:\/\/|@)[^()]*)\)/;
  */
 export function geocoderUserAgent(): string {
   if (cachedGeocoderUserAgent) return cachedGeocoderUserAgent;
-  const raw = process.env.GEOCODER_USER_AGENT;
+  // Blank counts as unset: CI and hosting dashboards often define an empty value.
+  const raw = process.env.GEOCODER_USER_AGENT?.trim() || undefined;
   let value: string;
   if (raw === undefined) {
     if (process.env.NODE_ENV === "production") {
@@ -56,7 +57,7 @@ export function geocoderUserAgent(): string {
     }
     value = DEFAULT_GEOCODER_USER_AGENT;
   } else {
-    value = raw.trim();
+    value = raw;
     if (!USER_AGENT_PATTERN.test(value)) {
       throw new Error(
         "Invalid environment variables:\n- GEOCODER_USER_AGENT must look like \"Name/version (contact)\" with a URL or email contact",
