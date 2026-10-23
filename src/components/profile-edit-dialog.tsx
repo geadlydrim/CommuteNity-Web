@@ -8,6 +8,7 @@ import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
 import { riderMessage } from "@/lib/errors";
+import { AVATAR_MAX_BYTES, AVATAR_TYPES, extensionForType, replaceAvatar } from "@/lib/avatars";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,26 +33,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-// Mirrors the `avatars` storage bucket limits.
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
-const AVATAR_PUBLIC_PREFIX = "/storage/v1/object/public/avatars/";
-
-/** Storage path of an avatar URL if it lives in this rider's own avatars folder. */
-function ownAvatarPath(url: string | null, userId: string): string | null {
-  if (!url) return null;
-  let path: string;
-  try {
-    const pathname = new URL(url).pathname;
-    const idx = pathname.indexOf(AVATAR_PUBLIC_PREFIX);
-    if (idx === -1) return null;
-    path = decodeURIComponent(pathname.slice(idx + AVATAR_PUBLIC_PREFIX.length));
-  } catch {
-    return null;
-  }
-  return path.startsWith(`${userId}/`) ? path : null;
-}
 
 function canChangeUsername(usernameChangedAt: string | null): boolean {
   if (!usernameChangedAt) return true;
@@ -99,11 +80,11 @@ export function ProfileEditDialog({
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+    if (!extensionForType(file.type)) {
       setServerError("Photo must be a PNG, JPEG, WebP, or GIF.");
       return;
     }
-    if (file.size > MAX_FILE_BYTES) {
+    if (file.size > AVATAR_MAX_BYTES) {
       setServerError("Photo must be 5 MB or smaller.");
       return;
     }
@@ -124,48 +105,39 @@ export function ProfileEditDialog({
   async function onSubmit(values: FormValues) {
     setServerError(null);
     const supabase = createClient();
-    let newAvatarUrl: string | null = null;
 
-    if (avatarFile) {
-      const ext = avatarFile.name.split(".").pop() ?? "jpg";
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, avatarFile, { upsert: true });
+    const saveProfile = async (avatarUrl: string | null) => {
+      const { error } = await supabase
+        .from("users")
+        .update({
+          username: values.username,
+          display_name: values.display_name,
+          ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+        })
+        .eq("id", userId);
+      return { error };
+    };
 
-      if (uploadError) {
-        setServerError(riderMessage(uploadError));
-        return;
-      }
-      newAvatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-    }
+    const result = avatarFile
+      ? await replaceAvatar(supabase, {
+          riderId: userId,
+          file: avatarFile,
+          previousUrl: currentAvatarUrl,
+          saveProfile,
+        })
+      : await saveProfile(null).then(({ error }) =>
+          error ? { ok: false as const, error } : { ok: true as const }
+        );
 
-    const { error: dbError } = await supabase
-      .from("users")
-      .update({
-        username: values.username,
-        display_name: values.display_name,
-        ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
-      })
-      .eq("id", userId);
-
-    if (dbError) {
+    if (!result.ok) {
       setServerError(
-        riderMessage(dbError, {
+        riderMessage(result.error, {
           usernameChangeableOn: usernameChangedAt
             ? cooldownEndDate(usernameChangedAt)
             : undefined,
         })
       );
       return;
-    }
-
-    if (newAvatarUrl) {
-      const oldPath = ownAvatarPath(currentAvatarUrl, userId);
-      if (oldPath) {
-        // Best-effort cleanup of the replaced photo; failures are harmless.
-        await supabase.storage.from("avatars").remove([oldPath]).catch(() => {});
-      }
     }
 
     handleClose(false);
@@ -210,7 +182,7 @@ export function ProfileEditDialog({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={ALLOWED_AVATAR_TYPES.join(",")}
+                  accept={AVATAR_TYPES.join(",")}
                   className="hidden"
                   onChange={onFileChange}
                 />
