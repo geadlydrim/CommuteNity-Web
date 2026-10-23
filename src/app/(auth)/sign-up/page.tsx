@@ -49,6 +49,23 @@ export default function SignUpPage() {
   async function onSubmit(values: FormValues) {
     setServerError(null);
     const supabase = createClient();
+
+    const { data: taken, error: lookupError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", values.username)
+      .maybeSingle();
+
+    if (lookupError) {
+      setServerError(riderMessage(lookupError));
+      return;
+    }
+    if (taken) {
+      form.setError("username", { message: "That username is taken." });
+      return;
+    }
+
+    // Input to the handle_new_user trigger only; `users` is the source of truth.
     const { error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,

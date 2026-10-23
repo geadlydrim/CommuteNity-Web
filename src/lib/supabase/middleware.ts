@@ -3,6 +3,7 @@ import { publicEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 import { NextResponse, type NextRequest } from "next/server";
 import { withTimeout } from "@/lib/supabase/with-timeout";
+import { gateDecision } from "@/lib/identity";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -41,20 +42,32 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const path = request.nextUrl.pathname;
-    const allowedWithoutHandle =
-      path.startsWith("/auth/") ||
-      path.startsWith("/onboarding/") ||
-      path === "/sign-in" ||
-      path === "/sign-up";
+    let hasUsername: boolean;
+    try {
+      const { data, error } = await withTimeout(
+        Promise.resolve(
+          supabase.from("users").select("username").eq("id", user.id).maybeSingle()
+        ),
+        2000,
+        "middleware username read"
+      );
+      if (error) throw error;
+      hasUsername = Boolean(data?.username);
+    } catch (err) {
+      // Don't trap riders behind onboarding when the database is unreachable.
+      console.error("[Supabase] Middleware username read failed:", err);
+      return supabaseResponse;
+    }
 
-    if (!allowedWithoutHandle) {
-      const username = user.user_metadata?.username as string | undefined;
-      if (!username) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/onboarding/username";
-        return NextResponse.redirect(url);
-      }
+    const decision = gateDecision({
+      pathname: request.nextUrl.pathname,
+      signedIn: true,
+      hasUsername,
+    });
+    if (decision === "onboarding") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding/username";
+      return NextResponse.redirect(url);
     }
   }
 

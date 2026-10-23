@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getViewer, type Viewer } from "@/lib/identity";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -17,13 +18,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/sign-in?error=oauth_failed`);
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let viewer: Viewer | null;
+  try {
+    viewer = await getViewer(supabase);
+  } catch (err) {
+    // The middleware gate checks the username again on the next request.
+    console.error("[OAuth] Reading the rider's profile failed:", err);
+    return NextResponse.redirect(`${origin}/`);
+  }
 
-  const username = user?.user_metadata?.username as string | undefined;
-
-  if (!username) {
+  if (!viewer?.username) {
     return NextResponse.redirect(`${origin}/onboarding/username`);
   }
   return NextResponse.redirect(`${origin}/`);
