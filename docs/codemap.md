@@ -19,23 +19,23 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 ## Request flow
 
-1. `src/middleware.ts` → `updateSession` in `src/lib/supabase/middleware.ts`: refreshes the session cookie, then sends a signed-in rider with no username to `/onboarding/username`. Skips static files and `/api/geocode*`.
+1. `src/middleware.ts` → `updateSession` in `src/lib/supabase/middleware.ts`: refreshes the session cookie, reads the rider's `users.username` by id, and applies `gateDecision` from `src/lib/identity.ts` (no username → `/onboarding/username`; the paths allowed without one live only there). Skips static files and `/api/geocode*`.
 2. Pages under `src/app/` are server components that read with `createClient` from `@/lib/supabase/server`.
-3. Interactive pieces are client components that write directly with `createClient` from `@/lib/supabase/client`. There are no server actions and no query layer; RLS in the migrations is the only authority on who can write what.
+3. Interactive pieces are client components that write directly with `createClient` from `@/lib/supabase/client`. Reads of posts go through `@/lib/posts`; there are no server actions, and RLS in the migrations is the only authority on who can write what.
 
 ## Feature flows
 
-**Feed** (`/`): `src/app/page.tsx` renders `SignedInHeader` + `PostComposer` for riders and `PostFeed` for everyone. `PostFeed` (server) selects 50 public posts with author and comment count, then the viewer's `post_votes`, and renders a `PostCard` per post.
+**Feed** (`/`): `src/app/page.tsx` renders `SignedInHeader` + `PostComposer` for riders (viewer from `getViewer` in `src/lib/identity.ts`) and `PostFeed` for everyone. `PostFeed` (server) calls `listFeedPosts` from `@/lib/posts` (50 public posts with author, comment count, and the viewer's vote in one request) and renders a `PostCard` per post.
 
 **Post card** (`src/components/post-card.tsx`, client): one component owns the whole card: optimistic voting (writes `post_votes`; a trigger maintains `posts.net_votes`), share, the static post-map thumbnail, comments (loaded on expand, inserted with an optional guide), and in focus mode the interactive `FocusMapView`.
 
-**Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `PostModal` → `PostCard focusMode`. A direct load renders `src/app/p/[id]/page.tsx`. Both fetch through `getPostById` in `src/lib/posts.ts`.
+**Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `PostModal` → `PostCard focusMode`. A direct load renders `src/app/p/[id]/page.tsx`. Both fetch through `getPostById` in `@/lib/posts`.
 
 **Posting**: `PostComposer` inserts into `posts` (`user_id` defaults to `auth.uid()` in SQL), optionally with `map_data` from `RouteMapBuilder`, then `router.refresh()`.
 
-**Profile** (`/u/[username]`): the page reads `users` and the rider's posts itself (not through `lib/posts.ts`); `ProfileEditDialog` renders for the owner only and uploads to the `avatars` bucket, then updates `users`.
+**Profile** (`/u/[username]`): the page reads the rider's `users` row, then their posts with `listPostsByAuthor` from `@/lib/posts` (author attached, not re-joined); `ProfileEditDialog` renders for the owner only, uploads to the `avatars` bucket, then updates `users`.
 
-**Sign-in and identity**: email sign-up passes `username`/`display_name` as auth metadata; the `handle_new_user` trigger copies them into `public.users`. Google sign-in lands at `src/app/auth/callback/route.ts`, then `/onboarding/username` if no username. The username lives in **two places**: auth `user_metadata` (read by the middleware gate, the callback, and the onboarding page) and `public.users.username` (read by every page). Onboarding and profile edit write both.
+**Sign-in and identity**: `public.users` is the only home of username, display name, and avatar (ADR 0006). Email sign-up checks username availability, then passes `username`/`display_name` as sign-up metadata, which only the `handle_new_user` trigger reads (it lowercases, stores NULL if invalid or taken, defaults display name from the Google name). Google sign-in lands at `src/app/auth/callback/route.ts`, then `/onboarding/username` if `users.username` is NULL. `getViewer` in `src/lib/identity.ts` is the server read of the signed-in rider. Onboarding and profile edit write only `users`.
 
 **Geocoding**: browser → `geocode` / `reverseGeocode` in `src/lib/geo/index.ts` → `/api/geocode` or `/api/geocode/reverse` → the shared `nominatim` instance from `createNominatimClient` in `src/lib/geo/nominatim.ts` (one serialized queue ≥1 s apart across both routes, max 4 waiting → 503, 8 s budget → 504, retries, LRU cache) → `label.ts` builds place labels. Request and response shapes are Zod schemas in `src/lib/schemas/geocode.ts`, shared by routes and the browser client. Builders use it through `LocationSearch` and map clicks.
 
@@ -43,11 +43,11 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 ## Edits that must land in several places
 
-- **Post select string and vote hydration**: copied in `src/components/post-feed.tsx`, `src/lib/posts.ts`, and `src/app/u/[username]/page.tsx`. `PostCardData` (the row type, defined in `post-card.tsx`) must match all three.
+- **Post reads**: one selection in `src/lib/posts/select.ts`, the UI type `Post` in `src/lib/posts/types.ts` (normalized by `toPost`), reads in `src/lib/posts/queries.ts`. A new column is a `select.ts` + `types.ts` change; regenerate row types first if it's a new database column.
 - **Map editing behavior** (slot state, reverse-geocode labeling, fly-to, dialog chrome): duplicated in `route-map-builder.tsx` and `guide-map-builder.tsx`.
 - **Static tile rendering and OSM attribution**: duplicated in `static-route-map.tsx` and `static-guide-map.tsx`.
 - **Pin and line colors**: hex literals in the builders, static maps, and `post-card.tsx`; mode colors in `MODE_META`.
-- **Username writes**: `onboarding-form.tsx` and `profile-edit-dialog.tsx` (auth metadata and `users`); the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK.
+- **Username rules**: the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK, and `handle_new_user` re-checks it at sign-up.
 - **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
 - **Limits shared with SQL**: post/comment body 500 and non-blank (`src/lib/schemas/post.ts` ↔ CHECKs), `map_data` ≤ 16 KB (CHECKs in `content_limits`; builders' pin/leg caps keep real maps far below), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`profile-edit-dialog.tsx` ↔ bucket settings in `20261022000000_rider_write_guards.sql`).
 - **Row types**: generated in `src/lib/supabase/database.types.ts` by `npm run db:types`; regenerate in the same change as any migration.
@@ -59,7 +59,7 @@ Each table's current shape is the sum of its migrations; later files alter earli
 | Table / object | Defined and changed in |
 |---|---|
 | `users` | `initial_schema` → `user_identity` (username) → `username_cooldown` → `rider_write_guards` (column grants, avatar guard) → `avatar_url_exact_origin` (current avatar guard) |
-| `handle_new_user` trigger | latest body in `avatar_storage` |
+| `handle_new_user` trigger | latest body in `profile_creation_trigger` |
 | `posts` | `posts_table` → `post_interactions` (`net_votes`) → `post_map_data` |
 | `post_votes`, `comments` | `post_interactions`; `comments.map_data` in `comment_map_data` |
 | `sync_post_net_votes` | `post_interactions`; made incremental (exact under concurrent votes) in `exact_post_vote_totals` |
