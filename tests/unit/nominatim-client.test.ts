@@ -123,13 +123,16 @@ describe("Nominatim client spacing", () => {
   it("starts three simultaneous calls, search and reverse alike, 1000 ms apart", async () => {
     const { clock, client, starts } = setup(() => ({ body: [] }));
 
-    const calls = [
+    // Settle-tracking is attached before time moves: the reverse call rejects
+    // (its body is a search-shaped array), and an unobserved rejection would
+    // surface as an unhandled error on fast machines.
+    const settled = Promise.allSettled([
       client.search({ q: "Cubao", limit: 5 }),
       client.reverse({ lat: 14.5995, lon: 120.9842 }),
       client.search({ q: "Monumento", limit: 5 }),
-    ];
+    ]);
     await clock.advance(10_000);
-    await Promise.allSettled(calls);
+    await settled;
 
     expect(starts).toEqual([0, 1000, 2000]);
   });
