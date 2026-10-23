@@ -4,4 +4,5 @@ Every rider must have a username, but `users.username` allows NULL. A Google sig
 
 ## Consequences
 
-- The gate reads the username from the auth user's metadata, while pages read `users.username`; both are written on onboarding and on profile edits, and nothing reconciles them if one write fails.
+- The gate and every page read `users.username`; `public.users` is the only home of a rider's username, display name, and avatar. Sign-in metadata is only sign-up input to the `handle_new_user` trigger, which keeps the username only if it is valid and free (otherwise NULL, so the rider lands on onboarding); nothing reads or writes identity in metadata afterwards.
+- The gate costs one primary-key read of `users` per gated request. If that read fails, the request is let through rather than trapping riders behind onboarding while the database is unreachable.

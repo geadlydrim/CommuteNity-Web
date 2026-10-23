@@ -1,19 +1,14 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { XIcon } from "lucide-react";
-import { PostCard, type PostCardData } from "@/components/post-card";
 import { DialogPortal, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-type Props = {
-  post: PostCardData;
-  initialUserVote: 1 | -1 | null;
-  currentUserId: string | null;
-};
-
-export function PostModal({ post, initialUserVote, currentUserId }: Props) {
+/** Dialog shell for the intercepted focus view; closing goes back to the feed. */
+export function FocusViewDialog({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   return (
@@ -41,15 +36,7 @@ export function PostModal({ post, initialUserVote, currentUserId }: Props) {
             </Button>
           </DialogPrimitive.Close>
 
-          {/* PostCard needs a <ul> parent since it renders <li> */}
-          <ul className="px-3 pt-10 pb-3 sm:p-0">
-            <PostCard
-              post={post}
-              initialUserVote={initialUserVote}
-              currentUserId={currentUserId}
-              focusMode
-            />
-          </ul>
+          <div className="px-3 pt-10 pb-3 sm:p-0">{children}</div>
         </DialogPrimitive.Content>
       </DialogPortal>
     </DialogPrimitive.Root>

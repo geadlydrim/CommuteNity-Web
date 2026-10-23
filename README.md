@@ -35,8 +35,12 @@ npx supabase db push         # apply supabase/migrations to your project
 npm run dev                  # http://localhost:3000
 ```
 
-`GEOCODER_USER_AGENT` in `.env.local` must identify your deployment and include a contact, as required by [Nominatim's usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+`GEOCODER_USER_AGENT` must identify your deployment and include a contact (`Name/version (https://… or email)`), as required by [Nominatim's](https://operations.osmfoundation.org/policies/nominatim/) and [OpenStreetMap's tile](https://operations.osmfoundation.org/policies/tiles/) usage policies. Geocoding and map tiles go through the app's own server routes with this agent; in production they fail with 502 until it's set.
 
 Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run typecheck`.
+
+### Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, typecheck, build, and tests on every push and pull request. Set the repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (placeholders are used if unset; the build never contacts Supabase). Set the repository secret `SUPABASE_DB_URL` to run the database tests against that project inside rolled-back transactions; without it they are skipped.
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.

@@ -1,15 +1,11 @@
-export type GeocodeResult = {
-  /** Primary display name — landmark / POI. */
-  displayName: string;
-  /** Full address minus postcode/country — shown as grey sub-line in search dropdown. */
-  detailName?: string;
-  /** Simplified address — barangay, city, province — stored as pin sublabel. */
-  secondaryName?: string;
-  /** Raw Nominatim display_name (escape hatch / tooltip). */
-  fullName?: string;
-  lat: number;
-  lon: number;
-  type: string;
-  category?: string;
-  importance?: number;
-};
+import type { z } from "zod";
+import type {
+  geocodeResultSchema,
+  reverseGeocodeResultSchema,
+} from "@/lib/schemas/geocode";
+
+/** One place search result, exactly as `/api/geocode` returns it. */
+export type GeocodeResult = z.infer<typeof geocodeResultSchema>;
+
+/** A reverse-geocoded point, exactly as `/api/geocode/reverse` returns it. */
+export type ReverseGeocodeResult = z.infer<typeof reverseGeocodeResultSchema>;

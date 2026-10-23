@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { callbackErrorMessage } from "@/lib/auth-callback";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -32,6 +33,16 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+function CallbackError() {
+  const message = callbackErrorMessage(useSearchParams().get("error"));
+  if (!message) return null;
+  return (
+    <p role="alert" className="mb-4 text-sm text-destructive">
+      {message}
+    </p>
+  );
+}
 
 export default function SignInPage() {
   const router = useRouter();
@@ -64,6 +75,9 @@ export default function SignInPage() {
           <CardDescription>Welcome back to CommuteNity.</CardDescription>
         </CardHeader>
         <CardContent>
+          <Suspense fallback={null}>
+            <CallbackError />
+          </Suspense>
           <GoogleSignInButton />
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">

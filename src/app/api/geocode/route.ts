@@ -1,68 +1,62 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { geocodeQuerySchema, limitSchema } from "@/lib/schemas/geocode";
-import { fetchNominatim, cacheGet, cacheSet, buildLabelParts } from "@/lib/geo/nominatim";
+import { GEOCODE_CACHE_CONTROL, geocodeFailure, nominatim } from "@/lib/geo/nominatim";
+import { buildLabelParts } from "@/lib/geo/label";
 import type { GeocodeResult } from "@/lib/geo/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** Seconds. The Nominatim client gives up after 8 s (BUDGET_MS); this leaves room to answer. */
+export const maxDuration = 10;
+
+function invalid(message: string) {
+  return NextResponse.json(
+    { error: message },
+    { status: 400, headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.error } },
+  );
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   // --- Validate query params ---
-  const qRaw = searchParams.get("q") ?? "";
-  const qResult = geocodeQuerySchema.safeParse(qRaw);
+  const qResult = geocodeQuerySchema.safeParse(searchParams.get("q") ?? "");
   if (!qResult.success) {
-    return NextResponse.json(
-      { error: qResult.error.issues[0]?.message ?? "Invalid query" },
-      { status: 400 }
-    );
+    return invalid(qResult.error.issues[0]?.message ?? "Invalid query");
   }
-  const q = qResult.data;
-
   const limitResult = limitSchema.safeParse(searchParams.get("limit") ?? undefined);
-  const limit = limitResult.success ? limitResult.data : 5;
-
-  // --- Cache lookup ---
-  const cacheKey = `search:${q.toLowerCase()}:${limit}`;
-  const cached = cacheGet(cacheKey);
-  if (cached) {
-    return NextResponse.json(cached);
+  if (!limitResult.success) {
+    return invalid(limitResult.error.issues[0]?.message ?? "Invalid limit");
   }
 
-  // --- Proxy to Nominatim (shared throttle in nominatim.ts) ---
+  // --- Nominatim, through the shared queue and cache ---
   try {
-    const raw = (await fetchNominatim("search", {
-      format: "jsonv2",
-      q,
-      limit: String(limit),
-      countrycodes: "ph",
-      addressdetails: "1",
-    })) as Record<string, unknown>[];
+    const places = await nominatim.search({ q: qResult.data, limit: limitResult.data });
 
-    const results: GeocodeResult[] = raw.map((item) => {
-      const p = buildLabelParts(item as Record<string, unknown>);
+    const results: GeocodeResult[] = places.map((place) => {
+      const p = buildLabelParts(place);
       return {
         displayName: p.primary,
         detailName: p.detail || undefined,
         secondaryName: p.secondary || undefined,
         fullName: p.full || undefined,
-        lat: Number(item.lat),
-        lon: Number(item.lon),
-        type: item.type as string,
-        category: item.class as string | undefined,
-        importance: item.importance as number | undefined,
+        lat: place.lat,
+        lon: place.lon,
+        type: place.type,
+        category: place.category,
+        importance: place.importance,
       };
     });
 
-    cacheSet(cacheKey, results);
-    return NextResponse.json(results);
+    return NextResponse.json(results, {
+      headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.found },
+    });
   } catch (err) {
-    if (err instanceof Error && err.name === "TimeoutError") {
-      console.error("[Geocode] upstream timed out");
-      return NextResponse.json({ error: "Geocoding request timed out" }, { status: 504 });
-    }
-    console.error("[Geocode] unexpected error", err);
-    return NextResponse.json({ error: "Geocoding failed" }, { status: 502 });
+    const failure = geocodeFailure(err);
+    if (failure.status !== 503) console.error("[Geocode] upstream failed", err);
+    return NextResponse.json(
+      { error: failure.error },
+      { status: failure.status, headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.error } },
+    );
   }
 }
