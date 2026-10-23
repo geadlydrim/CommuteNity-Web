@@ -19,7 +19,7 @@
  */
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Search } from "lucide-react";
-import { geocode } from "@/lib/geo";
+import { geocode, GeocodeBusyError } from "@/lib/geo";
 import type { GeocodeResult } from "@/lib/geo/types";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,7 @@ export function LocationSearch({ placeholder = "Search location…", onPick, onF
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -83,6 +84,7 @@ export function LocationSearch({ placeholder = "Search location…", onPick, onF
 
   function handleQueryChange(text: string) {
     setQuery(text);
+    setSearchError(null);
     setShowDropdown(false);
     setActiveIndex(-1);
     clearTimeout(debounceRef.current);
@@ -99,10 +101,15 @@ export function LocationSearch({ placeholder = "Search location…", onPick, onF
         const r = await geocode(text.trim(), { limit: 6, signal: controller.signal });
         if (controller.signal.aborted) return;
         setResults(r);
+        setSearchError(null);
         setActiveIndex(-1);
         setShowDropdown(r.length > 0);
-      } catch {
-        // aborted / network — ignore
+      } catch (error) {
+        // Aborts (superseded or unmounted) stay silent.
+        if (controller.signal.aborted) return;
+        setSearchError(
+          error instanceof GeocodeBusyError ? "Search is busy. Try again in a moment." : "Couldn't search right now.",
+        );
       } finally {
         // A superseded or aborted request no longer owns the spinner.
         if (abortRef.current === controller) {
@@ -231,6 +238,11 @@ export function LocationSearch({ placeholder = "Search location…", onPick, onF
             </li>
           ))}
       </ul>
+      {searchError && (
+        <p role="status" className="mt-1 text-xs text-muted-foreground">
+          {searchError}
+        </p>
+      )}
     </div>
   );
 }

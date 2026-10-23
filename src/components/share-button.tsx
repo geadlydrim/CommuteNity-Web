@@ -19,7 +19,8 @@ export function ShareButton({ postId, text }: Props) {
       } catch (error) {
         // The rider closed the share sheet: nothing to do.
         if (error instanceof DOMException && error.name === "AbortError") return;
-        // Sharing failed for another reason — fall through to clipboard
+        toast.error("Couldn't share. Try again.");
+        return;
       }
     }
     try {
