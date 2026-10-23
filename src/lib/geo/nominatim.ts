@@ -11,6 +11,8 @@
  * Acceptable for MVP at low traffic. Under load, swap to Upstash/Vercel KV.
  */
 
+import { geocoderUserAgent } from "@/lib/env";
+
 const CACHE_MAX = 200;
 const CACHE_TTL_MS = 300_000; // 5 min
 
@@ -175,7 +177,7 @@ export async function fetchNominatim(
       const res = await fetch(url.toString(), {
         headers: {
           "User-Agent":
-            process.env.GEOCODER_USER_AGENT ?? "CommuteNity/0.1 (dev)",
+            geocoderUserAgent(),
           "Accept-Language": "en-PH,en",
         },
         signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
