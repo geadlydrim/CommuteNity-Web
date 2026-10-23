@@ -37,7 +37,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 **Sign-in and identity**: email sign-up passes `username`/`display_name` as auth metadata; the `handle_new_user` trigger copies them into `public.users`. Google sign-in lands at `src/app/auth/callback/route.ts`, then `/onboarding/username` if no username. The username lives in **two places**: auth `user_metadata` (read by the middleware gate, the callback, and the onboarding page) and `public.users.username` (read by every page). Onboarding and profile edit write both.
 
-**Geocoding**: browser → `geocode` / `reverseGeocode` in `src/lib/geo/index.ts` → `/api/geocode` or `/api/geocode/reverse` → `src/lib/geo/nominatim.ts` (throttle, cache, retry, place labels). Builders use it through `LocationSearch` and map clicks.
+**Geocoding**: browser → `geocode` / `reverseGeocode` in `src/lib/geo/index.ts` → `/api/geocode` or `/api/geocode/reverse` → the shared `nominatim` instance from `createNominatimClient` in `src/lib/geo/nominatim.ts` (one serialized queue ≥1 s apart across both routes, max 4 waiting → 503, 8 s budget → 504, retries, LRU cache) → `label.ts` builds place labels. Request and response shapes are Zod schemas in `src/lib/schemas/geocode.ts`, shared by routes and the browser client. Builders use it through `LocationSearch` and map clicks.
 
 **Maps**: everything goes through the `@/components/map` barrel. Feed thumbnails are `<img>` tiles + SVG (`static-*-map.tsx`); live MapLibre (`MapView`) mounts only in the focus view and the two builders. MapLibre's core library is already lazy-loaded by `react-map-gl`.
 
@@ -49,7 +49,8 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 - **Pin and line colors**: hex literals in the builders, static maps, and `post-card.tsx`; mode colors in `MODE_META`.
 - **Username writes**: `onboarding-form.tsx` and `profile-edit-dialog.tsx` (auth metadata and `users`); the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK.
 - **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
-- **Limits shared with SQL**: post/comment body 500 (`src/lib/schemas/post.ts` ↔ CHECKs), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`profile-edit-dialog.tsx` ↔ bucket settings in `20261022000000_rider_write_guards.sql`).
+- **Limits shared with SQL**: post/comment body 500 and non-blank (`src/lib/schemas/post.ts` ↔ CHECKs), `map_data` ≤ 16 KB (CHECKs in `content_limits`; builders' pin/leg caps keep real maps far below), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`profile-edit-dialog.tsx` ↔ bucket settings in `20261022000000_rider_write_guards.sql`).
+- **Row types**: generated in `src/lib/supabase/database.types.ts` by `npm run db:types`; regenerate in the same change as any migration.
 
 ## Database
 
