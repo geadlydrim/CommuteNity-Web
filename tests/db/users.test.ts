@@ -15,7 +15,7 @@ describe.skipIf(!hasDb)("rider profile writes", () => {
         "select reputation from public.users where id = $1",
         [rider],
       );
-      expect(row.reputation).toBe(0);
+      expect(row?.reputation).toBe(0);
     }));
 
   it("rider can still change their display name and username", () =>

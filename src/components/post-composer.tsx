@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MapPin, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { TablesInsert } from "@/lib/supabase/database.types";
 import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,7 @@ export function PostComposer({
   async function handlePost() {
     setSubmitting(true);
     const supabase = createClient();
-    const payload: Record<string, unknown> = { body: trimmed };
+    const payload: TablesInsert<"posts"> = { body: trimmed };
     if (mapData) payload.map_data = mapData;
 
     const { error } = await supabase.from("posts").insert(payload);

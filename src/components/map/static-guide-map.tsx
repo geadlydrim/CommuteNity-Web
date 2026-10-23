@@ -120,6 +120,7 @@ export function StaticGuideMap({
         {/* Leg lines — solid */}
         {allLegSegs.map((seg, i) => {
           const [a, b] = seg.coords.map(project);
+          if (!a || !b) return null;
           return (
             <line
               key={`leg-${i}`}
@@ -135,6 +136,7 @@ export function StaticGuideMap({
         {/* Connector lines — dashed */}
         {allConnSegs.map((seg, i) => {
           const [a, b] = seg.coords.map(project);
+          if (!a || !b) return null;
           return (
             <line
               key={`conn-${i}`}

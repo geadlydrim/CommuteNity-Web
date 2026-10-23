@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import type { TablesInsert } from "@/lib/supabase/database.types";
 import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
@@ -239,7 +240,7 @@ export function PostCard({ post, initialUserVote, currentUserId, focusMode = fal
     const body = commentBody.trim();
     if (!body || !currentUserId) return;
     setCommentPending(true);
-    const insertPayload: Record<string, unknown> = { post_id: post.id, author_id: currentUserId, body };
+    const insertPayload: TablesInsert<"comments"> = { post_id: post.id, author_id: currentUserId, body };
     if (commentMapData) insertPayload.map_data = commentMapData;
     const { data, error } = await supabase
       .from("comments")

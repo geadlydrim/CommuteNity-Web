@@ -179,7 +179,11 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     if (newIdx < 0 || newIdx >= slots.length) return;
     setSlots((prev) => {
       const updated = [...prev];
-      [updated[index], updated[newIdx]] = [updated[newIdx], updated[index]];
+      const a = updated[index];
+      const b = updated[newIdx];
+      if (!a || !b) return prev;
+      updated[index] = b;
+      updated[newIdx] = a;
       return updated;
     });
   }
@@ -195,7 +199,10 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     }
     const slot = newSlot();
     // Insert before the destination (last slot)
-    setSlots((prev) => [...prev.slice(0, -1), slot, prev[prev.length - 1]]);
+    setSlots((prev) => {
+      const dest = prev.at(-1);
+      return dest ? [...prev.slice(0, -1), slot, dest] : [...prev, slot];
+    });
     setActiveId(slot.id);
   }
 
@@ -241,9 +248,9 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
   // --- Save ---
 
   function handleSave() {
-    const origin = slots[0];
-    const dest = slots[slots.length - 1];
-    if (!hasCoords(origin) || !hasCoords(dest)) {
+    const origin = slots.at(0);
+    const dest = slots.at(-1);
+    if (!origin || !dest || !hasCoords(origin) || !hasCoords(dest)) {
       toast.error("Set both an origin and a destination.");
       return;
     }
@@ -272,7 +279,9 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
   }));
   const fitView = placedPins.length >= 2 ? fitPinsToView(placedPins, 560, 420) : undefined;
   const lineData = placedPins.length >= 2 ? lineStringFromPins(placedPins) : null;
-  const canSave = hasCoords(slots[0]) && hasCoords(slots[slots.length - 1]);
+  const firstSlot = slots.at(0);
+  const lastSlot = slots.at(-1);
+  const canSave = !!firstSlot && !!lastSlot && hasCoords(firstSlot) && hasCoords(lastSlot);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

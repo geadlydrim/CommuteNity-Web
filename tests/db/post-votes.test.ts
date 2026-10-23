@@ -13,9 +13,11 @@ describe.skipIf(!hasDb)("post votes", () => {
       const postId = randomUUID();
       await db.actAs(author);
       await db.rows("insert into public.posts (id, body) values ($1, 'Sakay ka sa Cubao terminal')", [postId]);
-      const total = async () =>
-        (await db.rows<{ net_votes: number }>("select net_votes from public.posts where id = $1", [postId]))[0]
-          .net_votes;
+      const total = async () => {
+        const [post] = await db.rows<{ net_votes: number }>("select net_votes from public.posts where id = $1", [postId]);
+        if (!post) throw new Error(`post ${postId} not found`);
+        return post.net_votes;
+      };
 
       await db.actAs(fan);
       await db.rows("insert into public.post_votes (post_id, user_id, value) values ($1, $2, 1)", [postId, fan]);
