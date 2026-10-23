@@ -5,7 +5,10 @@
  * avatar. Sign-up metadata is input to the `handle_new_user` trigger only and
  * is never read back for identity (ADR 0006).
  */
-import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  isAuthRetryableFetchError,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type Viewer = {
@@ -18,15 +21,18 @@ export type Viewer = {
 
 /**
  * The signed-in rider and their `users` row, or null when signed out.
- * Throws if the `users` read fails, so callers never mistake an outage for a
- * rider without a username.
+ * Throws if the session check can't reach Supabase (network failure, timeout,
+ * or server error) or the `users` read fails, so callers never mistake an
+ * outage for a signed-out rider or a rider without a username.
  */
 export async function getViewer(
   supabase: SupabaseClient<Database>,
 ): Promise<Viewer | null> {
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
+  if (authError && isAuthRetryableFetchError(authError)) throw authError;
   if (!user) return null;
 
   const { data, error } = await supabase

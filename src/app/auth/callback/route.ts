@@ -1,13 +1,18 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer, type Viewer } from "@/lib/identity";
+import { callbackErrorPath } from "@/lib/auth-callback";
+
+// Relative Locations only: an origin taken from the request could be spoofed.
+function redirectTo(path: string): Response {
+  return new Response(null, { status: 303, headers: { Location: path } });
+}
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+  const code = request.nextUrl.searchParams.get("code");
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/sign-in?error=missing_code`);
+    return redirectTo(callbackErrorPath("missing_code"));
   }
 
   const supabase = await createClient();
@@ -15,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error("[OAuth] exchangeCodeForSession failed:", error.message);
-    return NextResponse.redirect(`${origin}/sign-in?error=oauth_failed`);
+    return redirectTo(callbackErrorPath("oauth_failed"));
   }
 
   let viewer: Viewer | null;
@@ -24,11 +29,11 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     // The middleware gate checks the username again on the next request.
     console.error("[OAuth] Reading the rider's profile failed:", err);
-    return NextResponse.redirect(`${origin}/`);
+    return redirectTo("/");
   }
 
   if (!viewer?.username) {
-    return NextResponse.redirect(`${origin}/onboarding/username`);
+    return redirectTo("/onboarding/username");
   }
-  return NextResponse.redirect(`${origin}/`);
+  return redirectTo("/");
 }
