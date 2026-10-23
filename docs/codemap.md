@@ -8,10 +8,10 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 | Glossary | Code |
 |---|---|
-| Post map | `map_data` on `posts`; `RouteMapBuilder`, `StaticRouteMap`, `route-geometry.ts`, `post-map.ts` (`mapDataSchema`, `pinSchema`) |
-| Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `guide-geometry.ts`, `guide-map.ts` (`guideMapDataSchema`) |
+| Post map | `map_data` on `posts`; `RouteMapBuilder`, `StaticRouteMap`, `PostMapPreview`, `route-geometry.ts`, `post-map.ts` (`parsePostMap`, `mapDataSchema`, `pinSchema`, `CURRENT_POST_MAP_VERSION`) |
+| Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `GuidePreview`, `guide-geometry.ts`, `guide-map.ts` (`parseGuide`, `guideMapDataSchema`, `CURRENT_GUIDE_VERSION`), chain rule `guideChainStatus` in `guide-chain.ts` |
 | Transfer | `connector` / `connectors` (TS and stored JSON key) |
-| Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `guide-map.ts` |
+| Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `src/lib/schemas/modes.ts`; colour via `modeColor` in `src/lib/map/colors.ts` |
 | Focus view | `FocusView`; `focus` prop on `PostCard`; `PostModal` (dialog shell taking children); routes `/p/[id]` and `@modal/(.)p/[id]` |
 | Post vote | `post_votes` table, `net_votes` column (catalog votes are the separate `votes` table) |
 | Rider | `user`, `users` table, `currentUserId` |
@@ -19,7 +19,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 ## Request flow
 
-1. `src/middleware.ts` → `updateSession` in `src/lib/supabase/middleware.ts`: refreshes the session cookie, reads the rider's `users.username` by id, and applies `gateDecision` from `src/lib/identity.ts` (no username → `/onboarding/username`; the paths allowed without one live only there). Skips static files and `/api/geocode*`.
+1. `src/middleware.ts` → `updateSession` in `src/lib/supabase/middleware.ts`: refreshes the session cookie, reads the rider's `users.username` by id, and applies `gateDecision` from `src/lib/identity.ts` (no username → `/onboarding/username`; the paths allowed without one live only there). Skips static files, `/api/geocode*`, and `/api/tiles/*`.
 2. Pages under `src/app/` are server components that read with `createClient` from `@/lib/supabase/server`.
 3. Interactive pieces are client components that write directly with `createClient` from `@/lib/supabase/client`. Reads of posts go through `@/lib/posts`; there are no server actions, and RLS in the migrations is the only authority on who can write what.
 
@@ -27,7 +27,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 **Feed** (`/`): `src/app/page.tsx` renders `SignedInHeader` + `PostComposer` for riders (viewer from `getViewer` in `src/lib/identity.ts`) and `PostFeed` for everyone. `PostFeed` (server) calls `listFeedPosts` from `@/lib/posts` (50 public posts with author, comment count, and the viewer's vote in one request) and renders a `PostCard` per post.
 
-**Post card** (`src/components/post-card.tsx`, **server**): author, `<time>` from `formatPostTime` (`src/lib/format-time.ts`, always Asia/Manila), body, static post-map thumbnail, and an overlay link to `/p/{id}`. Interactive parts are client islands: `PostVoteControls` (optimistic voting; a trigger maintains `posts.net_votes`), `CommentThread` (comments on expand, guide attach; `GuideMapBuilder` loaded with `next/dynamic` only after a signed-in rider opens it), `ShareButton` (a cancelled share does nothing).
+**Post card** (`src/components/post-card.tsx`, **server**): author, `<time>` from `formatPostTime` (`src/lib/format-time.ts`, always Asia/Manila), body, `PostMapPreview`, and an overlay link to `/p/{id}`. Interactive parts are client islands: `PostVoteControls` (instant update via `nextVote`, then adopts the server total from `setVote` in `src/lib/posts/votes.ts`; resets to fresh server props on refresh), `CommentThread` (50 comments per page via `listComments`/`addComment` in `src/lib/posts/comments.ts`, "show more", retry, chronological insert, `GuidePreview` per comment; `GuideMapBuilder` loaded with `next/dynamic` only after a signed-in rider opens it), `ShareButton` (a cancelled share does nothing).
 
 **Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `PostModal` → `FocusView`; a direct load renders `FocusView` from `src/app/p/[id]/page.tsx`, which also emits link-preview metadata. Both fetch through `getPostById` in `@/lib/posts`. The interactive map is `FocusPostMap` in `src/components/map/`, loaded lazily via `LazyFocusPostMap`.
 
@@ -41,14 +41,13 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 **Geocoding**: browser → `geocode` / `reverseGeocode` in `src/lib/geo/index.ts` → `/api/geocode` or `/api/geocode/reverse` → the shared `nominatim` instance from `createNominatimClient` in `src/lib/geo/nominatim.ts` (one serialized queue ≥1 s apart across both routes, max 4 waiting → 503, 8 s budget → 504, retries, LRU cache) → `label.ts` builds place labels. Request and response shapes are Zod schemas in `src/lib/schemas/geocode.ts`, shared by routes and the browser client. Builders use it through `LocationSearch` and map clicks.
 
-**Maps**: everything goes through the `@/components/map` barrel. Feed thumbnails are `<img>` tiles + SVG (`static-*-map.tsx`); live MapLibre (`MapView`) mounts only in the focus view and the two builders. MapLibre's core library is already lazy-loaded by `react-map-gl`.
+**Maps**: `@/components/map` is a server-safe barrel (static previews only). Feed thumbnails are `<img>` tiles + SVG drawn by `StaticTileCanvas` (`static-*-map.tsx` are thin mappers onto it). Every tile URL comes from `src/lib/map/tiles.ts` and is served by the caching, Philippines-only proxy `src/app/api/tiles/[z]/[x]/[y]/route.ts`. Live MapLibre (`MapView`) mounts only in the focus view and the two builders, loaded with `next/dynamic`; `react-map-gl` is re-exported only by `src/components/map/primitives.ts` for use inside the folder. Reading stored maps: `parsePostMap` / `parseGuide` (unknown newer versions show a placeholder).
 
 ## Edits that must land in several places
 
 - **Post reads**: one selection in `src/lib/posts/select.ts`, the UI type `Post` in `src/lib/posts/types.ts` (normalized by `toPost`), reads in `src/lib/posts/queries.ts`. A new column is a `select.ts` + `types.ts` change; regenerate row types first if it's a new database column.
 - **Map editing behavior** (slot state, reverse-geocode labeling, fly-to, dialog chrome): duplicated in `route-map-builder.tsx` and `guide-map-builder.tsx`.
-- **Static tile rendering and OSM attribution**: duplicated in `static-route-map.tsx` and `static-guide-map.tsx`.
-- **Pin and line colors**: hex literals in the builders, static maps, and `post-card.tsx`; mode colors in `MODE_META`.
+- **Colours**: one source, `src/lib/map/colors.ts` (pin roles, post-map line, `modeColor`); the builders still carry hex literals until they move onto it.
 - **Username rules**: the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK, and `handle_new_user` re-checks it at sign-up.
 - **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
 - **Limits shared with SQL**: post/comment body 500 and non-blank (`src/lib/schemas/post.ts` ↔ CHECKs), `map_data` ≤ 16 KB (CHECKs in `content_limits`; builders' pin/leg caps keep real maps far below), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`src/lib/avatars.ts` ↔ bucket settings in `20261022000000_rider_write_guards.sql`), display name ≤ 40 (`profile.ts` ↔ `profile_limits`).
