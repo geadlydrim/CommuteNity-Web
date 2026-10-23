@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { callbackErrorMessage } from "@/lib/auth-callback";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -32,13 +33,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-function callbackErrorMessage(code: string | null): string | null {
-  if (!code) return null;
-  if (code === "missing_code") return "Sign-in didn't finish. Please try again.";
-  if (code === "oauth_failed") return "Google sign-in failed. Please try again.";
-  return "Something went wrong signing you in. Please try again.";
-}
 
 function CallbackError() {
   const message = callbackErrorMessage(useSearchParams().get("error"));

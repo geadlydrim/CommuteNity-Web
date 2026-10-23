@@ -1,75 +1,68 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { publicEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 import { NextResponse, type NextRequest } from "next/server";
-import { withTimeout } from "@/lib/supabase/with-timeout";
-import { gateDecision } from "@/lib/identity";
+import { fetchWithTimeout } from "@/lib/supabase/with-timeout";
+import { gateDecision, getViewer, type Viewer } from "@/lib/identity";
+
+type CookieWrite = Parameters<SetAllCookies>[0][number];
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  // Session cookie writes are held back until the session check succeeds, so
+  // a timeout or network failure never touches the rider's cookies.
+  const cookieWrites = new Map<string, CookieWrite>();
+  const cookieHeaders = new Map<string, string>();
 
   const supabase = createServerClient<Database>(
     publicEnv().NEXT_PUBLIC_SUPABASE_URL,
     publicEnv().NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      global: { fetch: fetchWithTimeout },
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+        setAll(cookiesToSet, headers) {
+          for (const cookie of cookiesToSet) cookieWrites.set(cookie.name, cookie);
+          for (const [name, value] of Object.entries(headers)) {
+            cookieHeaders.set(name, value);
+          }
         },
       },
     }
   );
 
-  let user = null;
+  let viewer: Viewer | null;
   try {
-    const { data } = await withTimeout(
-      supabase.auth.getUser(),
-      2000,
-      "middleware getUser"
-    );
-    user = data?.user ?? null;
+    viewer = await getViewer(supabase);
   } catch (err) {
-    console.error("[Supabase] Middleware auth refresh failed:", err);
+    // Couldn't confirm the session: pass the request through untouched rather
+    // than signing the rider out or trapping them behind onboarding.
+    console.error("[Supabase] Middleware session check failed:", err);
+    return NextResponse.next({ request });
   }
 
-  if (user) {
-    let hasUsername: boolean;
-    try {
-      const { data, error } = await withTimeout(
-        Promise.resolve(
-          supabase.from("users").select("username").eq("id", user.id).maybeSingle()
-        ),
-        2000,
-        "middleware username read"
-      );
-      if (error) throw error;
-      hasUsername = Boolean(data?.username);
-    } catch (err) {
-      // Don't trap riders behind onboarding when the database is unreachable.
-      console.error("[Supabase] Middleware username read failed:", err);
-      return supabaseResponse;
-    }
-
-    const decision = gateDecision({
-      pathname: request.nextUrl.pathname,
-      signedIn: true,
-      hasUsername,
-    });
-    if (decision === "onboarding") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/onboarding/username";
-      return NextResponse.redirect(url);
-    }
+  for (const { name, value } of cookieWrites.values()) {
+    request.cookies.set(name, value);
   }
 
-  return supabaseResponse;
+  const decision = gateDecision({
+    pathname: request.nextUrl.pathname,
+    signedIn: viewer !== null,
+    hasUsername: Boolean(viewer?.username),
+  });
+  let response: NextResponse;
+  if (decision === "onboarding") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/onboarding/username";
+    response = NextResponse.redirect(url);
+  } else {
+    response = NextResponse.next({ request });
+  }
+
+  for (const { name, value, options } of cookieWrites.values()) {
+    response.cookies.set(name, value, options);
+  }
+  for (const [name, value] of cookieHeaders) response.headers.set(name, value);
+  return response;
 }
