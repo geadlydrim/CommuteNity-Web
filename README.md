@@ -39,4 +39,8 @@ npm run dev                  # http://localhost:3000
 
 Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run typecheck`.
 
+### Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, typecheck, build, and tests on every push and pull request. Set the repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (placeholders are used if unset; the build never contacts Supabase). Set the repository secret `SUPABASE_DB_URL` to run the database tests against that project inside rolled-back transactions; without it they are skipped.
+
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
