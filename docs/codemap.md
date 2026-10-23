@@ -11,7 +11,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 | Post map | `map_data` on `posts`; `RouteMapBuilder`, `StaticRouteMap`, `route-geometry.ts`, `post-map.ts` (`mapDataSchema`, `pinSchema`) |
 | Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `guide-geometry.ts`, `guide-map.ts` (`guideMapDataSchema`) |
 | Transfer | `connector` / `connectors` (TS and stored JSON key) |
-| Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `guide-map.ts` (`src/lib/transit/modes.ts` is an unused duplicate) |
+| Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `guide-map.ts` |
 | Focus view | `focusMode` prop on `PostCard`; `PostModal`; routes `/p/[id]` and `@modal/(.)p/[id]` |
 | Post vote | `post_votes` table, `net_votes` column (catalog votes are the separate `votes` table) |
 | Rider | `user`, `users` table, `currentUserId` |
@@ -48,7 +48,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 - **Static tile rendering and OSM attribution**: duplicated in `static-route-map.tsx` and `static-guide-map.tsx`.
 - **Pin and line colors**: hex literals in the builders, static maps, and `post-card.tsx`; mode colors in `MODE_META`.
 - **Username writes**: `onboarding-form.tsx` and `profile-edit-dialog.tsx` (auth metadata and `users`); the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK.
-- **Database error messages**: mapped by matching error text separately in `sign-up/page.tsx`, `onboarding-form.tsx`, and `profile-edit-dialog.tsx` (sentinels: `23505`, `username_cooldown`, `avatar_url_invalid`).
+- **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
 - **Limits shared with SQL**: post/comment body 500 (`src/lib/schemas/post.ts` ↔ CHECKs), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`profile-edit-dialog.tsx` ↔ bucket settings in `20261022000000_rider_write_guards.sql`).
 
 ## Database
@@ -61,7 +61,8 @@ Each table's current shape is the sum of its migrations; later files alter earli
 | `handle_new_user` trigger | latest body in `avatar_storage` |
 | `posts` | `posts_table` → `post_interactions` (`net_votes`) → `post_map_data` |
 | `post_votes`, `comments` | `post_interactions`; `comments.map_data` in `comment_map_data` |
-| `sync_post_net_votes` | `post_interactions`; search path pinned in `rider_write_guards` |
+| `sync_post_net_votes` | `post_interactions`; made incremental (exact under concurrent votes) in `exact_post_vote_totals` |
+| Policy style | every policy calling `auth.uid()` uses `(select auth.uid())` since `advisor_cleanup`; follow that in new policies. The catalog vote trigger was dropped there too |
 | `avatars` bucket and policies | `avatar_storage` → `rider_write_guards` (limits, delete policy) |
 | Catalog tables (parked) | `initial_schema`; insert policies replaced in `rider_write_guards` |
 
@@ -72,6 +73,8 @@ Each table's current shape is the sum of its migrations; later files alter earli
 `npm test` runs Vitest over `tests/**/*.test.ts` in Node.
 
 - `tests/db/`: act as a rider against the database in `SUPABASE_DB_URL` (the linked, live project) inside transactions that always roll back; `tests/db/rider.ts` is the harness (`withRollback`, `createRider`, `actAs`, `run`). `DB_TEST_MIGRATION=<file.sql>` applies an unpushed migration inside each test first, so a new migration can go red → green before `supabase db push`. These suites skip when `SUPABASE_DB_URL` is unset.
+- Concurrency tests need real commits: `withCommittedFixtures` in the same harness opens separate sessions and always deletes the riders it created (cascading to their posts and votes). `DB_TEST_MIGRATION` can't apply to these, so they go red before the push and green after.
+- `tests/unit/`: pure modules in Node (e.g. the error mapper).
 - `tests/api/`: call route handlers directly with a `NextRequest` and spy on `fetch`.
 - No component tests; client components have no injection seam yet.
 
