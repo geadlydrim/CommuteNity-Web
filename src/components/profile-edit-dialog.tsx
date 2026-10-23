@@ -140,19 +140,6 @@ export function ProfileEditDialog({
       newAvatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
     }
 
-    const { error: metaError } = await supabase.auth.updateUser({
-      data: {
-        username: values.username,
-        display_name: values.display_name,
-        ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
-      },
-    });
-
-    if (metaError) {
-      setServerError(riderMessage(metaError));
-      return;
-    }
-
     const { error: dbError } = await supabase
       .from("users")
       .update({

@@ -52,15 +52,6 @@ export function OnboardingForm({
     setServerError(null);
     const supabase = createClient();
 
-    const { error: metaError } = await supabase.auth.updateUser({
-      data: { username: values.username, display_name: values.display_name },
-    });
-
-    if (metaError) {
-      setServerError(riderMessage(metaError));
-      return;
-    }
-
     const { error: dbError } = await supabase
       .from("users")
       .update({ username: values.username, display_name: values.display_name })

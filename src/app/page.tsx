@@ -3,6 +3,7 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { withTimeout } from "@/lib/supabase/with-timeout";
+import { getViewer, type Viewer } from "@/lib/identity";
 import { Button } from "@/components/ui/button";
 import { PostComposer } from "@/components/post-composer";
 import { SignedInHeader } from "@/components/signed-in-header";
@@ -26,38 +27,26 @@ function FeedSkeleton() {
 }
 
 async function AuthArea() {
-  let user = null;
+  let viewer: Viewer | null = null;
 
   try {
     const supabase = await createClient();
-    const { data } = await withTimeout(
-      supabase.auth.getUser(),
-      2000,
-      "landing getUser",
-    );
-    user = data.user;
+    viewer = await withTimeout(getViewer(supabase), 2000, "landing getViewer");
   } catch (err) {
     unstable_rethrow(err);
     console.error("[Supabase] Landing auth check failed:", err);
   }
 
-  if (user) {
-    const supabase = await createClient();
-    const { data: me } = await supabase
-      .from("users")
-      .select("username, display_name, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle();
-
+  if (viewer) {
     return (
       <>
         <SignedInHeader
-          username={me?.username ?? null}
-          avatarUrl={me?.avatar_url ?? null}
-          displayName={me?.display_name ?? null}
+          username={viewer.username}
+          avatarUrl={viewer.avatarUrl}
+          displayName={viewer.displayName}
         />
         <div className="feed-col flex flex-col gap-6 pt-4 pb-12 lg:pt-8 lg:pb-16">
-          <PostComposer avatarUrl={me?.avatar_url ?? null} displayName={me?.display_name ?? null} />
+          <PostComposer avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} />
           <Suspense fallback={<FeedSkeleton />}>
             <PostFeed />
           </Suspense>
