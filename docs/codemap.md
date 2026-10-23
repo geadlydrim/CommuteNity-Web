@@ -12,7 +12,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 | Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `guide-geometry.ts`, `guide-map.ts` (`guideMapDataSchema`) |
 | Transfer | `connector` / `connectors` (TS and stored JSON key) |
 | Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `guide-map.ts` |
-| Focus view | `focusMode` prop on `PostCard`; `PostModal`; routes `/p/[id]` and `@modal/(.)p/[id]` |
+| Focus view | `FocusView`; `focus` prop on `PostCard`; `PostModal` (dialog shell taking children); routes `/p/[id]` and `@modal/(.)p/[id]` |
 | Post vote | `post_votes` table, `net_votes` column (catalog votes are the separate `votes` table) |
 | Rider | `user`, `users` table, `currentUserId` |
 | Username | `username`; some code and UI say "handle" |
@@ -27,13 +27,15 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 **Feed** (`/`): `src/app/page.tsx` renders `SignedInHeader` + `PostComposer` for riders (viewer from `getViewer` in `src/lib/identity.ts`) and `PostFeed` for everyone. `PostFeed` (server) calls `listFeedPosts` from `@/lib/posts` (50 public posts with author, comment count, and the viewer's vote in one request) and renders a `PostCard` per post.
 
-**Post card** (`src/components/post-card.tsx`, client): one component owns the whole card: optimistic voting (writes `post_votes`; a trigger maintains `posts.net_votes`), share, the static post-map thumbnail, comments (loaded on expand, inserted with an optional guide), and in focus mode the interactive `FocusMapView`.
+**Post card** (`src/components/post-card.tsx`, **server**): author, `<time>` from `formatPostTime` (`src/lib/format-time.ts`, always Asia/Manila), body, static post-map thumbnail, and an overlay link to `/p/{id}`. Interactive parts are client islands: `PostVoteControls` (optimistic voting; a trigger maintains `posts.net_votes`), `CommentThread` (comments on expand, guide attach; `GuideMapBuilder` loaded with `next/dynamic` only after a signed-in rider opens it), `ShareButton` (a cancelled share does nothing).
 
-**Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `PostModal` → `PostCard focusMode`. A direct load renders `src/app/p/[id]/page.tsx`. Both fetch through `getPostById` in `@/lib/posts`.
+**Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `PostModal` → `FocusView`; a direct load renders `FocusView` from `src/app/p/[id]/page.tsx`, which also emits link-preview metadata. Both fetch through `getPostById` in `@/lib/posts`. The interactive map is `FocusPostMap` in `src/components/map/`, loaded lazily via `LazyFocusPostMap`.
 
-**Posting**: `PostComposer` inserts into `posts` (`user_id` defaults to `auth.uid()` in SQL), optionally with `map_data` from `RouteMapBuilder`, then `router.refresh()`.
+**Posting**: `PostComposer` inserts into `posts` (`user_id` defaults to `auth.uid()` in SQL), optionally with `map_data` from `RouteMapBuilder` (loaded with `next/dynamic` on first open), then `router.refresh()`.
 
-**Profile** (`/u/[username]`): the page reads the rider's `users` row, then their posts with `listPostsByAuthor` from `@/lib/posts` (author attached, not re-joined); `ProfileEditDialog` renders for the owner only, uploads to the `avatars` bucket, then updates `users`.
+**Profile** (`/u/[username]`): the page reads the rider's `users` row, then their posts with `listPostsByAuthor` from `@/lib/posts` (author attached, not re-joined); `ProfileEditDialog` renders for the owner only and replaces photos through `replaceAvatar` in `src/lib/avatars.ts` (upload → update profile → on failure delete the new upload, on success delete the old own-folder photo).
+
+**Session resilience**: both Supabase server clients use `fetchWithTimeout` (`src/lib/supabase/with-timeout.ts`, 5 s, request really cancelled). `getViewer` throws on network/timeout errors so pages can tell "couldn't confirm" from signed out; middleware then passes the request through without touching cookies. Sign-out is a 303 that ends only this device's session. The OAuth callback redirects with relative paths; its error codes live in `src/lib/auth-callback.ts`.
 
 **Sign-in and identity**: `public.users` is the only home of username, display name, and avatar (ADR 0006). Email sign-up checks username availability, then passes `username`/`display_name` as sign-up metadata, which only the `handle_new_user` trigger reads (it lowercases, stores NULL if invalid or taken, defaults display name from the Google name). Google sign-in lands at `src/app/auth/callback/route.ts`, then `/onboarding/username` if `users.username` is NULL. `getViewer` in `src/lib/identity.ts` is the server read of the signed-in rider. Onboarding and profile edit write only `users`.
 
@@ -49,7 +51,7 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 - **Pin and line colors**: hex literals in the builders, static maps, and `post-card.tsx`; mode colors in `MODE_META`.
 - **Username rules**: the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK, and `handle_new_user` re-checks it at sign-up.
 - **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
-- **Limits shared with SQL**: post/comment body 500 and non-blank (`src/lib/schemas/post.ts` ↔ CHECKs), `map_data` ≤ 16 KB (CHECKs in `content_limits`; builders' pin/leg caps keep real maps far below), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`profile-edit-dialog.tsx` ↔ bucket settings in `20261022000000_rider_write_guards.sql`).
+- **Limits shared with SQL**: post/comment body 500 and non-blank (`src/lib/schemas/post.ts` ↔ CHECKs), `map_data` ≤ 16 KB (CHECKs in `content_limits`; builders' pin/leg caps keep real maps far below), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`src/lib/avatars.ts` ↔ bucket settings in `20261022000000_rider_write_guards.sql`), display name ≤ 40 (`profile.ts` ↔ `profile_limits`).
 - **Row types**: generated in `src/lib/supabase/database.types.ts` by `npm run db:types`; regenerate in the same change as any migration.
 
 ## Database
