@@ -23,6 +23,7 @@ export function FocusPostMap({ pins }: { pins: MapPin[] }) {
         className="h-[220px] overflow-hidden rounded-lg sm:h-[320px]"
         interactive
         cooperativeGestures
+        restrictToPhilippines
         showNavigationControl
         initialViewState={fit}
       >

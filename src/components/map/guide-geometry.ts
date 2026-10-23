@@ -33,8 +33,6 @@ export interface MapSegment {
   /** [lng, lat] pairs */
   coords: [number, number][];
   color: string;
-  /** true = dashed (connector transfer); false = solid (leg segment) */
-  dashed: boolean;
 }
 
 /** One solid-line segment per leg, colored by transport mode. */
@@ -45,7 +43,6 @@ export function legSegments(legs: GuideLeg[]): MapSegment[] {
       [l.destination.lng, l.destination.lat],
     ],
     color: MODE_META[l.mode].color,
-    dashed: false,
   }));
 }
 
@@ -67,7 +64,6 @@ export function connectorSegments(
         [toPin.lng, toPin.lat],
       ],
       color: MODE_META[c.mode].color,
-      dashed: true,
     }];
   });
 }

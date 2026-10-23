@@ -7,24 +7,15 @@
  *
  * Same-type connections (origin↔origin / destination↔destination) are
  * prevented by UI construction. Chain integrity is validated on save.
+ * Placement, labeling, and the camera come from the shared map-editing core
+ * (`useMapEditor`); this file keeps only the legs-and-transfers shape.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  MapPin as MapPinIcon,
-  Plus,
-  X,
-  Trash2,
-} from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { Plus, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { reverseGeocode } from "@/lib/geo";
+import type { GeocodeResult } from "@/lib/geo";
+import { PIN_COLORS, modeColor } from "@/lib/map/colors";
 import { ENABLED_MODES, MODE_META, type TransportMode } from "@/lib/schemas/modes";
 import {
   CURRENT_GUIDE_VERSION,
@@ -35,33 +26,21 @@ import {
 } from "@/lib/schemas/guide-map";
 import { guideChainStatus } from "@/lib/schemas/guide-chain";
 import { pinSchema } from "@/lib/schemas/post-map";
-import {
-  MapView,
-  Marker,
-  Source,
-  Layer,
-  type MapLayerMouseEvent,
-  type MapRef,
-} from "./primitives";
-import { guideMapFit, legSegments, connectorSegments } from "./guide-geometry";
-import { LocationSearch } from "./location-search";
+import { MapView, Marker, Source, Layer } from "./primitives";
+import { legSegments, connectorSegments } from "./guide-geometry";
+import { BuilderShell } from "./builder-shell";
+import { SlotFields } from "./slot-fields";
+import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
+import { useMapEditor, useOpenSession } from "./use-map-editor";
 
 // ---------------------------------------------------------------------------
 // Internal builder types
 // ---------------------------------------------------------------------------
 
-interface BuilderSlot {
-  lat: number | null;
-  lng: number | null;
-  label: string;
-  sublabel: string;
-}
-
+/** A leg's shape; its two end pins are editor slots keyed by `endKey`. */
 interface BuilderLeg {
   id: string;
   mode: TransportMode;
-  origin: BuilderSlot;
-  destination: BuilderSlot;
 }
 
 interface BuilderConnector {
@@ -73,50 +52,100 @@ interface BuilderConnector {
   toLegId: string;
 }
 
-/** Which leg-end the next map-click / drag should fill. */
-interface ActiveEnd {
-  legId: string;
-  end: "origin" | "destination";
-}
+type LegEnd = "origin" | "destination";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function emptySlot(): BuilderSlot {
-  return { lat: null, lng: null, label: "", sublabel: "" };
+const MAX_LEGS = 8;
+
+/** Editor slot key of one end of a leg. */
+function endKey(legId: string, end: LegEnd): string {
+  return `${legId}:${end}`;
 }
 
 function newLeg(): BuilderLeg {
+  return { id: crypto.randomUUID(), mode: "jeepney" };
+}
+
+function emptyEnds(legId: string): SeedSlot[] {
+  return [
+    { key: endKey(legId, "origin"), pin: null },
+    { key: endKey(legId, "destination"), pin: null },
+  ];
+}
+
+/** The saved guide's legs, transfers, and pins, or one empty leg. */
+function seedGuide(initialValue: GuideMapData | null): {
+  legs: BuilderLeg[];
+  connectors: BuilderConnector[];
+  slots: SeedSlot[];
+} {
+  if (!initialValue || initialValue.legs.length < 1) {
+    const leg = newLeg();
+    return { legs: [leg], connectors: [], slots: emptyEnds(leg.id) };
+  }
   return {
-    id: crypto.randomUUID(),
-    mode: "jeepney",
-    origin: emptySlot(),
-    destination: emptySlot(),
+    legs: initialValue.legs.map((l) => ({ id: l.id, mode: l.mode })),
+    connectors: (initialValue.connectors ?? []).map((c) => ({
+      id: c.id,
+      mode: c.mode,
+      fromLegId: c.from.legId,
+      toLegId: c.to.legId,
+    })),
+    slots: initialValue.legs.flatMap((l) => [
+      { key: endKey(l.id, "origin"), pin: l.origin },
+      { key: endKey(l.id, "destination"), pin: l.destination },
+    ]),
   };
 }
 
-function slotHasCoords(s: BuilderSlot): s is BuilderSlot & { lat: number; lng: number } {
-  return s.lat !== null && s.lng !== null;
-}
-
-function clampLabel(s: string): string {
-  return s.trim().slice(0, 120);
-}
-
-/** Convert a BuilderSlot to a valid pin (throws if no coords). */
-function slotToPin(s: BuilderSlot & { lat: number; lng: number }) {
+function toTransfer(c: BuilderConnector): GuideConnector {
   return {
-    lat: s.lat,
-    lng: s.lng,
-    label: clampLabel(s.label) || `${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}`,
-    sublabel: clampLabel(s.sublabel) || undefined,
+    id: c.id,
+    mode: c.mode,
+    from: { legId: c.fromLegId, end: "destination" },
+    to: { legId: c.toLegId, end: "origin" },
   };
 }
 
-/** Origin = green, destination = red (consistent with commuter map). */
-const ORIGIN_COLOR = "#22c55e";
-const DEST_COLOR = "#ef4444";
+type BuiltGuide = { ok: true; data: GuideMapData } | { ok: false; message: string };
+
+/** The guide document Save writes, or the first problem (also the Save hint). */
+function buildGuide(
+  legs: BuilderLeg[],
+  connectors: BuilderConnector[],
+  slotOf: (key: string) => EditorSlot
+): BuiltGuide {
+  const endPin = (legId: string, end: LegEnd) => {
+    const slot = slotOf(endKey(legId, end));
+    const parsed = pinSchema.safeParse(isPlaced(slot) ? slotToPin(slot) : {});
+    return parsed.success ? parsed.data : null;
+  };
+  const chainLegs = legs.map((l) => ({
+    id: l.id,
+    mode: l.mode,
+    origin: endPin(l.id, "origin"),
+    destination: endPin(l.id, "destination"),
+  }));
+  const transfers = connectors.map(toTransfer);
+
+  // Same rule the guide schema refines with, so the hint and Save agree.
+  const chain = guideChainStatus(chainLegs, transfers);
+  if (!chain.ok) return { ok: false, message: chain.message };
+
+  const result = guideMapDataSchema.safeParse({
+    version: CURRENT_GUIDE_VERSION,
+    kind: "guide" as const,
+    legs: chainLegs,
+    connectors: transfers,
+  });
+  if (!result.success) {
+    return { ok: false, message: result.error.issues[0]?.message ?? "This guide isn't complete yet." };
+  }
+  return { ok: true, data: result.data };
+}
 
 // ---------------------------------------------------------------------------
 // Props
@@ -133,99 +162,37 @@ interface Props {
 // Component
 // ---------------------------------------------------------------------------
 
-export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Props) {
-  const [legs, setLegs] = useState<BuilderLeg[]>([newLeg()]);
-  const [connectors, setConnectors] = useState<BuilderConnector[]>([]);
-  const [activeEnd, setActiveEnd] = useState<ActiveEnd | null>(null);
-  const mapRef = useRef<MapRef | null>(null);
+export function GuideMapBuilder(props: Props) {
+  // A fresh editor on every open, seeded from the current initialValue.
+  const session = useOpenSession(props.open);
+  return <GuideMapEditor key={session} {...props} />;
+}
 
-  // Seed from initialValue when dialog opens
-  useEffect(() => {
-    if (!open) return;
-    if (initialValue && initialValue.legs.length >= 1) {
-      setLegs(
-        initialValue.legs.map((l) => ({
-          id: l.id,
-          mode: l.mode,
-          origin: { lat: l.origin.lat, lng: l.origin.lng, label: l.origin.label, sublabel: l.origin.sublabel ?? "" },
-          destination: { lat: l.destination.lat, lng: l.destination.lng, label: l.destination.label, sublabel: l.destination.sublabel ?? "" },
-        }))
-      );
-      setConnectors(
-        (initialValue.connectors ?? []).map((c) => ({
-          id: c.id,
-          mode: c.mode,
-          fromLegId: c.from.legId,
-          toLegId: c.to.legId,
-        }))
-      );
-    } else {
-      setLegs([newLeg()]);
-      setConnectors([]);
-    }
-  }, [open, initialValue]);
-
-  // Default active end to the first empty slot
-  useEffect(() => {
-    if (!open) return;
-    setActiveEnd((prev) => {
-      if (prev) {
-        const leg = legs.find((l) => l.id === prev.legId);
-        if (leg) return prev;
-      }
-      for (const l of legs) {
-        if (!slotHasCoords(l.origin)) return { legId: l.id, end: "origin" };
-        if (!slotHasCoords(l.destination)) return { legId: l.id, end: "destination" };
-      }
-      return legs[0] ? { legId: legs[0].id, end: "origin" } : null;
-    });
-  }, [open, legs]);
-
-  // --- Slot mutations ---
-
-  const setEndLocation = useCallback(
-    (legId: string, end: "origin" | "destination", slot: Partial<BuilderSlot>) => {
-      setLegs((prev) =>
-        prev.map((l) =>
-          l.id === legId ? { ...l, [end]: { ...l[end], ...slot } } : l
-        )
-      );
-    },
-    []
+function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
+  const [seed] = useState(() => seedGuide(initialValue));
+  const [legs, setLegs] = useState<BuilderLeg[]>(seed.legs);
+  const [connectors, setConnectors] = useState<BuilderConnector[]>(seed.connectors);
+  const order = useMemo(
+    () => legs.flatMap((l) => [endKey(l.id, "origin"), endKey(l.id, "destination")]),
+    [legs]
   );
+  const editor = useMapEditor({ initialSlots: seed.slots, order });
 
-  const setEndWithReverse = useCallback(
-    async (legId: string, end: "origin" | "destination", lat: number, lng: number) => {
-      setEndLocation(legId, end, { lat, lng, label: "Locating…", sublabel: "" });
-      let label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      let sublabel = "";
-      try {
-        const r = await reverseGeocode(lat, lng);
-        label = clampLabel(r.displayName);
-        sublabel = clampLabel(r.secondaryName ?? "");
-      } catch {
-        // keep coordinate fallback
-      }
-      setLegs((prev) =>
-        prev.map((l) =>
-          l.id === legId && l[end].label === "Locating…"
-            ? { ...l, [end]: { ...l[end], label, sublabel } }
-            : l
-        )
-      );
-    },
-    [setEndLocation]
-  );
+  // --- Leg mutations ---
 
   function setLegMode(legId: string, mode: TransportMode) {
     setLegs((prev) => prev.map((l) => (l.id === legId ? { ...l, mode } : l)));
   }
 
   function addLeg() {
-    if (legs.length >= 8) { toast.error("Maximum 8 legs."); return; }
+    if (legs.length >= MAX_LEGS) {
+      toast.error(`Maximum ${MAX_LEGS} legs.`);
+      return;
+    }
     const leg = newLeg();
     setLegs((prev) => [...prev, leg]);
-    setActiveEnd({ legId: leg.id, end: "origin" });
+    editor.addSlots([endKey(leg.id, "origin"), endKey(leg.id, "destination")]);
+    editor.select(endKey(leg.id, "origin"));
   }
 
   function removeLeg(legId: string) {
@@ -233,36 +200,7 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     setConnectors((prev) =>
       prev.filter((c) => c.fromLegId !== legId && c.toLegId !== legId)
     );
-  }
-
-  // --- Map interactions ---
-
-  const handleMapClick = useCallback(
-    (e: MapLayerMouseEvent) => {
-      const { lat, lng } = e.lngLat;
-      if (!activeEnd) return;
-      void setEndWithReverse(activeEnd.legId, activeEnd.end, lat, lng);
-    },
-    [activeEnd, setEndWithReverse]
-  );
-
-  function handleDragEnd(
-    legId: string,
-    end: "origin" | "destination",
-    lngLat: { lng: number; lat: number }
-  ) {
-    void setEndWithReverse(legId, end, lngLat.lat, lngLat.lng);
-  }
-
-  function handlePick(legId: string, end: "origin" | "destination", r: import("@/lib/geo/types").GeocodeResult) {
-    setEndLocation(legId, end, {
-      lat: r.lat,
-      lng: r.lon,
-      label: clampLabel(r.displayName),
-      sublabel: clampLabel(r.secondaryName ?? ""),
-    });
-    setActiveEnd({ legId, end });
-    mapRef.current?.flyTo({ center: [r.lon, r.lat], zoom: 14, duration: 800 });
+    editor.removeSlots([endKey(legId, "origin"), endKey(legId, "destination")]);
   }
 
   // --- Connectors ---
@@ -284,45 +222,8 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
 
   // --- Save ---
 
-  function buildGuide():
-    | { ok: true; data: GuideMapData }
-    | { ok: false; message: string } {
-    const chainLegs = legs.map((l) => {
-      const op = pinSchema.safeParse(slotHasCoords(l.origin) ? slotToPin(l.origin as BuilderSlot & { lat: number; lng: number }) : {});
-      const dp = pinSchema.safeParse(slotHasCoords(l.destination) ? slotToPin(l.destination as BuilderSlot & { lat: number; lng: number }) : {});
-      return {
-        id: l.id,
-        mode: l.mode,
-        origin: op.success ? op.data : null,
-        destination: dp.success ? dp.data : null,
-      };
-    });
-    const transfers = connectors.map((c) => ({
-      id: c.id,
-      mode: c.mode,
-      from: { legId: c.fromLegId, end: "destination" as const },
-      to: { legId: c.toLegId, end: "origin" as const },
-    }));
-
-    // Same rule the guide schema refines with, so the hint and Save agree.
-    const chain = guideChainStatus(chainLegs, transfers);
-    if (!chain.ok) return { ok: false, message: chain.message };
-
-    const payload = {
-      version: CURRENT_GUIDE_VERSION,
-      kind: "guide" as const,
-      legs: chainLegs,
-      connectors: transfers,
-    };
-
-    const result = guideMapDataSchema.safeParse(payload);
-    if (!result.success) {
-      return { ok: false, message: result.error.issues[0]?.message ?? "This guide isn't complete yet." };
-    }
-    return { ok: true, data: result.data };
-  }
-
-  const built = buildGuide();
+  const { slot } = editor;
+  const built = useMemo(() => buildGuide(legs, connectors, slot), [legs, connectors, slot]);
 
   function handleSave() {
     if (!built.ok) {
@@ -335,197 +236,174 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
 
   // --- Map preview data ---
 
-  const validLegs: GuideLeg[] = legs
-    .filter((l) => slotHasCoords(l.origin) && slotHasCoords(l.destination))
-    .map((l) => ({
-      id: l.id,
-      mode: l.mode,
-      origin: slotToPin(l.origin as BuilderSlot & { lat: number; lng: number }),
-      destination: slotToPin(l.destination as BuilderSlot & { lat: number; lng: number }),
-    }));
-
-  const validConnectors: GuideConnector[] = connectors
-    .filter((c) =>
-      validLegs.some((l) => l.id === c.fromLegId) &&
-      validLegs.some((l) => l.id === c.toLegId)
-    )
-    .map((c) => ({
-      id: c.id,
-      mode: c.mode,
-      from: { legId: c.fromLegId, end: "destination" as const },
-      to: { legId: c.toLegId, end: "origin" as const },
-    }));
-
-  const allLegSegs = validLegs.length > 0 ? legSegments(validLegs) : [];
-  const allConnSegs = connectorSegments(validLegs, validConnectors);
-  const fitView = validLegs.length > 0 ? guideMapFit(validLegs, 560, 420) : undefined;
-  const canSave = built.ok;
+  const preview = useMemo(() => {
+    const validLegs: GuideLeg[] = legs.flatMap((l) => {
+      const origin = slot(endKey(l.id, "origin"));
+      const destination = slot(endKey(l.id, "destination"));
+      return isPlaced(origin) && isPlaced(destination)
+        ? [{ id: l.id, mode: l.mode, origin: slotToPin(origin), destination: slotToPin(destination) }]
+        : [];
+    });
+    const placedIds = new Set(validLegs.map((l) => l.id));
+    const validConnectors = connectors.filter(
+      (c) => placedIds.has(c.fromLegId) && placedIds.has(c.toLegId)
+    );
+    return {
+      legs: validLegs,
+      legLines: validLegs.flatMap((l) => legSegments([l]).map((seg) => ({ id: l.id, seg }))),
+      transferLines: validConnectors.flatMap((c) =>
+        connectorSegments(validLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
+      ),
+    };
+  }, [legs, connectors, slot]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="flex min-h-0 flex-col gap-0 overflow-hidden p-0 inset-0 h-auto max-h-none w-full max-w-none translate-x-0 translate-y-0 rounded-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[min(80vh,720px)] sm:max-h-[90vh] sm:w-[92vw] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl"
-        showCloseButton={false}
-      >
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {/* Header */}
-          <DialogHeader className="shrink-0 border-b px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
-            <DialogTitle className="flex items-center gap-2">
-              <MapPinIcon className="h-4 w-4" />
-              Add guide route
-            </DialogTitle>
-            <p className="text-xs text-muted-foreground">
-              Add legs (origin → destination + mode). Connect legs via transfer connectors to build the full route.
-            </p>
-          </DialogHeader>
-
-          {/* Body: one scroll on mobile (map + legs); side-by-side on md+ */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] md:flex-row md:overflow-hidden">
-            {/* Map */}
-            <div className="h-[38vh] shrink-0 md:h-auto md:min-h-0 md:flex-1">
-              <MapView
-                mapRef={mapRef}
-                className="h-full w-full rounded-none"
-                onClick={handleMapClick}
-                interactive
-                cooperativeGestures
-                showNavigationControl
-                initialViewState={fitView ?? undefined}
-              >
-                {/* Leg lines */}
-                {allLegSegs.map((seg, i) => (
-                  <Source
-                    key={`leg-src-${i}`}
-                    id={`leg-line-${i}`}
-                    type="geojson"
-                    data={{
-                      type: "Feature",
-                      geometry: { type: "LineString", coordinates: seg.coords },
-                      properties: {},
-                    }}
-                  >
-                    <Layer
-                      id={`leg-line-layer-${i}`}
-                      type="line"
-                      paint={{ "line-color": seg.color, "line-width": 3, "line-opacity": 0.9 }}
-                      layout={{ "line-join": "round", "line-cap": "round" }}
-                    />
-                  </Source>
-                ))}
-                {/* Connector lines — dashed */}
-                {allConnSegs.map((seg, i) => (
-                  <Source
-                    key={`conn-src-${i}`}
-                    id={`conn-line-${i}`}
-                    type="geojson"
-                    data={{
-                      type: "Feature",
-                      geometry: { type: "LineString", coordinates: seg.coords },
-                      properties: {},
-                    }}
-                  >
-                    <Layer
-                      id={`conn-line-layer-${i}`}
-                      type="line"
-                      paint={{
-                        "line-color": seg.color,
-                        "line-width": 2,
-                        "line-opacity": 0.75,
-                        "line-dasharray": [2, 2],
-                      }}
-                      layout={{ "line-join": "round", "line-cap": "round" }}
-                    />
-                  </Source>
-                ))}
-                {/* Markers */}
-                {validLegs.map((l) => (
-                  <span key={l.id}>
-                    <Marker
-                      longitude={l.origin.lng}
-                      latitude={l.origin.lat}
-                      color={ORIGIN_COLOR}
-                      draggable
-                      onDragEnd={(e) => handleDragEnd(l.id, "origin", e.lngLat)}
-                    />
-                    <Marker
-                      longitude={l.destination.lng}
-                      latitude={l.destination.lat}
-                      color={DEST_COLOR}
-                      draggable
-                      onDragEnd={(e) => handleDragEnd(l.id, "destination", e.lngLat)}
-                    />
-                  </span>
-                ))}
-              </MapView>
-            </div>
-
-            {/* Sidebar */}
-            <div className="flex min-h-0 flex-col border-t bg-background md:w-80 md:flex-none md:overflow-hidden md:border-t-0 md:border-l">
-              <div className="space-y-0 p-2 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-contain">
-
-                {/* Interleaved leg cards + connector slots */}
-                {legs.map((leg, i) => (
-                  <div key={leg.id}>
-                    <LegCard
-                      leg={leg}
-                      index={i}
-                      activeEnd={activeEnd}
-                      onActivate={(end) => setActiveEnd({ legId: leg.id, end })}
-                      onPick={(end, r) => handlePick(leg.id, end, r)}
-                      onLabelChange={(end, v) =>
-                        setEndLocation(leg.id, end, { label: v })
-                      }
-                      onModeChange={(m) => setLegMode(leg.id, m)}
-                      onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
-                    />
-                    {/* Connector slot between this leg and the next */}
-                    {legs[i + 1] && (
-                      <ConnectorSlot
-                        connector={connectors.find(
-                          (c) => c.fromLegId === leg.id && c.toLegId === legs[i + 1]?.id
-                        )}
-                        onAdd={(mode) => {
-                          const next = legs[i + 1];
-                          if (next) addConnector(leg.id, next.id, mode);
-                        }}
-                        onRemove={(id) => removeConnector(id)}
-                        onModeChange={(id, mode) => updateConnectorMode(id, mode)}
-                      />
+    <BuilderShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Add guide route"
+      description="Add legs (origin → destination + mode). Connect legs via transfer connectors to build the full route."
+      saveLabel="Save guide route"
+      canSave={built.ok}
+      hint={built.ok ? null : built.message}
+      onSave={handleSave}
+      map={
+        <MapView
+          mapRef={editor.mapRef}
+          className="h-full w-full rounded-none"
+          onClick={editor.onMapClick}
+          onLoad={editor.onMapLoad}
+          interactive
+          cooperativeGestures
+          restrictToPhilippines
+          showNavigationControl
+          initialViewState={editor.initialViewState}
+        >
+          {/* Leg lines */}
+          {preview.legLines.map(({ id, seg }) => (
+            <Source
+              key={`leg-src-${id}`}
+              id={`leg-line-${id}`}
+              type="geojson"
+              data={{
+                type: "Feature",
+                geometry: { type: "LineString", coordinates: seg.coords },
+                properties: {},
+              }}
+            >
+              <Layer
+                id={`leg-line-layer-${id}`}
+                type="line"
+                paint={{ "line-color": seg.color, "line-width": 3, "line-opacity": 0.9 }}
+                layout={{ "line-join": "round", "line-cap": "round" }}
+              />
+            </Source>
+          ))}
+          {/* Transfer lines — dashed */}
+          {preview.transferLines.map(({ id, seg }) => (
+            <Source
+              key={`transfer-src-${id}`}
+              id={`transfer-line-${id}`}
+              type="geojson"
+              data={{
+                type: "Feature",
+                geometry: { type: "LineString", coordinates: seg.coords },
+                properties: {},
+              }}
+            >
+              <Layer
+                id={`transfer-line-layer-${id}`}
+                type="line"
+                paint={{
+                  "line-color": seg.color,
+                  "line-width": 2,
+                  "line-opacity": 0.75,
+                  "line-dasharray": [2, 2],
+                }}
+                layout={{ "line-join": "round", "line-cap": "round" }}
+              />
+            </Source>
+          ))}
+          {/* Markers */}
+          {preview.legs.map((l) => (
+            <Fragment key={l.id}>
+              <Marker
+                longitude={l.origin.lng}
+                latitude={l.origin.lat}
+                color={PIN_COLORS.origin}
+                draggable
+                onDragEnd={(e) => {
+                  editor.placeAt(endKey(l.id, "origin"), e.lngLat.lat, e.lngLat.lng);
+                }}
+              />
+              <Marker
+                longitude={l.destination.lng}
+                latitude={l.destination.lat}
+                color={PIN_COLORS.destination}
+                draggable
+                onDragEnd={(e) => {
+                  editor.placeAt(endKey(l.id, "destination"), e.lngLat.lat, e.lngLat.lng);
+                }}
+              />
+            </Fragment>
+          ))}
+        </MapView>
+      }
+      panel={
+        <>
+          {/* Interleaved leg cards + connector slots */}
+          {legs.map((leg, i) => {
+            const next = legs[i + 1];
+            return (
+              <div key={leg.id}>
+                <LegCard
+                  leg={leg}
+                  index={i}
+                  origin={slot(endKey(leg.id, "origin"))}
+                  destination={slot(endKey(leg.id, "destination"))}
+                  activeEnd={
+                    editor.activeKey === endKey(leg.id, "origin")
+                      ? "origin"
+                      : editor.activeKey === endKey(leg.id, "destination")
+                        ? "destination"
+                        : null
+                  }
+                  onActivate={(end) => editor.select(endKey(leg.id, end))}
+                  onPick={(end, r) => editor.pick(endKey(leg.id, end), r)}
+                  onLabelChange={(end, v) => editor.setLabel(endKey(leg.id, end), v)}
+                  onModeChange={(m) => setLegMode(leg.id, m)}
+                  onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
+                />
+                {/* Connector slot between this leg and the next */}
+                {next && (
+                  <ConnectorSlot
+                    connector={connectors.find(
+                      (c) => c.fromLegId === leg.id && c.toLegId === next.id
                     )}
-                  </div>
-                ))}
-
-                {/* Add leg */}
-                {legs.length < 8 && (
-                  <div className="pt-2">
-                    <button
-                      onClick={addLeg}
-                      className="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed py-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Add leg
-                    </button>
-                  </div>
+                    onAdd={(mode) => addConnector(leg.id, next.id, mode)}
+                    onRemove={(id) => removeConnector(id)}
+                    onModeChange={(id, mode) => updateConnectorMode(id, mode)}
+                  />
                 )}
               </div>
-            </div>
-          </div>
+            );
+          })}
 
-          {/* Footer */}
-          <div className="flex shrink-0 items-center justify-end gap-2 border-t bg-muted/50 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            {!built.ok && (
-              <p className="mr-auto min-w-0 text-xs text-muted-foreground">{built.message}</p>
-            )}
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={!canSave}>
-              Save guide route
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Add leg */}
+          {legs.length < MAX_LEGS && (
+            <div className="pt-2">
+              <button
+                onClick={addLeg}
+                className="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed py-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add leg
+              </button>
+            </div>
+          )}
+        </>
+      }
+    />
   );
 }
 
@@ -568,7 +446,7 @@ function ConnectorSlot({ connector, onAdd, onRemove, onModeChange }: ConnectorSl
                 )}
                 style={
                   active
-                    ? { backgroundColor: MODE_META[m].color, borderColor: MODE_META[m].color }
+                    ? { backgroundColor: modeColor(m), borderColor: modeColor(m) }
                     : {}
                 }
               >
@@ -598,10 +476,13 @@ function ConnectorSlot({ connector, onAdd, onRemove, onModeChange }: ConnectorSl
 interface LegCardProps {
   leg: BuilderLeg;
   index: number;
-  activeEnd: ActiveEnd | null;
-  onActivate: (end: "origin" | "destination") => void;
-  onPick: (end: "origin" | "destination", r: import("@/lib/geo/types").GeocodeResult) => void;
-  onLabelChange: (end: "origin" | "destination", value: string) => void;
+  origin: EditorSlot;
+  destination: EditorSlot;
+  /** Which of this leg's ends the next map click fills, if any. */
+  activeEnd: LegEnd | null;
+  onActivate: (end: LegEnd) => void;
+  onPick: (end: LegEnd, r: GeocodeResult) => void;
+  onLabelChange: (end: LegEnd, value: string) => void;
   onModeChange: (mode: TransportMode) => void;
   onRemove?: () => void;
 }
@@ -609,6 +490,8 @@ interface LegCardProps {
 function LegCard({
   leg,
   index,
+  origin,
+  destination,
   activeEnd,
   onActivate,
   onPick,
@@ -647,7 +530,7 @@ function LegCard({
                 ? "text-white border-transparent"
                 : "bg-background text-muted-foreground hover:text-foreground"
             )}
-            style={leg.mode === m ? { backgroundColor: MODE_META[m].color, borderColor: MODE_META[m].color } : {}}
+            style={leg.mode === m ? { backgroundColor: modeColor(m), borderColor: modeColor(m) } : {}}
           >
             {MODE_META[m].label}
           </button>
@@ -657,9 +540,9 @@ function LegCard({
       {/* Origin */}
       <EndRow
         label="Origin"
-        color="#22c55e"
-        slot={leg.origin}
-        isActive={activeEnd?.legId === leg.id && activeEnd.end === "origin"}
+        color={PIN_COLORS.origin}
+        slot={origin}
+        isActive={activeEnd === "origin"}
         onActivate={() => onActivate("origin")}
         onPick={(r) => onPick("origin", r)}
         onLabelChange={(v) => onLabelChange("origin", v)}
@@ -668,9 +551,9 @@ function LegCard({
       {/* Destination */}
       <EndRow
         label="Destination"
-        color="#ef4444"
-        slot={leg.destination}
-        isActive={activeEnd?.legId === leg.id && activeEnd.end === "destination"}
+        color={PIN_COLORS.destination}
+        slot={destination}
+        isActive={activeEnd === "destination"}
         onActivate={() => onActivate("destination")}
         onPick={(r) => onPick("destination", r)}
         onLabelChange={(v) => onLabelChange("destination", v)}
@@ -686,15 +569,14 @@ function LegCard({
 interface EndRowProps {
   label: string;
   color: string;
-  slot: BuilderSlot;
+  slot: EditorSlot;
   isActive: boolean;
   onActivate: () => void;
-  onPick: (r: import("@/lib/geo/types").GeocodeResult) => void;
+  onPick: (r: GeocodeResult) => void;
   onLabelChange: (v: string) => void;
 }
 
 function EndRow({ label, color, slot, isActive, onActivate, onPick, onLabelChange }: EndRowProps) {
-  const placed = slotHasCoords(slot);
   return (
     <div
       onClick={onActivate}
@@ -714,40 +596,13 @@ function EndRow({ label, color, slot, isActive, onActivate, onPick, onLabelChang
         </span>
       </div>
 
-      {/* Search */}
-      <div onClick={(e) => e.stopPropagation()}>
-        <LocationSearch
-          placeholder={`Search ${label.toLowerCase()}…`}
-          onPick={onPick}
-          onFocus={onActivate}
-        />
-      </div>
-
-      {/* Placed pin info */}
-      {placed ? (
-        <>
-          <input
-            value={slot.label}
-            onChange={(e) => onLabelChange(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            placeholder="Place name…"
-            maxLength={120}
-            className="w-full rounded border bg-background px-2 py-1 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-          {slot.sublabel && (
-            <p className="text-[10px] text-muted-foreground leading-tight px-0.5">
-              {slot.sublabel}
-            </p>
-          )}
-          <p className="text-[10px] text-muted-foreground tabular-nums">
-            {slot.lat!.toFixed(5)}, {slot.lng!.toFixed(5)}
-          </p>
-        </>
-      ) : (
-        <p className="text-[10px] text-muted-foreground italic">
-          Not set — search above or click the map.
-        </p>
-      )}
+      <SlotFields
+        slot={slot}
+        role={label}
+        onSelect={onActivate}
+        onPick={onPick}
+        onLabelChange={onLabelChange}
+      />
     </div>
   );
 }
