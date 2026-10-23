@@ -12,7 +12,7 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const handle = username.toLowerCase();
+  const requestedUsername = username.toLowerCase();
 
   const supabase = await createClient();
 
@@ -20,7 +20,7 @@ export default async function ProfilePage({
     supabase
       .from("users")
       .select("id, username, display_name, avatar_url, username_changed_at")
-      .eq("username", handle)
+      .eq("username", requestedUsername)
       .maybeSingle(),
     supabase.auth.getUser(),
   ]);

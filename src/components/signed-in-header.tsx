@@ -38,7 +38,7 @@ export function SignedInHeader({
             </Link>
           ) : (
             <span className="hidden text-sm text-muted-foreground sm:inline">
-              No handle set
+              No username set
             </span>
           )}
           <ThemeToggle />

@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const title = `${excerpt(post.body, 60)} · CommuteNity`;
   const name = post.author?.display_name ?? null;
-  const handle = post.author?.username ? `@${post.author.username}` : null;
-  const by = name && handle ? `${name} (${handle})` : (name ?? handle ?? "A rider");
+  const authorTag = post.author?.username ? `@${post.author.username}` : null;
+  const by = name && authorTag ? `${name} (${authorTag})` : (name ?? authorTag ?? "A rider");
   const description = `${by}: ${excerpt(post.body, 160)}`;
 
   return {

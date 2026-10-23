@@ -8,7 +8,7 @@ import { DialogPortal, DialogOverlay, DialogTitle } from "@/components/ui/dialog
 import { Button } from "@/components/ui/button";
 
 /** Dialog shell for the intercepted focus view; closing goes back to the feed. */
-export function PostModal({ children }: { children: ReactNode }) {
+export function FocusViewDialog({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   return (
