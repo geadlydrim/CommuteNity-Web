@@ -11,11 +11,13 @@ async function postAs(session: Session, riderId: string): Promise<string> {
     "insert into public.posts (body) values ('Sakay ka sa Cubao terminal') returning id",
   );
   await session.rows("commit");
+  if (!post) throw new Error("post insert returned no row");
   return post.id;
 }
 
 async function voteTotal(fx: CommittedFixtures, postId: string): Promise<number> {
   const [post] = await fx.rows<{ net_votes: number }>("select net_votes from public.posts where id = $1", [postId]);
+  if (!post) throw new Error(`post ${postId} not found`);
   return post.net_votes;
 }
 

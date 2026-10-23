@@ -101,7 +101,9 @@ async function insertRider(client: ClientBase, username: string): Promise<string
      returning id`,
     [`${username}@test.commutenity.invalid`, username],
   );
-  return rows[0].id;
+  const row = rows[0];
+  if (!row) throw new Error(`creating rider ${username} returned no row`);
+  return row.id;
 }
 
 /** Transaction-local: the caller must be inside `begin`. */
@@ -166,7 +168,9 @@ async function connect(): Promise<{ client: Client; pid: number }> {
   try {
     for (const sql of SESSION_LIMITS) await client.query(sql);
     const { rows } = await client.query<{ pid: number }>("select pg_backend_pid() as pid");
-    return { client, pid: rows[0].pid };
+    const row = rows[0];
+    if (!row) throw new Error("pg_backend_pid() returned no row");
+    return { client, pid: row.pid };
   } catch (err) {
     await client.end().catch(() => {});
     throw err;
@@ -211,7 +215,7 @@ export async function withCommittedFixtures(fn: (fx: CommittedFixtures) => Promi
           "select cardinality(pg_blocking_pids($1)) > 0 as blocked",
           [session.pid],
         );
-        if (rows[0].blocked) return;
+        if (rows[0]?.blocked) return;
         if (Date.now() > deadline) throw new Error(`session ${session.pid} never waited on a lock`);
         await sleep(25);
       }

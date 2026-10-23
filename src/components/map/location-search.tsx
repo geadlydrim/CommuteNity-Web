@@ -143,7 +143,8 @@ export function LocationSearch({ placeholder = "Search location…", onPick, onF
       case "Enter": {
         // Never submit a surrounding form from the search box.
         e.preventDefault();
-        if (isOpen && activeIndex >= 0 && activeIndex < results.length) pick(results[activeIndex]);
+        const picked = results[activeIndex];
+        if (isOpen && picked) pick(picked);
         return;
       }
       case "Escape": {

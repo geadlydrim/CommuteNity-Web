@@ -9,9 +9,11 @@ npm run dev          # dev server on http://localhost:3000 (Turbopack)
 npm run build        # production build (fetches Google Fonts; needs network)
 npm run lint         # ESLint
 npm run typecheck    # TypeScript check without emitting files
+npm test             # Vitest: unit, route-handler, and database tests (see docs/codemap.md → Tests)
+npm run db:types     # regenerate src/lib/supabase/database.types.ts from SUPABASE_DB_URL; run after every migration
 ```
 
-No test suite yet.
+`database.types.ts` is generated; never hand-edit it.
 
 ## Read first
 

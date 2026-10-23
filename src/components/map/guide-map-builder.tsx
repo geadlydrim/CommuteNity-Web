@@ -300,7 +300,9 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
     }
 
     for (let i = 0; i < legs.length - 1; i++) {
-      const linked = connectors.some((c) => c.fromLegId === legs[i].id && c.toLegId === legs[i + 1].id);
+      const from = legs[i];
+      const to = legs[i + 1];
+      const linked = !!from && !!to && connectors.some((c) => c.fromLegId === from.id && c.toLegId === to.id);
       if (!linked) {
         return { ok: false, message: `Add a transfer between legs ${i + 1} and ${i + 2}.` };
       }
@@ -482,12 +484,15 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
                       onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
                     />
                     {/* Connector slot between this leg and the next */}
-                    {i < legs.length - 1 && (
+                    {legs[i + 1] && (
                       <ConnectorSlot
                         connector={connectors.find(
-                          (c) => c.fromLegId === leg.id && c.toLegId === legs[i + 1].id
+                          (c) => c.fromLegId === leg.id && c.toLegId === legs[i + 1]?.id
                         )}
-                        onAdd={(mode) => addConnector(leg.id, legs[i + 1].id, mode)}
+                        onAdd={(mode) => {
+                          const next = legs[i + 1];
+                          if (next) addConnector(leg.id, next.id, mode);
+                        }}
                         onRemove={(id) => removeConnector(id)}
                         onModeChange={(id, mode) => updateConnectorMode(id, mode)}
                       />
