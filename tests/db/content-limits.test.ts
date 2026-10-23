@@ -58,6 +58,40 @@ describe.skipIf(!hasDb)("content limits", () => {
       expect(res).toMatchObject({ ok: false, code: CHECK_VIOLATION });
     }));
 
+  const unicodeBlanks = [
+    { name: "vertical tab", body: "\u000b" },
+    { name: "form feed", body: "\u000c" },
+    { name: "non-breaking and ideographic spaces", body: "\u00a0\u3000" },
+  ];
+
+  it.each(unicodeBlanks)("rejects a post whose body is only $name", ({ body }) =>
+    withRollback(async (db) => {
+      const rider = await db.createRider("unicode_blank_poster");
+      await db.actAs(rider);
+
+      const res = await db.run(insertPost, [body, null]);
+      expect(res).toMatchObject({ ok: false, code: CHECK_VIOLATION });
+    }));
+
+  it.each(unicodeBlanks)("rejects a comment whose body is only $name", ({ body }) =>
+    withRollback(async (db) => {
+      const { rider, postId } = await riderWithPost(db, "uni_blank_commenter");
+
+      const res = await db.run(insertComment, [postId, rider, body, null]);
+      expect(res).toMatchObject({ ok: false, code: CHECK_VIOLATION });
+    }));
+
+  it("accepts a post and a comment with a non-breaking space between words", () =>
+    withRollback(async (db) => {
+      const { rider, postId } = await riderWithPost(db, "nbsp_rider");
+
+      const post = await db.run(insertPost, ["Quiapo\u00a0to Ayala", null]);
+      expect(post).toMatchObject({ ok: true, rowCount: 1 });
+
+      const comment = await db.run(insertComment, [postId, rider, "Take the\u00a0jeep", null]);
+      expect(comment).toMatchObject({ ok: true, rowCount: 1 });
+    }));
+
   it("rejects a post with an oversized post map", () =>
     withRollback(async (db) => {
       const rider = await db.createRider("big_map_poster");
