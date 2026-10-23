@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
+import { AVATAR_MAX_BYTES, AVATAR_TYPES, extensionForType, replaceAvatar } from "@/lib/avatars";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +33,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 function canChangeUsername(usernameChangedAt: string | null): boolean {
   if (!usernameChangedAt) return true;
@@ -80,12 +80,12 @@ export function ProfileEditDialog({
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setServerError("File must be an image.");
+    if (!extensionForType(file.type)) {
+      setServerError("Photo must be a PNG, JPEG, WebP, or GIF.");
       return;
     }
-    if (file.size > MAX_FILE_BYTES) {
-      setServerError("Image must be 2 MB or smaller.");
+    if (file.size > AVATAR_MAX_BYTES) {
+      setServerError("Photo must be 5 MB or smaller.");
       return;
     }
     setServerError(null);
@@ -105,56 +105,38 @@ export function ProfileEditDialog({
   async function onSubmit(values: FormValues) {
     setServerError(null);
     const supabase = createClient();
-    let newAvatarUrl: string | null = null;
 
-    if (avatarFile) {
-      const ext = avatarFile.name.split(".").pop() ?? "jpg";
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, avatarFile, { upsert: true });
+    const saveProfile = async (avatarUrl: string | null) => {
+      const { error } = await supabase
+        .from("users")
+        .update({
+          username: values.username,
+          display_name: values.display_name,
+          ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+        })
+        .eq("id", userId);
+      return { error };
+    };
 
-      if (uploadError) {
-        setServerError(uploadError.message);
-        return;
-      }
-      newAvatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-    }
-
-    const { error: metaError } = await supabase.auth.updateUser({
-      data: {
-        username: values.username,
-        display_name: values.display_name,
-        ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
-      },
-    });
-
-    if (metaError) {
-      setServerError(metaError.message);
-      return;
-    }
-
-    const { error: dbError } = await supabase
-      .from("users")
-      .update({
-        username: values.username,
-        display_name: values.display_name,
-        ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
-      })
-      .eq("id", userId);
-
-    if (dbError) {
-      if (dbError.code === "23505") {
-        setServerError("Username is taken.");
-      } else if (dbError.message.includes("username_cooldown")) {
-        setServerError(
-          usernameChangedAt
-            ? `You can change your username again on ${cooldownEndDate(usernameChangedAt)}.`
-            : "Username can only be changed once every 30 days."
+    const result = avatarFile
+      ? await replaceAvatar(supabase, {
+          riderId: userId,
+          file: avatarFile,
+          previousUrl: currentAvatarUrl,
+          saveProfile,
+        })
+      : await saveProfile(null).then(({ error }) =>
+          error ? { ok: false as const, error } : { ok: true as const }
         );
-      } else {
-        setServerError(dbError.message);
-      }
+
+    if (!result.ok) {
+      setServerError(
+        riderMessage(result.error, {
+          usernameChangeableOn: usernameChangedAt
+            ? cooldownEndDate(usernameChangedAt)
+            : undefined,
+        })
+      );
       return;
     }
 
@@ -200,7 +182,7 @@ export function ProfileEditDialog({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={AVATAR_TYPES.join(",")}
                   className="hidden"
                   onChange={onFileChange}
                 />

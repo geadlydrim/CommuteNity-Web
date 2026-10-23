@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,6 +49,23 @@ export default function SignUpPage() {
   async function onSubmit(values: FormValues) {
     setServerError(null);
     const supabase = createClient();
+
+    const { data: taken, error: lookupError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", values.username)
+      .maybeSingle();
+
+    if (lookupError) {
+      setServerError(riderMessage(lookupError));
+      return;
+    }
+    if (taken) {
+      form.setError("username", { message: "That username is taken." });
+      return;
+    }
+
+    // Input to the handle_new_user trigger only; `users` is the source of truth.
     const { error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -60,11 +78,7 @@ export default function SignUpPage() {
     });
 
     if (error) {
-      if (error.message.toLowerCase().includes("username")) {
-        setServerError("Username is taken.");
-      } else {
-        setServerError(error.message);
-      }
+      setServerError(riderMessage(error));
       return;
     }
 

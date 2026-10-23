@@ -1,13 +1,13 @@
 /**
  * Geometry helpers for the guide map (multi-leg, multi-modal).
  *
- * Reuses worldX / worldY / fitPinsToView from route-geometry.ts.
+ * Reuses worldX / worldY / fitPinsToView from post-map-geometry.ts.
  * No "use client" — plain math, importable anywhere.
  */
 import type { MapPin } from "@/lib/schemas/post-map";
-import type { GuideLeg, GuideConnector } from "@/lib/schemas/guide-map";
-import { MODE_META } from "@/lib/schemas/guide-map";
-import { fitPinsToView, worldX, worldY, type FitResult } from "./route-geometry";
+import type { GuideLeg, GuideTransfer } from "@/lib/schemas/guide-map";
+import { MODE_META } from "@/lib/schemas/modes";
+import { fitPinsToView, worldX, worldY, type FitResult } from "./post-map-geometry";
 
 export { worldX, worldY };
 
@@ -33,8 +33,6 @@ export interface MapSegment {
   /** [lng, lat] pairs */
   coords: [number, number][];
   color: string;
-  /** true = dashed (connector transfer); false = solid (leg segment) */
-  dashed: boolean;
 }
 
 /** One solid-line segment per leg, colored by transport mode. */
@@ -45,17 +43,16 @@ export function legSegments(legs: GuideLeg[]): MapSegment[] {
       [l.destination.lng, l.destination.lat],
     ],
     color: MODE_META[l.mode].color,
-    dashed: false,
   }));
 }
 
-/** One dashed-line segment per connector (the transfer walk/ride). */
-export function connectorSegments(
+/** One dashed-line segment per transfer (the transfer walk/ride). */
+export function transferSegments(
   legs: GuideLeg[],
-  connectors: GuideConnector[]
+  transfers: GuideTransfer[]
 ): MapSegment[] {
   const legMap = new Map(legs.map((l) => [l.id, l]));
-  return connectors.flatMap((c) => {
+  return transfers.flatMap((c) => {
     const fromLeg = legMap.get(c.from.legId);
     const toLeg = legMap.get(c.to.legId);
     if (!fromLeg || !toLeg) return [];
@@ -67,7 +64,6 @@ export function connectorSegments(
         [toPin.lng, toPin.lat],
       ],
       color: MODE_META[c.mode].color,
-      dashed: true,
     }];
   });
 }

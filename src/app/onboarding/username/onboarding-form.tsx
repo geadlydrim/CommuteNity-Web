@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,29 +52,13 @@ export function OnboardingForm({
     setServerError(null);
     const supabase = createClient();
 
-    const { error: metaError } = await supabase.auth.updateUser({
-      data: { username: values.username, display_name: values.display_name },
-    });
-
-    if (metaError) {
-      setServerError(metaError.message);
-      return;
-    }
-
     const { error: dbError } = await supabase
       .from("users")
       .update({ username: values.username, display_name: values.display_name })
       .eq("id", userId);
 
     if (dbError) {
-      if (
-        dbError.code === "23505" ||
-        dbError.message.toLowerCase().includes("username")
-      ) {
-        setServerError("Username is taken.");
-      } else {
-        setServerError(dbError.message);
-      }
+      setServerError(riderMessage(dbError));
       return;
     }
 
@@ -86,7 +71,7 @@ export function OnboardingForm({
       <CardHeader>
         <CardTitle>Pick a username</CardTitle>
         <CardDescription>
-          Choose a unique handle for your CommuteNity profile.
+          Choose a unique username for your CommuteNity profile.
         </CardDescription>
       </CardHeader>
       <CardContent>

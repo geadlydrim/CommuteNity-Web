@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PostCard, type PostCardData } from "@/components/post-card";
+import { listPostsByAuthor } from "@/lib/posts";
+import { PostCard } from "@/components/post-card";
 import { ProfileEditDialog } from "@/components/profile-edit-dialog";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -11,7 +12,7 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const handle = username.toLowerCase();
+  const requestedUsername = username.toLowerCase();
 
   const supabase = await createClient();
 
@@ -19,38 +20,24 @@ export default async function ProfilePage({
     supabase
       .from("users")
       .select("id, username, display_name, avatar_url, username_changed_at")
-      .eq("username", handle)
+      .eq("username", requestedUsername)
       .maybeSingle(),
     supabase.auth.getUser(),
   ]);
 
   if (!profile) notFound();
 
-  const isSelf = viewer?.id === profile.id;
+  const viewerId = viewer?.id ?? null;
+  const isSelf = viewerId === profile.id;
 
-  const { data: posts, error: postsError } = await supabase
-    .from("posts")
-    .select("id, body, created_at, net_votes, map_data, users(username, display_name, avatar_url), comments(count)")
-    .eq("user_id", profile.id)
-    .eq("visibility", "public")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { posts, error: postsError } = await listPostsByAuthor(
+    supabase,
+    profile,
+    viewerId,
+  );
 
   if (postsError) {
     console.error("[Profile] posts fetch failed:", postsError);
-  }
-
-  const userVotes: Record<string, 1 | -1> = {};
-  if (viewer && posts?.length) {
-    const postIds = posts.map((p) => p.id);
-    const { data: votes } = await supabase
-      .from("post_votes")
-      .select("post_id, value")
-      .eq("user_id", viewer.id)
-      .in("post_id", postIds);
-    votes?.forEach((v) => {
-      userVotes[v.post_id] = v.value as 1 | -1;
-    });
   }
 
   return (
@@ -89,12 +76,12 @@ export default async function ProfilePage({
       </header>
       {posts && posts.length > 0 ? (
         <ul className="feed-col space-y-3">
-          {(posts as PostCardData[]).map((p) => (
+          {posts.map((p) => (
             <PostCard
               key={p.id}
               post={p}
-              initialUserVote={userVotes[p.id] ?? null}
-              currentUserId={viewer?.id ?? null}
+              initialUserVote={p.viewerVote}
+              currentUserId={viewerId}
             />
           ))}
         </ul>
