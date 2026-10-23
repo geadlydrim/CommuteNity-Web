@@ -2,7 +2,7 @@ export type { GeocodeResult } from "./types";
 
 /**
  * Forward geocode a text query via the app's /api/geocode proxy (Nominatim).
- * Safe to use in browser code (TanStack Query queryFn, form handlers, etc.).
+ * Safe to use in browser code (data-fetching hooks, form handlers, etc.).
  *
  * @param query - Human-readable search string (min 2 chars).
  * @param opts.limit - Max results (1–10, default 5).

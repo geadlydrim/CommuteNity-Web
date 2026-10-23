@@ -23,7 +23,7 @@ No test suite yet.
 ## Conventions
 
 - **Stack:** Next.js 15 App Router (`src/app/`), React 19, Tailwind v4 + shadcn/ui (`radix-nova`), Supabase via `@/lib/supabase/server` and `@/lib/supabase/client`. Path alias `@/*` → `src/*`. Combine classes with `cn()` from `@/lib/utils`.
-- **shadcn:** add primitives with `npx shadcn@latest add <component>`; never hand-edit `src/components/ui/`.
+- **shadcn:** add primitives with `npx shadcn@4 add <component>`; never hand-edit `src/components/ui/`. The `shadcn` package is also a build input (its stylesheet is imported by `globals.css`), so keep it in dependencies.
 - **Maps:** outside `src/components/map/`, import map primitives only from `@/components/map`, never `react-map-gl` directly. Feed cards use static tile thumbnails; live MapLibre maps only in the focus view and the builders (ADR 0005).
 - **Geocoding:** browsers call `/api/geocode` and `/api/geocode/reverse` through `@/lib/geo`; never call Nominatim or any other public geo service from the browser (ADR 0003).
 - **Map data:** `posts.map_data` and `comments.map_data` are versioned JSON documents. The shape lives in Zod (`src/lib/schemas/`): `safeParse` before render, bump `version` to change the shape, and keep old versions parsing (ADR 0004). Pin bounds are the Philippines; don't silently widen them.
@@ -32,7 +32,7 @@ No test suite yet.
 
 ## Guardrails
 
-- The catalog (routes, stops, segments, edit proposals, reports, catalog votes) and offline browsing are parked. Catalog tables exist in the database; don't build UI on them, and don't wire the installed-but-unused `@tanstack/react-query`, `zustand`, `dexie`, `dexie-react-hooks`, or `next-pwa`, without asking.
+- The catalog (routes, stops, segments, edit proposals, reports, catalog votes) and offline browsing are parked. Catalog tables exist in the database; don't build UI on them or add client caching/state/offline libraries without asking.
 - `posts.visibility = 'friends'` has no backing table or policy; don't write it.
 - Native Android/iOS work is out of scope (ADR 0001).
 
