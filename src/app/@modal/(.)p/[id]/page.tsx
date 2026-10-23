@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPostById } from "@/lib/posts";
 import { PostModal } from "@/components/post-modal";
+import { FocusView } from "@/components/focus-view";
 
 export default async function InterceptedPostPage({
   params,
@@ -19,10 +20,8 @@ export default async function InterceptedPostPage({
   if (!post) return null;
 
   return (
-    <PostModal
-      post={post}
-      initialUserVote={post.viewerVote}
-      currentUserId={currentUserId}
-    />
+    <PostModal>
+      <FocusView post={post} currentUserId={currentUserId} />
+    </PostModal>
   );
 }

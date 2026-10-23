@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MapPin, X } from "lucide-react";
@@ -10,7 +11,11 @@ import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RouteMapBuilder } from "@/components/map/route-map-builder";
+// Loaded on first open so the feed's initial bundle carries no map-builder code.
+const RouteMapBuilder = dynamic(
+  () => import("@/components/map/route-map-builder").then((m) => m.RouteMapBuilder),
+  { ssr: false }
+);
 import type { MapData } from "@/lib/schemas/post-map";
 import { POST_BODY_MAX } from "@/lib/schemas/post";
 
@@ -26,6 +31,12 @@ export function PostComposer({
   const [submitting, setSubmitting] = useState(false);
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [builderOpen, setBuilderOpen] = useState(false);
+  // Stays mounted after the first open so the dialog's close animation plays.
+  const [builderMounted, setBuilderMounted] = useState(false);
+  const openBuilder = () => {
+    setBuilderMounted(true);
+    setBuilderOpen(true);
+  };
   const trimmed = text.trim();
   const remaining = POST_BODY_MAX - trimmed.length;
   const canPost = trimmed.length > 0 && remaining >= 0 && !submitting;
@@ -85,7 +96,7 @@ export function PostComposer({
                   )}
                 </span>
                 <button
-                  onClick={() => setBuilderOpen(true)}
+                  onClick={openBuilder}
                   className="shrink-0 text-muted-foreground underline transition-colors hover:text-foreground"
                 >
                   Edit
@@ -105,7 +116,7 @@ export function PostComposer({
                 <span />
               ) : (
                 <button
-                  onClick={() => setBuilderOpen(true)}
+                  onClick={openBuilder}
                   disabled={submitting}
                   className="flex items-center gap-1.5 self-start py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                 >
@@ -135,12 +146,14 @@ export function PostComposer({
         </div>
       </div>
 
-      <RouteMapBuilder
-        open={builderOpen}
-        onOpenChange={setBuilderOpen}
-        initialValue={mapData}
-        onSave={setMapData}
-      />
+      {builderMounted && (
+        <RouteMapBuilder
+          open={builderOpen}
+          onOpenChange={setBuilderOpen}
+          initialValue={mapData}
+          onSave={setMapData}
+        />
+      )}
     </>
   );
 }
