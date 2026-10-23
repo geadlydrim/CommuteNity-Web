@@ -91,7 +91,7 @@ export function PostComposer({
                   <span className="font-medium">{dest.label}</span>
                   {waypointCount > 0 && (
                     <span className="ml-1 text-muted-foreground">
-                      • +{waypointCount} stop{waypointCount > 1 ? "s" : ""}
+                      • +{waypointCount} waypoint{waypointCount > 1 ? "s" : ""}
                     </span>
                   )}
                 </span>

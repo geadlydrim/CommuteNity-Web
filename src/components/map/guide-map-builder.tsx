@@ -1,7 +1,7 @@
 "use client";
 /**
- * GuideMapBuilder — dialog for composing a multi-leg, multi-modal post map
- * on a comment. Each leg is an origin→destination pair with a transport mode.
+ * GuideMapBuilder — dialog for composing a multi-leg, multi-modal guide on a
+ * comment. Each leg is an origin→destination pair with a transport mode.
  * Transfers link one leg's destination end to another leg's origin end (the
  * transfer point) and carry their own mode, forming one continuous chain.
  *

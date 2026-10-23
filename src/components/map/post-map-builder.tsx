@@ -3,8 +3,8 @@
  * PostMapBuilder — dialog for composing a post map on a post.
  *
  * Slot model: Origin and Destination cards ALWAYS persist (even empty);
- * optional waypoint slots sit between them. Each slot has its own location
- * search field. Click the map (or drag a marker) to fine-tune the active slot.
+ * optional waypoint slots sit between them. Each slot has its own place
+ * search field. Click the map (or drag a pin) to fine-tune the active slot.
  * Placement, labeling, and the camera come from the shared map-editing core
  * (`useMapEditor`); this file keeps only the ordered-pins shape.
  *
@@ -46,7 +46,7 @@ const MAX_PINS = 10;
 function roleLabel(index: number, total: number): string {
   if (index === 0) return "Origin";
   if (index === total - 1) return "Destination";
-  return `Stop ${index}`;
+  return `Waypoint ${index}`;
 }
 
 /** The saved pins, or an empty origin and destination. */
@@ -146,7 +146,7 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       title="Add post map"
-      description="Search each location, or click the map to place the selected pin. Drag a marker to fine-tune."
+      description="Search for each place, or click the map to place the selected pin. Drag a pin to fine-tune."
       saveLabel="Save post map"
       canSave={canSave}
       hint={canSave ? null : "Set both an origin and a destination."}
@@ -220,7 +220,7 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
               className="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed py-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add stop
+              Add waypoint
             </button>
           )}
         </div>
@@ -230,7 +230,7 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
 }
 
 // ---------------------------------------------------------------------------
-// SlotRow — single slot card; owns its own location search
+// SlotRow — single slot card; owns its own place search
 // ---------------------------------------------------------------------------
 
 interface SlotRowProps {
@@ -310,7 +310,7 @@ function SlotRow({
                 onRemove();
               }}
               className="p-0.5 rounded hover:bg-destructive/20 text-destructive transition-colors"
-              title="Remove stop"
+              title="Remove waypoint"
             >
               <X className="h-3 w-3" />
             </button>
