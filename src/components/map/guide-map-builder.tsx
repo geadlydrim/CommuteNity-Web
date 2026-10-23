@@ -284,7 +284,9 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
 
   // --- Save ---
 
-  function handleSave() {
+  function buildGuide():
+    | { ok: true; data: GuideMapData }
+    | { ok: false; message: string } {
     const legResults = legs.map((l) => {
       const op = pinSchema.safeParse(slotHasCoords(l.origin) ? slotToPin(l.origin as BuilderSlot & { lat: number; lng: number }) : {});
       const dp = pinSchema.safeParse(slotHasCoords(l.destination) ? slotToPin(l.destination as BuilderSlot & { lat: number; lng: number }) : {});
@@ -292,9 +294,16 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
       return { id: l.id, mode: l.mode, origin: op.data, destination: dp.data };
     });
 
-    if (legResults.some((r) => r === null)) {
-      toast.error("Every leg must have both an origin and a destination.");
-      return;
+    const missingIdx = legResults.findIndex((r) => r === null);
+    if (missingIdx !== -1) {
+      return { ok: false, message: `Leg ${missingIdx + 1} needs an origin and a destination.` };
+    }
+
+    for (let i = 0; i < legs.length - 1; i++) {
+      const linked = connectors.some((c) => c.fromLegId === legs[i].id && c.toLegId === legs[i + 1].id);
+      if (!linked) {
+        return { ok: false, message: `Add a transfer between legs ${i + 1} and ${i + 2}.` };
+      }
     }
 
     const payload = {
@@ -311,10 +320,19 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
 
     const result = guideMapDataSchema.safeParse(payload);
     if (!result.success) {
-      toast.error(result.error.issues[0]?.message ?? "Invalid guide map");
+      return { ok: false, message: result.error.issues[0]?.message ?? "This guide isn't complete yet." };
+    }
+    return { ok: true, data: result.data };
+  }
+
+  const built = buildGuide();
+
+  function handleSave() {
+    if (!built.ok) {
+      toast.error(built.message);
       return;
     }
-    onSave(result.data);
+    onSave(built.data);
     onOpenChange(false);
   }
 
@@ -344,7 +362,7 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
   const allLegSegs = validLegs.length > 0 ? legSegments(validLegs) : [];
   const allConnSegs = connectorSegments(validLegs, validConnectors);
   const fitView = validLegs.length > 0 ? guideMapFit(validLegs, 560, 420) : undefined;
-  const canSave = legs.every((l) => slotHasCoords(l.origin) && slotHasCoords(l.destination));
+  const canSave = built.ok;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -494,7 +512,10 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
           </div>
 
           {/* Footer */}
-          <div className="flex shrink-0 justify-end gap-2 border-t bg-muted/50 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex shrink-0 items-center justify-end gap-2 border-t bg-muted/50 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {!built.ok && (
+              <p className="mr-auto min-w-0 text-xs text-muted-foreground">{built.message}</p>
+            )}
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
