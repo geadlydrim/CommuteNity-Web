@@ -18,6 +18,7 @@ No test suite yet.
 - `docs/product.md`: what the product is, who it's for, scope (now / later / out)
 - `GLOSSARY.md`: domain language; use these terms in code, issues, and UI copy
 - `docs/adr/`: decisions that look odd without context; don't "fix" them silently
+- `docs/codemap.md`: before locating code for a feature, tracing a flow, or editing something duplicated; maps glossary terms to code names and lists edits that must land in several files. Update it in the same change when those move.
 
 ## Conventions
 
