@@ -1,16 +1,16 @@
 # Codemap
 
-Where things live and how requests flow, for finding code fast. Covers what the tree can't show: which file owns a behavior, which names differ from `GLOSSARY.md`, and which edits must land in several places at once. For the file list itself, look at the tree.
+Where things live and how requests flow, for finding code fast. Covers what the tree can't show: which file owns a behavior, where each glossary term lives in code, and which edits must land in several places at once. For the file list itself, look at the tree.
 
-## Glossary term → code name
+## Glossary term → code
 
-The code predates `GLOSSARY.md` and uses older names in places. Search for the code name.
+Code uses the glossary's terms. The one deliberate exception is a stored JSON key (below), which changes only with a new map version.
 
 | Glossary | Code |
 |---|---|
-| Post map | `map_data` on `posts`; `RouteMapBuilder`, `StaticRouteMap`, `PostMapPreview`, `route-geometry.ts`, `post-map.ts` (`parsePostMap`, `mapDataSchema`, `pinSchema`, `CURRENT_POST_MAP_VERSION`) |
+| Post map | `map_data` on `posts`; `PostMapBuilder`, `StaticPostMap`, `PostMapPreview`, `post-map-geometry.ts`, `post-map.ts` (`parsePostMap`, `mapDataSchema`, `pinSchema`, `CURRENT_POST_MAP_VERSION`) |
 | Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `GuidePreview`, `guide-geometry.ts`, `guide-map.ts` (`parseGuide`, `guideMapDataSchema`, `CURRENT_GUIDE_VERSION`), chain rule `guideChainStatus` in `guide-chain.ts` |
-| Transfer | `connector` / `connectors` (TS and stored JSON key) |
+| Transfer | `GuideTransfer`, `transferSchema`, `transferSegments`; stored under the JSON key `connectors` in guide v1 |
 | Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `src/lib/schemas/modes.ts`; colour via `modeColor` in `src/lib/map/colors.ts` |
 | Focus view | `FocusView`; `focus` prop on `PostCard`; `FocusViewDialog` (dialog shell taking children); routes `/p/[id]` and `@modal/(.)p/[id]` |
 | Post vote | `post_votes` table, `net_votes` column (catalog votes are the separate `votes` table) |
@@ -29,9 +29,9 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 
 **Post card** (`src/components/post-card.tsx`, **server**): author, `<time>` from `formatPostTime` (`src/lib/format-time.ts`, always Asia/Manila), body, `PostMapPreview`, and an overlay link to `/p/{id}`. Interactive parts are client islands: `PostVoteControls` (instant update via `nextVote`, then adopts the server total from `setVote` in `src/lib/posts/votes.ts`; resets to fresh server props on refresh), `CommentThread` (50 comments per page via `listComments`/`addComment` in `src/lib/posts/comments.ts`, "show more", retry, chronological insert, `GuidePreview` per comment; `GuideMapBuilder` loaded with `next/dynamic` only after a signed-in rider opens it), `ShareButton` (a cancelled share does nothing).
 
-**Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `PostModal` → `FocusView`; a direct load renders `FocusView` from `src/app/p/[id]/page.tsx`, which also emits link-preview metadata. Both fetch through `getPostById` in `@/lib/posts`. The interactive map is `FocusPostMap` in `src/components/map/`, loaded lazily via `LazyFocusPostMap`.
+**Focus view**: client navigation to `/p/[id]` is intercepted by `src/app/@modal/(.)p/[id]/page.tsx` → `FocusViewDialog` → `FocusView`; a direct load renders `FocusView` from `src/app/p/[id]/page.tsx`, which also emits link-preview metadata. Both fetch through `getPostById` in `@/lib/posts`. The interactive map is `FocusPostMap` in `src/components/map/`, loaded lazily via `LazyFocusPostMap`.
 
-**Posting**: `PostComposer` inserts into `posts` (`user_id` defaults to `auth.uid()` in SQL), optionally with `map_data` from `RouteMapBuilder` (loaded with `next/dynamic` on first open), then `router.refresh()`.
+**Posting**: `PostComposer` inserts into `posts` (`user_id` defaults to `auth.uid()` in SQL), optionally with `map_data` from `PostMapBuilder` (loaded with `next/dynamic` on first open), then `router.refresh()`.
 
 **Profile** (`/u/[username]`): the page reads the rider's `users` row, then their posts with `listPostsByAuthor` from `@/lib/posts` (author attached, not re-joined); `ProfileEditDialog` renders for the owner only and replaces photos through `replaceAvatar` in `src/lib/avatars.ts` (upload → update profile → on failure delete the new upload, on success delete the old own-folder photo).
 
