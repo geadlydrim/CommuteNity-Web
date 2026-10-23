@@ -1,9 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { latSchema, lonSchema } from "@/lib/schemas/geocode";
-import { fetchNominatim, cacheGet, cacheSet, buildLabelParts } from "@/lib/geo/nominatim";
+import { GEOCODE_CACHE_CONTROL, geocodeFailure, nominatim } from "@/lib/geo/nominatim";
+import { buildLabelParts } from "@/lib/geo/label";
+import type { ReverseGeocodeResult } from "@/lib/geo/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** Seconds. The Nominatim client gives up after 8 s (BUDGET_MS); this leaves room to answer. */
+export const maxDuration = 10;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -15,55 +19,41 @@ export async function GET(request: NextRequest) {
   if (!latResult.success || !lonResult.success) {
     return NextResponse.json(
       { error: "lat and lon are required and must be inside the Philippines" },
-      { status: 400 }
+      { status: 400, headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.error } },
     );
   }
-  const lat = latResult.data;
-  const lon = lonResult.data;
 
-  // --- Cache lookup ---
-  const cacheKey = `reverse:${lat.toFixed(5)}:${lon.toFixed(5)}`;
-  const cached = cacheGet(cacheKey);
-  if (cached) {
-    return NextResponse.json(cached);
-  }
-
-  // --- Proxy to Nominatim reverse (shared throttle in nominatim.ts) ---
+  // --- Nominatim, through the shared queue and cache (key rounds to 4 decimals) ---
   try {
-    const raw = (await fetchNominatim("reverse", {
-      format: "jsonv2",
-      lat: String(lat),
-      lon: String(lon),
-      addressdetails: "1",
-    })) as Record<string, unknown>;
+    const place = await nominatim.reverse({ lat: latResult.data, lon: lonResult.data });
 
-    // Nominatim reverse returns a single object (not an array).
-    // If the point is in the ocean or off-map, it returns an error key.
-    if (raw.error) {
+    // No place at this point (open sea, off-map). Cached by the client too.
+    if (!place) {
       return NextResponse.json(
-        { error: String(raw.error) },
-        { status: 404 }
+        { error: "No address found at this point" },
+        { status: 404, headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.notFound } },
       );
     }
 
-    const p = buildLabelParts(raw);
-    const result = {
+    const p = buildLabelParts(place);
+    const result: ReverseGeocodeResult = {
       displayName: p.primary,
       detailName: p.detail || undefined,
       secondaryName: p.secondary || undefined,
       fullName: p.full || undefined,
-      lat: Number(raw.lat),
-      lon: Number(raw.lon),
+      lat: place.lat,
+      lon: place.lon,
     };
 
-    cacheSet(cacheKey, result);
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.found },
+    });
   } catch (err) {
-    if (err instanceof Error && err.name === "TimeoutError") {
-      console.error("[ReverseGeocode] upstream timed out");
-      return NextResponse.json({ error: "Reverse geocoding request timed out" }, { status: 504 });
-    }
-    console.error("[ReverseGeocode] unexpected error", err);
-    return NextResponse.json({ error: "Reverse geocoding failed" }, { status: 502 });
+    const failure = geocodeFailure(err);
+    if (failure.status !== 503) console.error("[ReverseGeocode] upstream failed", err);
+    return NextResponse.json(
+      { error: failure.error },
+      { status: failure.status, headers: { "Cache-Control": GEOCODE_CACHE_CONTROL.error } },
+    );
   }
 }
