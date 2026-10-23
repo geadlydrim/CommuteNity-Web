@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MapPin, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,8 +37,7 @@ export function PostComposer({
 
     const { error } = await supabase.from("posts").insert(payload);
     if (error) {
-      console.error("[Post] insert failed:", error);
-      toast.error("Failed to post. Try again.");
+      toast.error(riderMessage(error, { fallback: "Failed to post. Try again." }));
     } else {
       setText("");
       setMapData(null);

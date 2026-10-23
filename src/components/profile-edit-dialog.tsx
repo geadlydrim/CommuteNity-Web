@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,7 +134,7 @@ export function ProfileEditDialog({
         .upload(path, avatarFile, { upsert: true });
 
       if (uploadError) {
-        setServerError(uploadError.message);
+        setServerError(riderMessage(uploadError));
         return;
       }
       newAvatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
@@ -148,7 +149,7 @@ export function ProfileEditDialog({
     });
 
     if (metaError) {
-      setServerError(metaError.message);
+      setServerError(riderMessage(metaError));
       return;
     }
 
@@ -162,19 +163,13 @@ export function ProfileEditDialog({
       .eq("id", userId);
 
     if (dbError) {
-      if (dbError.code === "23505") {
-        setServerError("Username is taken.");
-      } else if (dbError.message.includes("username_cooldown")) {
-        setServerError(
-          usernameChangedAt
-            ? `You can change your username again on ${cooldownEndDate(usernameChangedAt)}.`
-            : "Username can only be changed once every 30 days."
-        );
-      } else if (dbError.message.includes("avatar_url_invalid")) {
-        setServerError("That photo couldn't be saved. Try uploading it again.");
-      } else {
-        setServerError(dbError.message);
-      }
+      setServerError(
+        riderMessage(dbError, {
+          usernameChangeableOn: usernameChangedAt
+            ? cooldownEndDate(usernameChangedAt)
+            : undefined,
+        })
+      );
       return;
     }
 
