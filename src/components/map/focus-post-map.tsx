@@ -7,9 +7,9 @@
  * the feed bundle.
  */
 import { useState } from "react";
-import { MapView } from "./map-view";
-import { Marker, Popup, Source, Layer } from "react-map-gl/maplibre";
+import { MapView, Marker, Popup, Source, Layer } from "./primitives";
 import { lineStringFromPins, fitPinsToView } from "./route-geometry";
+import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
 import type { MapPin } from "@/lib/schemas/post-map";
 
 export function FocusPostMap({ pins }: { pins: MapPin[] }) {
@@ -32,7 +32,7 @@ export function FocusPostMap({ pins }: { pins: MapPin[] }) {
               id="focus-route-line-layer"
               type="line"
               paint={{
-                "line-color": "#3b82f6",
+                "line-color": POST_MAP_LINE_COLOR,
                 "line-width": 3,
                 "line-opacity": 0.85,
               }}
@@ -45,7 +45,7 @@ export function FocusPostMap({ pins }: { pins: MapPin[] }) {
             key={i}
             longitude={pin.lng}
             latitude={pin.lat}
-            color={i === 0 ? "#22c55e" : i === pins.length - 1 ? "#ef4444" : "#6b7280"}
+            color={pinColor(i, pins.length)}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               setActivePopup(activePopup === i ? null : i);

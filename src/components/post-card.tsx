@@ -4,8 +4,9 @@ import { UserAvatar } from "@/components/user-avatar";
 import { PostVoteControls } from "@/components/post-vote-controls";
 import { CommentThread } from "@/components/comment-thread";
 import { ShareButton } from "@/components/share-button";
-import { mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
-import { StaticRouteMap } from "@/components/map/static-route-map";
+import { parsePostMap, type MapPin } from "@/lib/schemas/post-map";
+// Direct import, not the "use client" barrel: the preview renders on the server.
+import { PostMapPreview } from "@/components/map";
 import { formatPostTime } from "@/lib/format-time";
 import type { Post, ViewerVote } from "@/lib/posts";
 
@@ -28,12 +29,9 @@ type Props = {
 export function PostCard({ post, initialUserVote, currentUserId, focus }: Props) {
   const u = post.author;
 
-  // Parse map_data defensively — a bad row renders no map instead of crashing the feed
-  const mapData: MapData | null = (() => {
-    if (!post.map_data) return null;
-    const result = mapDataSchema.safeParse(post.map_data);
-    return result.success ? result.data : null;
-  })();
+  // A bad row renders no map instead of crashing the feed; a map from a newer
+  // format renders the preview's placeholder.
+  const postMap = parsePostMap(post.map_data);
   const display = u?.display_name ?? "Unknown user";
   const handle = u?.username ?? null;
 
@@ -77,12 +75,13 @@ export function PostCard({ post, initialUserVote, currentUserId, focus }: Props)
         {/* Map — static preview in feed, interactive in focus view.
             The thumbnail lets clicks through to the card link; only its
             attribution link takes pointer events. */}
-        {mapData && !focus && (
-          <div className="pointer-events-none relative z-10 mt-3 w-full">
-            <StaticRouteMap pins={mapData.pins} width={560} height={240} />
-          </div>
-        )}
-        {mapData && focus?.renderMap(mapData.pins)}
+        {focus && postMap.status === "ok"
+          ? focus.renderMap(postMap.map.pins)
+          : (postMap.status === "ok" || postMap.status === "unknown-version") && (
+              <div className="pointer-events-none relative z-10 mt-3 w-full">
+                <PostMapPreview mapData={post.map_data} />
+              </div>
+            )}
       </div>
 
       <CommentThread

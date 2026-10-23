@@ -25,15 +25,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { reverseGeocode } from "@/lib/geo";
+import { ENABLED_MODES, MODE_META, type TransportMode } from "@/lib/schemas/modes";
 import {
-  ENABLED_MODES,
-  MODE_META,
+  CURRENT_GUIDE_VERSION,
   guideMapDataSchema,
   type GuideMapData,
   type GuideLeg,
   type GuideConnector,
-  type TransportMode,
 } from "@/lib/schemas/guide-map";
+import { guideChainStatus } from "@/lib/schemas/guide-chain";
 import { pinSchema } from "@/lib/schemas/post-map";
 import {
   MapView,
@@ -42,7 +42,7 @@ import {
   Layer,
   type MapLayerMouseEvent,
   type MapRef,
-} from "@/components/map";
+} from "./primitives";
 import { guideMapFit, legSegments, connectorSegments } from "./guide-geometry";
 import { LocationSearch } from "./location-search";
 
@@ -287,37 +287,32 @@ export function GuideMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
   function buildGuide():
     | { ok: true; data: GuideMapData }
     | { ok: false; message: string } {
-    const legResults = legs.map((l) => {
+    const chainLegs = legs.map((l) => {
       const op = pinSchema.safeParse(slotHasCoords(l.origin) ? slotToPin(l.origin as BuilderSlot & { lat: number; lng: number }) : {});
       const dp = pinSchema.safeParse(slotHasCoords(l.destination) ? slotToPin(l.destination as BuilderSlot & { lat: number; lng: number }) : {});
-      if (!op.success || !dp.success) return null;
-      return { id: l.id, mode: l.mode, origin: op.data, destination: dp.data };
+      return {
+        id: l.id,
+        mode: l.mode,
+        origin: op.success ? op.data : null,
+        destination: dp.success ? dp.data : null,
+      };
     });
+    const transfers = connectors.map((c) => ({
+      id: c.id,
+      mode: c.mode,
+      from: { legId: c.fromLegId, end: "destination" as const },
+      to: { legId: c.toLegId, end: "origin" as const },
+    }));
 
-    const missingIdx = legResults.findIndex((r) => r === null);
-    if (missingIdx !== -1) {
-      return { ok: false, message: `Leg ${missingIdx + 1} needs an origin and a destination.` };
-    }
-
-    for (let i = 0; i < legs.length - 1; i++) {
-      const from = legs[i];
-      const to = legs[i + 1];
-      const linked = !!from && !!to && connectors.some((c) => c.fromLegId === from.id && c.toLegId === to.id);
-      if (!linked) {
-        return { ok: false, message: `Add a transfer between legs ${i + 1} and ${i + 2}.` };
-      }
-    }
+    // Same rule the guide schema refines with, so the hint and Save agree.
+    const chain = guideChainStatus(chainLegs, transfers);
+    if (!chain.ok) return { ok: false, message: chain.message };
 
     const payload = {
-      version: 1 as const,
+      version: CURRENT_GUIDE_VERSION,
       kind: "guide" as const,
-      legs: legResults as NonNullable<typeof legResults[number]>[],
-      connectors: connectors.map((c) => ({
-        id: c.id,
-        mode: c.mode,
-        from: { legId: c.fromLegId, end: "destination" as const },
-        to: { legId: c.toLegId, end: "origin" as const },
-      })),
+      legs: chainLegs,
+      connectors: transfers,
     };
 
     const result = guideMapDataSchema.safeParse(payload);

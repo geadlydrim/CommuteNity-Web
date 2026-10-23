@@ -1,16 +1,20 @@
 import type { StyleSpecification } from "@maplibre/maplibre-gl-style-spec";
+import { MAX_TILE_ZOOM, tileUrlTemplate } from "@/lib/map/tiles";
+import { PH_LAT_RANGE, PH_LNG_RANGE } from "@/lib/schemas/post-map";
 
-// NOTE: tile.openstreetmap.org is suitable for dev and low-traffic only.
-// Under real load, swap the tiles array here to a self-hosted raster proxy,
-// MapTiler, or Protomaps vector style — this file is the single swap point.
+// Tiles come through our caching, Philippines-only proxy (ADR 0003); the URL
+// lives in `@/lib/map/tiles`, shared with the static thumbnails. To move to
+// MapTiler, Protomaps, or a self-hosted server, change the proxy, not this style.
 export const OSM_RASTER_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     osm: {
       type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tiles: [tileUrlTemplate()],
       tileSize: 256,
-      maxzoom: 19,
+      maxzoom: MAX_TILE_ZOOM,
+      // Only request tiles the proxy serves (it refuses everything outside the Philippines).
+      bounds: [PH_LNG_RANGE.min, PH_LAT_RANGE.min, PH_LNG_RANGE.max, PH_LAT_RANGE.max],
       // Required by OSM tile usage policy.
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
