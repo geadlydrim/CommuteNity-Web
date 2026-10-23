@@ -6,7 +6,7 @@
  */
 import type { MapPin } from "@/lib/schemas/post-map";
 import type { GuideLeg, GuideConnector } from "@/lib/schemas/guide-map";
-import { MODE_META } from "@/lib/schemas/guide-map";
+import { MODE_META } from "@/lib/schemas/modes";
 import { fitPinsToView, worldX, worldY, type FitResult } from "./route-geometry";
 
 export { worldX, worldY };

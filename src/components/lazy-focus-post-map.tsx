@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
  * module, hence this wrapper for the server-rendered focus view.
  */
 export const LazyFocusPostMap = dynamic(
-  () => import("@/components/map").then((m) => m.FocusPostMap),
+  () => import("@/components/map/focus-post-map").then((m) => m.FocusPostMap),
   {
     ssr: false,
     // Same footprint as the map, so the card doesn't jump when it arrives.

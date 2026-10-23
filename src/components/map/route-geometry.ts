@@ -1,8 +1,8 @@
 /**
  * Pure geometry helpers shared by:
- *   - StaticRouteMap (tile projection)
+ *   - StaticTileCanvas / StaticRouteMap (tile projection, fit-to-view)
  *   - RouteMapBuilder (Source/Layer LineString)
- *   - PostCard focus view (MapView initialViewState)
+ *   - FocusPostMap (MapView initialViewState)
  *
  * No "use client" — this is plain math, importable anywhere.
  */

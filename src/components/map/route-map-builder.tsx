@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { reverseGeocode } from "@/lib/geo";
 import type { GeocodeResult } from "@/lib/geo/types";
 import { LocationSearch } from "./location-search";
-import { mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
+import { CURRENT_POST_MAP_VERSION, mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
 import {
   MapView,
   Marker,
@@ -36,7 +36,7 @@ import {
   Layer,
   type MapLayerMouseEvent,
   type MapRef,
-} from "@/components/map";
+} from "./primitives";
 import { lineStringFromPins, fitPinsToView } from "./route-geometry";
 
 // ---------------------------------------------------------------------------
@@ -261,7 +261,7 @@ export function RouteMapBuilder({ open, onOpenChange, initialValue, onSave }: Pr
       sublabel: clampLabel(s.sublabel) || undefined,
     }));
 
-    const result = mapDataSchema.safeParse({ version: 1, pins });
+    const result = mapDataSchema.safeParse({ version: CURRENT_POST_MAP_VERSION, pins });
     if (!result.success) {
       toast.error(result.error.issues[0]?.message ?? "Invalid map data");
       return;
