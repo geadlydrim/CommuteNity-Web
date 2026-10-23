@@ -128,7 +128,8 @@ export interface NominatimClientDeps {
   now: () => number;
   /** Resolves after `ms`, or as soon as `signal` aborts. Never rejects. */
   sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
-  userAgent: string;
+  /** A fixed agent, or a resolver called per upstream request (lets builds skip env validation). */
+  userAgent: string | (() => string);
   baseUrl?: string;
 }
 
@@ -197,7 +198,7 @@ export function createNominatimClient(deps: NominatimClientDeps): NominatimClien
     else held = false;
   }
 
-  async function attemptOnce(url: string, callSignal: AbortSignal, deadline: number): Promise<unknown> {
+  async function attemptOnce(url: string, userAgent: string, callSignal: AbortSignal, deadline: number): Promise<unknown> {
     const attempt = new AbortController();
     const finished = new AbortController();
     const forwardAbort = () => attempt.abort(callSignal.reason);
@@ -222,6 +223,13 @@ export function createNominatimClient(deps: NominatimClientDeps): NominatimClien
 
   /** Run attempts while holding the slot; every attempt starts ≥ MIN_INTERVAL_MS after the last. */
   async function fetchWithRetry(url: string, signal: AbortSignal, deadline: number): Promise<unknown> {
+    let agent: string;
+    try {
+      agent = typeof userAgent === "function" ? userAgent() : userAgent;
+    } catch (err) {
+      // Misconfigured env: not retryable; routes answer with their 502.
+      throw new UpstreamError("Geocoder user agent is not configured", undefined, { cause: err });
+    }
     for (let attempt = 1; ; attempt++) {
       const wait = lastStart + MIN_INTERVAL_MS - now();
       if (wait > 0) await sleep(wait, signal);
@@ -230,7 +238,7 @@ export function createNominatimClient(deps: NominatimClientDeps): NominatimClien
       if (now() >= deadline) throw new GeocodeTimeoutError();
       lastStart = now();
       try {
-        return await attemptOnce(url, signal, deadline);
+        return await attemptOnce(url, agent, signal, deadline);
       } catch (err) {
         signal.throwIfAborted();
         const backoff = BACKOFF_MS * 2 ** (attempt - 1);
@@ -342,5 +350,5 @@ export const nominatim = createNominatimClient({
   fetch: (url, init) => fetch(url, init),
   now: () => Date.now(),
   sleep,
-  userAgent: geocoderUserAgent(),
+  userAgent: geocoderUserAgent,
 });
