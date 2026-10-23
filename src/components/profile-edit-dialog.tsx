@@ -32,7 +32,25 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2 MB
+// Mirrors the `avatars` storage bucket limits.
+const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const AVATAR_PUBLIC_PREFIX = "/storage/v1/object/public/avatars/";
+
+/** Storage path of an avatar URL if it lives in this rider's own avatars folder. */
+function ownAvatarPath(url: string | null, userId: string): string | null {
+  if (!url) return null;
+  let path: string;
+  try {
+    const pathname = new URL(url).pathname;
+    const idx = pathname.indexOf(AVATAR_PUBLIC_PREFIX);
+    if (idx === -1) return null;
+    path = decodeURIComponent(pathname.slice(idx + AVATAR_PUBLIC_PREFIX.length));
+  } catch {
+    return null;
+  }
+  return path.startsWith(`${userId}/`) ? path : null;
+}
 
 function canChangeUsername(usernameChangedAt: string | null): boolean {
   if (!usernameChangedAt) return true;
@@ -80,12 +98,12 @@ export function ProfileEditDialog({
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setServerError("File must be an image.");
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setServerError("Photo must be a PNG, JPEG, WebP, or GIF.");
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      setServerError("Image must be 2 MB or smaller.");
+      setServerError("Photo must be 5 MB or smaller.");
       return;
     }
     setServerError(null);
@@ -152,10 +170,20 @@ export function ProfileEditDialog({
             ? `You can change your username again on ${cooldownEndDate(usernameChangedAt)}.`
             : "Username can only be changed once every 30 days."
         );
+      } else if (dbError.message.includes("avatar_url_invalid")) {
+        setServerError("That photo couldn't be saved. Try uploading it again.");
       } else {
         setServerError(dbError.message);
       }
       return;
+    }
+
+    if (newAvatarUrl) {
+      const oldPath = ownAvatarPath(currentAvatarUrl, userId);
+      if (oldPath) {
+        // Best-effort cleanup of the replaced photo; failures are harmless.
+        await supabase.storage.from("avatars").remove([oldPath]).catch(() => {});
+      }
     }
 
     handleClose(false);
@@ -200,7 +228,7 @@ export function ProfileEditDialog({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={ALLOWED_AVATAR_TYPES.join(",")}
                   className="hidden"
                   onChange={onFileChange}
                 />
