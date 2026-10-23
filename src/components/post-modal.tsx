@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { XIcon } from "lucide-react";
-import { PostCard, type PostCardData } from "@/components/post-card";
+import { PostCard } from "@/components/post-card";
+import type { Post } from "@/lib/posts";
 import { DialogPortal, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  post: PostCardData;
+  post: Post;
   initialUserVote: 1 | -1 | null;
   currentUserId: string | null;
 };

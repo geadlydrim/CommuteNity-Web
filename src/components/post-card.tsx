@@ -18,20 +18,7 @@ import { GuideMapBuilder } from "@/components/map/guide-map-builder";
 import { MapView, Marker, Popup, Source, Layer } from "@/components/map";
 import { lineStringFromPins, fitPinsToView } from "@/components/map/route-geometry";
 import { POST_BODY_MAX } from "@/lib/schemas/post";
-
-export type PostCardData = {
-  id: string;
-  body: string;
-  created_at: string;
-  net_votes: number;
-  /** Unvalidated from DB — always safeParse before use. */
-  map_data?: unknown;
-  comments: { count: number }[] | null;
-  users:
-    | { username: string | null; display_name: string | null; avatar_url: string | null }
-    | { username: string | null; display_name: string | null; avatar_url: string | null }[]
-    | null;
-};
+import type { Post } from "@/lib/posts";
 
 type CommentRow = {
   id: string;
@@ -46,7 +33,7 @@ type CommentRow = {
 };
 
 type Props = {
-  post: PostCardData;
+  post: Post;
   initialUserVote: 1 | -1 | null;
   currentUserId: string | null;
   /** Focus mode: content not clickable, comments expanded on mount. */
@@ -135,8 +122,7 @@ function formatPostTime(iso: string): string {
 
 export function PostCard({ post, initialUserVote, currentUserId, focusMode = false }: Props) {
   const router = useRouter();
-  const raw = post.users;
-  const u = Array.isArray(raw) ? raw[0] : raw;
+  const u = post.author;
 
   // Parse map_data defensively — a bad row renders no map instead of crashing the feed
   const mapData: MapData | null = (() => {
@@ -153,7 +139,7 @@ export function PostCard({ post, initialUserVote, currentUserId, focusMode = fal
 
   const [showComments, setShowComments] = useState(focusMode);
   const [comments, setComments] = useState<CommentRow[]>([]);
-  const [commentCount, setCommentCount] = useState(post.comments?.[0]?.count ?? 0);
+  const [commentCount, setCommentCount] = useState(post.commentCount);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [commentBody, setCommentBody] = useState("");
   const [commentPending, setCommentPending] = useState(false);
