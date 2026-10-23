@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { reverseGeocode, type GeocodeResult, type ReverseGeocodeResult } from "@/lib/geo";
 import type { MapPin } from "@/lib/schemas/post-map";
 import type { MapLayerMouseEvent, MapRef } from "./primitives";
-import { fitPinsToView, type FitResult } from "./route-geometry";
+import { fitPinsToView, type FitResult } from "./post-map-geometry";
 import {
   EMPTY_SLOT,
   activeSlotKey,

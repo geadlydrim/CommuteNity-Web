@@ -1,8 +1,8 @@
 "use client";
 /**
- * GuideMapBuilder — dialog for composing a multi-leg, multi-modal route map
+ * GuideMapBuilder — dialog for composing a multi-leg, multi-modal post map
  * on a comment. Each leg is an origin→destination pair with a transport mode.
- * Connectors link one leg's destination end to another leg's origin end (the
+ * Transfers link one leg's destination end to another leg's origin end (the
  * transfer point) and carry their own mode, forming one continuous chain.
  *
  * Same-type connections (origin↔origin / destination↔destination) are
@@ -22,12 +22,12 @@ import {
   guideMapDataSchema,
   type GuideMapData,
   type GuideLeg,
-  type GuideConnector,
+  type GuideTransfer,
 } from "@/lib/schemas/guide-map";
 import { guideChainStatus } from "@/lib/schemas/guide-chain";
 import { pinSchema } from "@/lib/schemas/post-map";
 import { MapView, Marker, Source, Layer } from "./primitives";
-import { legSegments, connectorSegments } from "./guide-geometry";
+import { legSegments, transferSegments } from "./guide-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
@@ -43,7 +43,7 @@ interface BuilderLeg {
   mode: TransportMode;
 }
 
-interface BuilderConnector {
+interface BuilderTransfer {
   id: string;
   mode: TransportMode;
   /** The leg whose destination end is the departure point. */
@@ -79,16 +79,16 @@ function emptyEnds(legId: string): SeedSlot[] {
 /** The saved guide's legs, transfers, and pins, or one empty leg. */
 function seedGuide(initialValue: GuideMapData | null): {
   legs: BuilderLeg[];
-  connectors: BuilderConnector[];
+  transfers: BuilderTransfer[];
   slots: SeedSlot[];
 } {
   if (!initialValue || initialValue.legs.length < 1) {
     const leg = newLeg();
-    return { legs: [leg], connectors: [], slots: emptyEnds(leg.id) };
+    return { legs: [leg], transfers: [], slots: emptyEnds(leg.id) };
   }
   return {
     legs: initialValue.legs.map((l) => ({ id: l.id, mode: l.mode })),
-    connectors: (initialValue.connectors ?? []).map((c) => ({
+    transfers: (initialValue.connectors ?? []).map((c) => ({
       id: c.id,
       mode: c.mode,
       fromLegId: c.from.legId,
@@ -101,7 +101,7 @@ function seedGuide(initialValue: GuideMapData | null): {
   };
 }
 
-function toTransfer(c: BuilderConnector): GuideConnector {
+function toTransfer(c: BuilderTransfer): GuideTransfer {
   return {
     id: c.id,
     mode: c.mode,
@@ -115,7 +115,7 @@ type BuiltGuide = { ok: true; data: GuideMapData } | { ok: false; message: strin
 /** The guide document Save writes, or the first problem (also the Save hint). */
 function buildGuide(
   legs: BuilderLeg[],
-  connectors: BuilderConnector[],
+  transfers: BuilderTransfer[],
   slotOf: (key: string) => EditorSlot
 ): BuiltGuide {
   const endPin = (legId: string, end: LegEnd) => {
@@ -129,17 +129,17 @@ function buildGuide(
     origin: endPin(l.id, "origin"),
     destination: endPin(l.id, "destination"),
   }));
-  const transfers = connectors.map(toTransfer);
+  const guideTransfers = transfers.map(toTransfer);
 
   // Same rule the guide schema refines with, so the hint and Save agree.
-  const chain = guideChainStatus(chainLegs, transfers);
+  const chain = guideChainStatus(chainLegs, guideTransfers);
   if (!chain.ok) return { ok: false, message: chain.message };
 
   const result = guideMapDataSchema.safeParse({
     version: CURRENT_GUIDE_VERSION,
     kind: "guide" as const,
     legs: chainLegs,
-    connectors: transfers,
+    connectors: guideTransfers,
   });
   if (!result.success) {
     return { ok: false, message: result.error.issues[0]?.message ?? "This guide isn't complete yet." };
@@ -171,7 +171,7 @@ export function GuideMapBuilder(props: Props) {
 function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const [seed] = useState(() => seedGuide(initialValue));
   const [legs, setLegs] = useState<BuilderLeg[]>(seed.legs);
-  const [connectors, setConnectors] = useState<BuilderConnector[]>(seed.connectors);
+  const [transfers, setTransfers] = useState<BuilderTransfer[]>(seed.transfers);
   const order = useMemo(
     () => legs.flatMap((l) => [endKey(l.id, "origin"), endKey(l.id, "destination")]),
     [legs]
@@ -197,33 +197,33 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
 
   function removeLeg(legId: string) {
     setLegs((prev) => prev.filter((l) => l.id !== legId));
-    setConnectors((prev) =>
+    setTransfers((prev) =>
       prev.filter((c) => c.fromLegId !== legId && c.toLegId !== legId)
     );
     editor.removeSlots([endKey(legId, "origin"), endKey(legId, "destination")]);
   }
 
-  // --- Connectors ---
+  // --- Transfers ---
 
-  function addConnector(fromLegId: string, toLegId: string, mode: TransportMode) {
-    setConnectors((prev) => [
+  function addTransfer(fromLegId: string, toLegId: string, mode: TransportMode) {
+    setTransfers((prev) => [
       ...prev,
       { id: crypto.randomUUID(), mode, fromLegId, toLegId },
     ]);
   }
 
-  function updateConnectorMode(id: string, mode: TransportMode) {
-    setConnectors((prev) => prev.map((c) => (c.id === id ? { ...c, mode } : c)));
+  function updateTransferMode(id: string, mode: TransportMode) {
+    setTransfers((prev) => prev.map((c) => (c.id === id ? { ...c, mode } : c)));
   }
 
-  function removeConnector(id: string) {
-    setConnectors((prev) => prev.filter((c) => c.id !== id));
+  function removeTransfer(id: string) {
+    setTransfers((prev) => prev.filter((c) => c.id !== id));
   }
 
   // --- Save ---
 
   const { slot } = editor;
-  const built = useMemo(() => buildGuide(legs, connectors, slot), [legs, connectors, slot]);
+  const built = useMemo(() => buildGuide(legs, transfers, slot), [legs, transfers, slot]);
 
   function handleSave() {
     if (!built.ok) {
@@ -245,25 +245,25 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
         : [];
     });
     const placedIds = new Set(validLegs.map((l) => l.id));
-    const validConnectors = connectors.filter(
+    const validTransfers = transfers.filter(
       (c) => placedIds.has(c.fromLegId) && placedIds.has(c.toLegId)
     );
     return {
       legs: validLegs,
       legLines: validLegs.flatMap((l) => legSegments([l]).map((seg) => ({ id: l.id, seg }))),
-      transferLines: validConnectors.flatMap((c) =>
-        connectorSegments(validLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
+      transferLines: validTransfers.flatMap((c) =>
+        transferSegments(validLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
       ),
     };
-  }, [legs, connectors, slot]);
+  }, [legs, transfers, slot]);
 
   return (
     <BuilderShell
       open={open}
       onOpenChange={onOpenChange}
-      title="Add guide route"
-      description="Add legs (origin → destination + mode). Connect legs via transfer connectors to build the full route."
-      saveLabel="Save guide route"
+      title="Add guide"
+      description="Add legs (origin → destination + mode). Connect legs via transfers to build the full guide."
+      saveLabel="Save guide"
       canSave={built.ok}
       hint={built.ok ? null : built.message}
       onSave={handleSave}
@@ -351,7 +351,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       }
       panel={
         <>
-          {/* Interleaved leg cards + connector slots */}
+          {/* Interleaved leg cards + transfer slots */}
           {legs.map((leg, i) => {
             const next = legs[i + 1];
             return (
@@ -374,15 +374,15 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                   onModeChange={(m) => setLegMode(leg.id, m)}
                   onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
                 />
-                {/* Connector slot between this leg and the next */}
+                {/* Transfer slot between this leg and the next */}
                 {next && (
-                  <ConnectorSlot
-                    connector={connectors.find(
+                  <TransferSlot
+                    transfer={transfers.find(
                       (c) => c.fromLegId === leg.id && c.toLegId === next.id
                     )}
-                    onAdd={(mode) => addConnector(leg.id, next.id, mode)}
-                    onRemove={(id) => removeConnector(id)}
-                    onModeChange={(id, mode) => updateConnectorMode(id, mode)}
+                    onAdd={(mode) => addTransfer(leg.id, next.id, mode)}
+                    onRemove={(id) => removeTransfer(id)}
+                    onModeChange={(id, mode) => updateTransferMode(id, mode)}
                   />
                 )}
               </div>
@@ -408,17 +408,17 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
 }
 
 // ---------------------------------------------------------------------------
-// ConnectorSlot — inline transfer card between two leg cards
+// TransferSlot — inline transfer card between two leg cards
 // ---------------------------------------------------------------------------
 
-interface ConnectorSlotProps {
-  connector: BuilderConnector | undefined;
+interface TransferSlotProps {
+  transfer: BuilderTransfer | undefined;
   onAdd: (mode: TransportMode) => void;
   onRemove: (id: string) => void;
   onModeChange: (id: string, mode: TransportMode) => void;
 }
 
-function ConnectorSlot({ connector, onAdd, onRemove, onModeChange }: ConnectorSlotProps) {
+function TransferSlot({ transfer, onAdd, onRemove, onModeChange }: TransferSlotProps) {
   return (
     <div className="flex items-stretch gap-0 py-0.5">
       {/* Dashed vertical track */}
@@ -431,12 +431,12 @@ function ConnectorSlot({ connector, onAdd, onRemove, onModeChange }: ConnectorSl
         <span className="text-[10px] text-muted-foreground shrink-0">Transfer:</span>
         <div className="flex items-center gap-1 flex-wrap">
           {ENABLED_MODES.map((m) => {
-            const active = connector?.mode === m;
+            const active = transfer?.mode === m;
             return (
               <button
                 key={m}
                 onClick={() =>
-                  connector ? onModeChange(connector.id, m) : onAdd(m)
+                  transfer ? onModeChange(transfer.id, m) : onAdd(m)
                 }
                 className={cn(
                   "px-2 py-0.5 rounded text-[10px] font-medium border transition-colors",
@@ -455,9 +455,9 @@ function ConnectorSlot({ connector, onAdd, onRemove, onModeChange }: ConnectorSl
             );
           })}
         </div>
-        {connector && (
+        {transfer && (
           <button
-            onClick={() => onRemove(connector.id)}
+            onClick={() => onRemove(transfer.id)}
             className="ml-auto shrink-0 p-0.5 rounded hover:bg-destructive/20 text-destructive transition-colors"
             title="Remove transfer"
           >

@@ -1,27 +1,27 @@
 /**
- * StaticRouteMap — post map thumbnail: the pins and the line through them,
+ * StaticPostMap — post map thumbnail: the pins and the line through them,
  * drawn on the shared StaticTileCanvas (no WebGL; safe once per feed post).
  */
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
 import type { MapPin } from "@/lib/schemas/post-map";
-import { fitPinsToView } from "./route-geometry";
+import { fitPinsToView } from "./post-map-geometry";
 import { StaticPinDot, StaticTileCanvas } from "./static-tile-canvas";
 
 const PIN_RADIUS = 6;
 
-export interface StaticRouteMapProps {
+export interface StaticPostMapProps {
   pins: MapPin[];
   width?: number;
   height?: number;
   className?: string;
 }
 
-export function StaticRouteMap({
+export function StaticPostMap({
   pins,
   width = 600,
   height = 240,
   className,
-}: StaticRouteMapProps) {
+}: StaticPostMapProps) {
   if (pins.length === 0) return null;
 
   return (
@@ -29,7 +29,7 @@ export function StaticRouteMap({
       fit={fitPinsToView(pins, width, height)}
       width={width}
       height={height}
-      ariaLabel="Route map preview"
+      ariaLabel="Post map preview"
       className={className}
     >
       {(project) => {
