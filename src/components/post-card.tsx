@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 import { mapDataSchema, type MapData } from "@/lib/schemas/post-map";
@@ -203,10 +204,10 @@ export function PostCard({ post, initialUserVote, currentUserId, focusMode = fal
           .upsert({ post_id: post.id, user_id: currentUserId, value }, { onConflict: "post_id,user_id" });
         if (error) throw error;
       }
-    } catch {
+    } catch (error) {
       setNetVotes(prevVotes);
       setUserVote(prevUserVote);
-      toast.error("Vote failed. Try again.");
+      toast.error(riderMessage(error, { fallback: "Vote failed. Try again." }));
     } finally {
       setVotePending(false);
     }
@@ -246,7 +247,7 @@ export function PostCard({ post, initialUserVote, currentUserId, focusMode = fal
       .select("id, body, created_at, map_data, users(username, display_name, avatar_url)")
       .single();
     if (error) {
-      toast.error("Comment failed.");
+      toast.error(riderMessage(error, { fallback: "Comment failed." }));
     } else {
       setComments((prev) => [...prev, data as CommentRow]);
       setCommentCount((c) => c + 1);

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,7 +57,7 @@ export function OnboardingForm({
     });
 
     if (metaError) {
-      setServerError(metaError.message);
+      setServerError(riderMessage(metaError));
       return;
     }
 
@@ -66,14 +67,7 @@ export function OnboardingForm({
       .eq("id", userId);
 
     if (dbError) {
-      if (
-        dbError.code === "23505" ||
-        dbError.message.toLowerCase().includes("username")
-      ) {
-        setServerError("Username is taken.");
-      } else {
-        setServerError(dbError.message);
-      }
+      setServerError(riderMessage(dbError));
       return;
     }
 

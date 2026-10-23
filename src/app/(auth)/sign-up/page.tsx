@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { usernameSchema, displayNameSchema } from "@/lib/schemas/profile";
 import { createClient } from "@/lib/supabase/client";
+import { riderMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -60,11 +61,7 @@ export default function SignUpPage() {
     });
 
     if (error) {
-      if (error.message.toLowerCase().includes("username")) {
-        setServerError("Username is taken.");
-      } else {
-        setServerError(error.message);
-      }
+      setServerError(riderMessage(error));
       return;
     }
 
