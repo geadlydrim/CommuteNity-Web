@@ -15,6 +15,7 @@ import { StaticGuideMap } from "@/components/map/static-guide-map";
 import { GuideMapBuilder } from "@/components/map/guide-map-builder";
 import { MapView, Marker, Popup, Source, Layer } from "@/components/map";
 import { lineStringFromPins, fitPinsToView } from "@/components/map/route-geometry";
+import { POST_BODY_MAX } from "@/lib/schemas/post";
 
 export type PostCardData = {
   id: string;
@@ -447,7 +448,7 @@ export function PostCard({ post, initialUserVote, currentUserId, focusMode = fal
                     e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })
                   }
                   placeholder="Add a comment…"
-                  maxLength={500}
+                  maxLength={POST_BODY_MAX}
                   disabled={commentPending}
                   className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 md:py-1.5 md:text-xs"
                 />

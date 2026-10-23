@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RouteMapBuilder } from "@/components/map/route-map-builder";
 import type { MapData } from "@/lib/schemas/post-map";
+import { POST_BODY_MAX } from "@/lib/schemas/post";
 
 export function PostComposer({
   avatarUrl,
@@ -24,6 +25,8 @@ export function PostComposer({
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [builderOpen, setBuilderOpen] = useState(false);
   const trimmed = text.trim();
+  const remaining = POST_BODY_MAX - trimmed.length;
+  const canPost = trimmed.length > 0 && remaining >= 0 && !submitting;
 
   async function handlePost() {
     setSubmitting(true);
@@ -109,11 +112,21 @@ export function PostComposer({
                   Add map
                 </button>
               )}
-              <Button
-                onClick={handlePost}
-                disabled={!trimmed || submitting}
-                className="ml-auto"
+              <span
+                className={`ml-auto text-xs tabular-nums ${
+                  remaining < 0
+                    ? "font-medium text-destructive"
+                    : remaining <= 50
+                      ? "font-medium text-amber-600"
+                      : "text-muted-foreground"
+                }`}
+                aria-live="polite"
               >
+                {remaining < 0
+                  ? `${-remaining} over the limit`
+                  : `${remaining} left`}
+              </span>
+              <Button onClick={handlePost} disabled={!canPost}>
                 {submitting ? "Posting…" : "Post"}
               </Button>
             </div>
