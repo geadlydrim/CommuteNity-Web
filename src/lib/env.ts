@@ -34,8 +34,35 @@ export function publicEnv(): PublicEnv {
   return cachedPublicEnv;
 }
 
-/** Server-only. User agent sent to the upstream geocoder. */
+let cachedGeocoderUserAgent: string | undefined;
+
+/** `Name/version (contact)`, where contact is a URL or email. */
+const USER_AGENT_PATTERN = /^\S+\/\S+.*\((?:[^()]*(?:https?:\/\/|@)[^()]*)\)/;
+
+/**
+ * Server-only. User agent sent to the upstream geocoder.
+ * Nominatim's usage policy requires an identifying agent with contact details,
+ * so production must set GEOCODER_USER_AGENT. Validates once and caches.
+ */
 export function geocoderUserAgent(): string {
-  const value = process.env.GEOCODER_USER_AGENT?.trim();
-  return value ? value : DEFAULT_GEOCODER_USER_AGENT;
+  if (cachedGeocoderUserAgent) return cachedGeocoderUserAgent;
+  const raw = process.env.GEOCODER_USER_AGENT;
+  let value: string;
+  if (raw === undefined) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Invalid environment variables:\n- GEOCODER_USER_AGENT is missing; production requires an identifying user agent like \"CommuteNity/1.0 (https://example.com)\"",
+      );
+    }
+    value = DEFAULT_GEOCODER_USER_AGENT;
+  } else {
+    value = raw.trim();
+    if (!USER_AGENT_PATTERN.test(value)) {
+      throw new Error(
+        "Invalid environment variables:\n- GEOCODER_USER_AGENT must look like \"Name/version (contact)\" with a URL or email contact",
+      );
+    }
+  }
+  cachedGeocoderUserAgent = value;
+  return value;
 }
