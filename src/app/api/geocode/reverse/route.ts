@@ -9,12 +9,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   // --- Validate query params ---
-  const latResult = latSchema.safeParse(searchParams.get("lat") ?? "");
-  const lonResult = lonSchema.safeParse(searchParams.get("lon") ?? "");
+  const latResult = latSchema.safeParse(searchParams.get("lat") ?? undefined);
+  const lonResult = lonSchema.safeParse(searchParams.get("lon") ?? undefined);
 
   if (!latResult.success || !lonResult.success) {
     return NextResponse.json(
-      { error: "lat and lon are required and must be valid coordinates" },
+      { error: "lat and lon are required and must be inside the Philippines" },
       { status: 400 }
     );
   }
