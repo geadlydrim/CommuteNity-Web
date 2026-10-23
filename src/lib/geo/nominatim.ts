@@ -1,213 +1,346 @@
 /**
- * Shared Nominatim HTTP helper — server-only.
- * Never import this file in browser code.
+ * Nominatim client — server-only. Never import this file in browser code.
  *
- * Holds the ONE module-level throttle + cache shared by both the forward
- * (/search) and reverse (/reverse) geocode routes so combined bursts
- * (e.g. geocode search then immediate drop-pin reverse) stay within
- * Nominatim's 1 req/s rate limit.
+ * `createNominatimClient` owns everything Nominatim's usage policy and our
+ * server functions need: one-at-a-time upstream calls at least 1 s apart, a
+ * bounded wait queue, a total time budget per call, retries for transient
+ * failures, and an LRU cache. Its clock, sleep, and fetch are injected so the
+ * behavior is testable with a fake clock.
  *
- * Serverless caveat: each cold-start instance gets its own lastRequestAt.
- * Acceptable for MVP at low traffic. Under load, swap to Upstash/Vercel KV.
+ * Both geocode routes share the module-level `nominatim` instance, so forward
+ * and reverse bursts stay within 1 request/second together. Each serverless
+ * instance has its own queue and cache (ADR 0003).
  */
 
+import { z } from "zod";
 import { geocoderUserAgent } from "@/lib/env";
 
-const CACHE_MAX = 200;
-const CACHE_TTL_MS = 300_000; // 5 min
-
-// Retry config — only for transient network / timeout failures
+/** Upstream calls start at least this far apart (Nominatim: 1 request/second). */
+const MIN_INTERVAL_MS = 1000;
+/** Callers allowed to wait for the upstream slot; one more is rejected as busy. */
+const MAX_WAITING = 4;
+/** Total time per call: queue wait, spacing, attempts, and backoff. */
+const BUDGET_MS = 8000;
+/** One upstream attempt; the remaining budget can cut it shorter. */
+const ATTEMPT_TIMEOUT_MS = 5000;
 const MAX_ATTEMPTS = 3;
-const ATTEMPT_TIMEOUT_MS = 8000; // up from 5000 — more room on slow networks
-const RETRY_BACKOFF_MS = 600;    // linear: 600 ms, 1200 ms between retries
+/** Exponential: 500 ms, then 1000 ms. */
+const BACKOFF_MS = 500;
+const CACHE_MAX = 200;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
-let lastRequestAt = 0;
-const cache = new Map<string, { data: unknown; expires: number }>();
+// ---------------------------------------------------------------------------
+// Upstream shapes (jsonv2 with addressdetails=1)
+// ---------------------------------------------------------------------------
 
-/** Return cached data if still fresh, else undefined. */
-export function cacheGet(key: string): unknown | undefined {
-  const hit = cache.get(key);
-  if (!hit) return undefined;
-  if (hit.expires <= Date.now()) {
+const nominatimPlaceSchema = z.object({
+  lat: z.coerce.number(),
+  lon: z.coerce.number(),
+  name: z.string().nullish(),
+  display_name: z.string().optional(),
+  category: z.string().optional(),
+  type: z.string().optional(),
+  importance: z.number().optional().catch(undefined),
+  address: z.record(z.string(), z.string()).optional(),
+});
+
+export type NominatimPlace = z.infer<typeof nominatimPlaceSchema>;
+
+const searchResponseSchema = z.array(nominatimPlaceSchema);
+
+/** Reverse answers `{ "error": "Unable to geocode" }` where there is no place (e.g. open sea). */
+const reverseResponseSchema = z.union([
+  z.object({ error: z.string() }),
+  nominatimPlaceSchema,
+]);
+
+// ---------------------------------------------------------------------------
+// Errors
+// ---------------------------------------------------------------------------
+
+/** Too many callers are already waiting for the upstream slot. */
+export class BusyError extends Error {
+  constructor() {
+    super("Nominatim queue is full");
+    this.name = "BusyError";
+  }
+}
+
+/** The call's total time budget ran out (queue wait, attempts, and retries). */
+export class GeocodeTimeoutError extends Error {
+  constructor() {
+    super(`Nominatim did not answer within ${BUDGET_MS} ms`);
+    this.name = "GeocodeTimeoutError";
+  }
+}
+
+/** Nominatim failed: an HTTP error, an unreachable server, or an unexpected body. */
+export class UpstreamError extends Error {
+  readonly status: number | undefined;
+
+  constructor(message: string, status?: number, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "UpstreamError";
+    this.status = status;
+  }
+}
+
+/** One attempt ran past its own timeout; retried while budget remains. */
+class AttemptTimeoutError extends Error {
+  constructor() {
+    super("Nominatim attempt timed out");
+    this.name = "AttemptTimeoutError";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// What the geocode routes answer
+// ---------------------------------------------------------------------------
+
+/** `Cache-Control` values shared by both geocode routes. */
+export const GEOCODE_CACHE_CONTROL = {
+  /** 200: browsers 5 min, CDN a day, then serve stale while revalidating. */
+  found: "public, max-age=300, s-maxage=86400, stale-while-revalidate=86400",
+  /** Reverse 404 "no place here": cacheable, but not for long. */
+  notFound: "public, max-age=300, s-maxage=300",
+  /** Validation and upstream failures. */
+  error: "no-store",
+} as const;
+
+/** Status and rider message for a failed client call. */
+export function geocodeFailure(err: unknown): { status: 502 | 503 | 504; error: string } {
+  if (err instanceof BusyError) {
+    return { status: 503, error: "Place search is busy right now. Try again in a moment." };
+  }
+  if (err instanceof GeocodeTimeoutError) {
+    return { status: 504, error: "Place search took too long. Try again." };
+  }
+  return { status: 502, error: "Place search isn't working right now. Try again later." };
+}
+
+// ---------------------------------------------------------------------------
+// Client
+// ---------------------------------------------------------------------------
+
+export interface NominatimClientDeps {
+  fetch: (url: string, init: RequestInit) => Promise<Response>;
+  /** Milliseconds since the epoch (or any monotonic origin). */
+  now: () => number;
+  /** Resolves after `ms`, or as soon as `signal` aborts. Never rejects. */
+  sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
+  userAgent: string;
+  baseUrl?: string;
+}
+
+export interface NominatimClient {
+  /** Forward search, Philippines only. */
+  search(params: { q: string; limit: number }): Promise<NominatimPlace[]>;
+  /** Reverse lookup at 4-decimal precision; `null` when there is no place there. */
+  reverse(params: { lat: number; lon: number }): Promise<NominatimPlace | null>;
+}
+
+export function createNominatimClient(deps: NominatimClientDeps): NominatimClient {
+  const { now, sleep, userAgent } = deps;
+  const baseUrl = deps.baseUrl ?? "https://nominatim.openstreetmap.org";
+
+  // --- LRU cache of validated upstream JSON (Map keeps insertion order) ---
+  const cache = new Map<string, { json: unknown; expires: number }>();
+
+  function cacheGet(key: string): { json: unknown } | undefined {
+    const entry = cache.get(key);
+    if (!entry) return undefined;
     cache.delete(key);
-    return undefined;
+    if (entry.expires <= now()) return undefined;
+    cache.set(key, entry); // most recently used moves to the end
+    return entry;
   }
-  return hit.data;
-}
 
-/** Store data in cache with FIFO eviction when full. */
-export function cacheSet(key: string, data: unknown): void {
-  if (cache.size >= CACHE_MAX) {
-    const oldest = cache.keys().next().value;
-    if (oldest !== undefined) cache.delete(oldest);
-  }
-  cache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
-}
-
-// ---------------------------------------------------------------------------
-// Two-tier PH-aware label builder
-// ---------------------------------------------------------------------------
-
-export interface LabelParts {
-  /** Landmark / POI name — primary bold line. */
-  primary: string;
-  /** Full address minus postcode/country — shown in search dropdown grey sub-line. */
-  detail: string;
-  /** Simplified barangay, city, province — stored as pin sublabel. */
-  secondary: string;
-  /** Raw Nominatim display_name — tooltip / fallback. */
-  full: string;
-}
-
-// Address keys to walk in order for the detail line (postcode/country excluded).
-const DETAIL_KEY_ORDER = [
-  "road",
-  "quarter", "neighbourhood", "suburb", "village", "hamlet",
-  "city_district", "district",
-  "city", "town", "municipality",
-  "county", "province", "state",
-] as const;
-
-/**
- * Derive Google-Maps-style label parts from a Nominatim result object.
- *
- * `raw` must be a single Nominatim feature (from `/search` array items or the
- * `/reverse` root object). Requires `addressdetails=1` in the upstream call.
- *
- * Two secondary strings are produced:
- *   detail    — full address chain, no postcode/country (for search dropdown)
- *   secondary — simplified barangay, city, province (stored as pin sublabel)
- */
-export function buildLabelParts(raw: Record<string, unknown>): LabelParts {
-  const a = ((raw.address ?? {}) as Record<string, string>);
-  const name = typeof raw.name === "string" ? raw.name.trim() : "";
-
-  const rawPoi =
-    name || a.amenity || a.shop || a.tourism || a.leisure ||
-    a.historic || a.office || a.building;
-  const rawRoad = a.road;
-  const rawBarangay =
-    a.quarter || a.neighbourhood || a.suburb ||
-    a.city_district || a.village || a.hamlet;
-  const rawCity = a.city || a.town || a.municipality;
-  const rawProvince = a.province || a.state;
-
-  // Primary: prefer landmark → road → barangay → city
-  const primaryVal =
-    rawPoi || rawRoad || rawBarangay || rawCity || "";
-
-  // Detail: all address keys in order, skipping the value already used as primary
-  const primaryLower = primaryVal.toLowerCase();
-  const detailSeen = new Set<string>([primaryLower].filter(Boolean));
-  const detailParts: string[] = [];
-  for (const key of DETAIL_KEY_ORDER) {
-    const v = a[key];
-    if (v && !detailSeen.has(v.toLowerCase())) {
-      detailSeen.add(v.toLowerCase());
-      detailParts.push(v);
+  function cacheSet(key: string, json: unknown): void {
+    cache.delete(key);
+    cache.set(key, { json, expires: now() + CACHE_TTL_MS });
+    for (const oldest of cache.keys()) {
+      if (cache.size <= CACHE_MAX) break;
+      cache.delete(oldest);
     }
   }
 
-  // Secondary (simplified): barangay → city → province, de-duped against primary
-  const secondarySeen = new Set<string>([primaryLower].filter(Boolean));
-  const secondaryParts = ([rawBarangay, rawCity, rawProvince] as (string | undefined)[])
-    .filter((v): v is string => {
-      if (!v || secondarySeen.has(v.toLowerCase())) return false;
-      secondarySeen.add(v.toLowerCase());
-      return true;
+  // --- The upstream slot: one holder, a bounded FIFO of waiters ---
+  let held = false;
+  const waiters: Array<() => void> = [];
+  let lastStart = Number.NEGATIVE_INFINITY;
+
+  /** Take the slot, or wait in line for it; leaves the line when `signal` aborts. */
+  function acquire(signal: AbortSignal): Promise<void> {
+    if (!held) {
+      held = true;
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const grant = () => {
+        signal.removeEventListener("abort", leave);
+        resolve();
+      };
+      const leave = () => {
+        const index = waiters.indexOf(grant);
+        if (index >= 0) waiters.splice(index, 1);
+        reject(signal.reason);
+      };
+      waiters.push(grant);
+      signal.addEventListener("abort", leave, { once: true });
+    });
+  }
+
+  /** Hand the slot to the next waiter, or free it. */
+  function release(): void {
+    const next = waiters.shift();
+    if (next) next();
+    else held = false;
+  }
+
+  async function attemptOnce(url: string, callSignal: AbortSignal, deadline: number): Promise<unknown> {
+    const attempt = new AbortController();
+    const finished = new AbortController();
+    const forwardAbort = () => attempt.abort(callSignal.reason);
+    callSignal.addEventListener("abort", forwardAbort, { once: true });
+    void sleep(Math.min(ATTEMPT_TIMEOUT_MS, deadline - now()), finished.signal).then(() => {
+      if (!finished.signal.aborted) attempt.abort(new AttemptTimeoutError());
+    });
+    try {
+      const res = await deps.fetch(url, {
+        headers: { "User-Agent": userAgent, "Accept-Language": "en-PH,en" },
+        signal: attempt.signal,
+      });
+      if (!res.ok) {
+        throw new UpstreamError(`Nominatim returned HTTP ${res.status}`, res.status);
+      }
+      return await res.json();
+    } finally {
+      finished.abort();
+      callSignal.removeEventListener("abort", forwardAbort);
+    }
+  }
+
+  /** Run attempts while holding the slot; every attempt starts ≥ MIN_INTERVAL_MS after the last. */
+  async function fetchWithRetry(url: string, signal: AbortSignal, deadline: number): Promise<unknown> {
+    for (let attempt = 1; ; attempt++) {
+      const wait = lastStart + MIN_INTERVAL_MS - now();
+      if (wait > 0) await sleep(wait, signal);
+      signal.throwIfAborted();
+      // Its budget can run out the instant the slot is handed over.
+      if (now() >= deadline) throw new GeocodeTimeoutError();
+      lastStart = now();
+      try {
+        return await attemptOnce(url, signal, deadline);
+      } catch (err) {
+        signal.throwIfAborted();
+        const backoff = BACKOFF_MS * 2 ** (attempt - 1);
+        if (attempt >= MAX_ATTEMPTS || !isRetryable(err) || now() + backoff >= deadline) {
+          throw finalError(err);
+        }
+        await sleep(backoff, signal);
+      }
+    }
+  }
+
+  async function lookup<T>(
+    key: string,
+    path: "search" | "reverse",
+    params: Record<string, string>,
+    parse: (json: unknown) => T,
+  ): Promise<T> {
+    const hit = cacheGet(key);
+    if (hit) return parse(hit.json);
+    if (held && waiters.length >= MAX_WAITING) throw new BusyError();
+
+    const deadline = now() + BUDGET_MS;
+    const call = new AbortController();
+    const settled = new AbortController();
+    void sleep(BUDGET_MS, settled.signal).then(() => {
+      if (!settled.signal.aborted) call.abort(new GeocodeTimeoutError());
     });
 
-  const full = typeof raw.display_name === "string" ? raw.display_name : "";
-  const primary = primaryVal || full;
+    const url = new URL(`${baseUrl}/${path}`);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+
+    let acquired = false;
+    try {
+      await acquire(call.signal);
+      acquired = true;
+      // A caller ahead in the queue may have fetched the same key.
+      const fresh = cacheGet(key);
+      if (fresh) return parse(fresh.json);
+
+      const json = await fetchWithRetry(url.toString(), call.signal, deadline);
+      let value: T;
+      try {
+        value = parse(json);
+      } catch (err) {
+        throw new UpstreamError("Nominatim returned an unexpected response", undefined, { cause: err });
+      }
+      cacheSet(key, json);
+      return value;
+    } finally {
+      if (acquired) release();
+      settled.abort();
+    }
+  }
+
   return {
-    primary,
-    detail: detailParts.join(", "),
-    secondary: secondaryParts.join(", "),
-    full,
+    search({ q, limit }) {
+      return lookup(
+        `search:${limit}:${q.toLowerCase()}`,
+        "search",
+        { format: "jsonv2", q, limit: String(limit), countrycodes: "ph", addressdetails: "1" },
+        (json) => searchResponseSchema.parse(json),
+      );
+    },
+    reverse({ lat, lon }) {
+      // ~11 m: taps this close share one cache entry and one upstream answer.
+      const la = lat.toFixed(4);
+      const lo = lon.toFixed(4);
+      return lookup(
+        `reverse:${la}:${lo}`,
+        "reverse",
+        { format: "jsonv2", lat: la, lon: lo, addressdetails: "1" },
+        (json) => {
+          const answer = reverseResponseSchema.parse(json);
+          return "error" in answer ? null : answer;
+        },
+      );
+    },
   };
 }
 
-/**
- * Returns true for transient connection/timeout errors that are worth retrying.
- * HTTP errors (carry `.status`) are never retried — they won't self-heal.
- */
+/** Network failures, attempt timeouts, and 5xx answers may heal on retry; nothing else will. */
 function isRetryable(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  if ("status" in err) return false; // upstream HTTP error — don't retry
-  if (err.name === "TimeoutError" || err.name === "AbortError") return true;
-  // ETIMEDOUT from undici surfaces as TypeError: fetch failed, cause has `code`
-  const code =
-    (err as { cause?: { code?: string } }).cause?.code ??
-    (err as { code?: string }).code;
-  return (
-    code === "ETIMEDOUT" ||
-    code === "ECONNRESET" ||
-    code === "ECONNREFUSED" ||
-    code === "EAI_AGAIN" ||
-    err.message.includes("fetch failed") // generic undici rejection
-  );
+  if (err instanceof UpstreamError) return err.status !== undefined && err.status >= 500;
+  if (err instanceof SyntaxError) return false; // unparseable body
+  return true; // fetch rejected: unreachable, reset, or our attempt timeout
 }
 
-/**
- * Fire a Nominatim request, respecting the shared 1 req/s throttle.
- * Retries up to MAX_ATTEMPTS times on timeout / connection failures.
- * Returns parsed JSON or throws an Error (with a `.status` property on
- * upstream HTTP failures; `TimeoutError` name on final timeout).
- */
-export async function fetchNominatim(
-  path: "search" | "reverse",
-  params: Record<string, string>
-): Promise<unknown> {
-  const url = new URL(`https://nominatim.openstreetmap.org/${path}`);
-  for (const [k, v] of Object.entries(params)) {
-    url.searchParams.set(k, v);
-  }
-
-  let lastErr: unknown;
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    // Re-apply throttle inside the loop so retries also respect 1 req/s
-    const wait = 1000 - (Date.now() - lastRequestAt);
-    if (wait > 0) {
-      await new Promise<void>((r) => setTimeout(r, wait));
-    }
-    lastRequestAt = Date.now();
-
-    try {
-      const res = await fetch(url.toString(), {
-        headers: {
-          "User-Agent":
-            geocoderUserAgent(),
-          "Accept-Language": "en-PH,en",
-        },
-        signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
-      });
-
-      if (!res.ok) {
-        // HTTP error — not retried; keep .status so routes can map to 504/502
-        throw Object.assign(
-          new Error(`Nominatim ${path} returned HTTP ${res.status}`),
-          { status: res.status }
-        );
-      }
-
-      return res.json();
-    } catch (err) {
-      lastErr = err;
-      if (attempt < MAX_ATTEMPTS && isRetryable(err)) {
-        console.warn(
-          `[Geocode] attempt ${attempt} failed (${err instanceof Error ? err.message : err}); retrying in ${RETRY_BACKOFF_MS * attempt}ms`
-        );
-        await new Promise<void>((r) =>
-          setTimeout(r, RETRY_BACKOFF_MS * attempt)
-        );
-        continue;
-      }
-      // Final attempt exhausted, or non-retryable — preserve original shape
-      throw err;
-    }
-  }
-
-  // Unreachable; satisfies TS control-flow
-  throw lastErr;
+function finalError(err: unknown): Error {
+  if (err instanceof UpstreamError) return err;
+  if (err instanceof AttemptTimeoutError) return new GeocodeTimeoutError();
+  return new UpstreamError("Could not reach Nominatim", undefined, { cause: err });
 }
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted) return resolve();
+    const done = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener("abort", done, { once: true });
+  });
+}
+
+/** The one client both geocode routes share. */
+export const nominatim = createNominatimClient({
+  fetch: (url, init) => fetch(url, init),
+  now: () => Date.now(),
+  sleep,
+  userAgent: geocoderUserAgent(),
+});
