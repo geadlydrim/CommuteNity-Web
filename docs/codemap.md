@@ -12,10 +12,10 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 | Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `GuidePreview`, `guide-geometry.ts`, `guide-map.ts` (`parseGuide`, `guideMapDataSchema`, `CURRENT_GUIDE_VERSION`), chain rule `guideChainStatus` in `guide-chain.ts` |
 | Transfer | `connector` / `connectors` (TS and stored JSON key) |
 | Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `src/lib/schemas/modes.ts`; colour via `modeColor` in `src/lib/map/colors.ts` |
-| Focus view | `FocusView`; `focus` prop on `PostCard`; `PostModal` (dialog shell taking children); routes `/p/[id]` and `@modal/(.)p/[id]` |
+| Focus view | `FocusView`; `focus` prop on `PostCard`; `FocusViewDialog` (dialog shell taking children); routes `/p/[id]` and `@modal/(.)p/[id]` |
 | Post vote | `post_votes` table, `net_votes` column (catalog votes are the separate `votes` table) |
 | Rider | `user`, `users` table, `currentUserId` |
-| Username | `username`; some code and UI say "handle" |
+| Username | `username` |
 
 ## Request flow
 
@@ -46,8 +46,8 @@ The code predates `GLOSSARY.md` and uses older names in places. Search for the c
 ## Edits that must land in several places
 
 - **Post reads**: one selection in `src/lib/posts/select.ts`, the UI type `Post` in `src/lib/posts/types.ts` (normalized by `toPost`), reads in `src/lib/posts/queries.ts`. A new column is a `select.ts` + `types.ts` change; regenerate row types first if it's a new database column.
-- **Map editing behavior** (slot state, reverse-geocode labeling, fly-to, dialog chrome): duplicated in `route-map-builder.tsx` and `guide-map-builder.tsx`.
-- **Colours**: one source, `src/lib/map/colors.ts` (pin roles, post-map line, `modeColor`); the builders still carry hex literals until they move onto it.
+- **Map editing**: both builders run on one core: pure slot transitions, per-slot request tokens, and the Philippines bounds check in `src/components/map/map-editor-state.ts`; the `useMapEditor` hook (`use-map-editor.ts`) for active slot, picking, placement, reverse-geocode aborts, fly-to, and fitting seeded pins; shared `BuilderShell` and `SlotFields`. A placement or labeling fix goes there, not in a builder.
+- **Colours**: one source, `src/lib/map/colors.ts` (pin roles, post-map line, `modeColor`), used by thumbnails, live maps, and builders.
 - **Username rules**: the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK, and `handle_new_user` re-checks it at sign-up.
 - **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
 - **Limits shared with SQL**: post/comment body 500 and non-blank (`src/lib/schemas/post.ts` ↔ CHECKs), `map_data` ≤ 16 KB (CHECKs in `content_limits`; builders' pin/leg caps keep real maps far below), Philippine pin bounds (`post-map.ts` ↔ reverse-geocode schema in `geocode.ts`), avatar types and 5 MiB (`src/lib/avatars.ts` ↔ bucket settings in `20261022000000_rider_write_guards.sql`), display name ≤ 40 (`profile.ts` ↔ `profile_limits`).
