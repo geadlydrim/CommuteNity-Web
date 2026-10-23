@@ -9,7 +9,7 @@
  */
 import { parsePostMap } from "@/lib/schemas/post-map";
 import { parseGuide } from "@/lib/schemas/guide-map";
-import { StaticRouteMap } from "./static-route-map";
+import { StaticPostMap } from "./static-post-map";
 import { StaticGuideMap } from "./static-guide-map";
 
 function UnavailableMap() {
@@ -24,7 +24,7 @@ export function PostMapPreview({ mapData }: { mapData: unknown }) {
   const parsed = parsePostMap(mapData);
   switch (parsed.status) {
     case "ok":
-      return <StaticRouteMap pins={parsed.map.pins} width={560} height={240} />;
+      return <StaticPostMap pins={parsed.map.pins} width={560} height={240} />;
     case "unknown-version":
       return <UnavailableMap />;
     default:

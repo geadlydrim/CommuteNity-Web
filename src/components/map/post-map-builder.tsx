@@ -1,6 +1,6 @@
 "use client";
 /**
- * RouteMapBuilder — dialog for composing a route map on a post.
+ * PostMapBuilder — dialog for composing a post map on a post.
  *
  * Slot model: Origin and Destination cards ALWAYS persist (even empty);
  * optional waypoint slots sit between them. Each slot has its own location
@@ -18,7 +18,7 @@ import type { GeocodeResult } from "@/lib/geo";
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
 import { CURRENT_POST_MAP_VERSION, mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
 import { MapView, Marker, Source, Layer } from "./primitives";
-import { lineStringFromPins } from "./route-geometry";
+import { lineStringFromPins } from "./post-map-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
@@ -64,13 +64,13 @@ function seedSlots(initialValue: MapData | null): SeedSlot[] {
 // Component
 // ---------------------------------------------------------------------------
 
-export function RouteMapBuilder(props: Props) {
+export function PostMapBuilder(props: Props) {
   // A fresh editor on every open, seeded from the current initialValue.
   const session = useOpenSession(props.open);
-  return <RouteMapEditor key={session} {...props} />;
+  return <PostMapEditor key={session} {...props} />;
 }
 
-function RouteMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
+function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const [seed] = useState(() => seedSlots(initialValue));
   /** Slot keys in pin order: origin, waypoints, destination. */
   const [order, setOrder] = useState(() => seed.map((s) => s.key));
@@ -145,9 +145,9 @@ function RouteMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     <BuilderShell
       open={open}
       onOpenChange={onOpenChange}
-      title="Add route map"
+      title="Add post map"
       description="Search each location, or click the map to place the selected pin. Drag a marker to fine-tune."
-      saveLabel="Save route"
+      saveLabel="Save post map"
       canSave={canSave}
       hint={canSave ? null : "Set both an origin and a destination."}
       onSave={handleSave}
@@ -164,9 +164,9 @@ function RouteMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
           initialViewState={editor.initialViewState}
         >
           {lineData && (
-            <Source id="route-line" type="geojson" data={lineData}>
+            <Source id="post-map-line" type="geojson" data={lineData}>
               <Layer
-                id="route-line-layer"
+                id="post-map-line-layer"
                 type="line"
                 paint={{
                   "line-color": POST_MAP_LINE_COLOR,

@@ -28,10 +28,10 @@ export const endRefSchema = z.object({
 export type EndRef = z.infer<typeof endRefSchema>;
 
 // ---------------------------------------------------------------------------
-// Connector — joins one leg's destination to another leg's origin
+// Transfer — joins one leg's destination to another leg's origin
 // ---------------------------------------------------------------------------
 
-export const connectorSchema = z.object({
+export const transferSchema = z.object({
   id: z.string().min(1),
   mode: modeSchema,
   /** Alight here — must always be a destination end. */
@@ -40,7 +40,7 @@ export const connectorSchema = z.object({
   to: endRefSchema,
 });
 
-export type GuideConnector = z.infer<typeof connectorSchema>;
+export type GuideTransfer = z.infer<typeof transferSchema>;
 
 // ---------------------------------------------------------------------------
 // Versions (ADR 0004)
@@ -53,14 +53,15 @@ export type GuideConnector = z.infer<typeof connectorSchema>;
 
 export const CURRENT_GUIDE_VERSION = 1;
 
-/** Version 1: legs joined by connectors into one chain (see guide-chain.ts). */
+/** Version 1: legs joined by transfers into one chain (see guide-chain.ts). */
 const guideV1Schema = z
   .object({
     version: z.literal(1),
     /** Discriminates from commuter map_data (which has no 'kind' field). */
     kind: z.literal("guide"),
     legs: z.array(legSchema).min(1, "At least one leg is required").max(8, "Maximum 8 legs"),
-    connectors: z.array(connectorSchema).default([]),
+    // Stored key is `connectors` (v1); the glossary term is transfer.
+    connectors: z.array(transferSchema).default([]),
   })
   .superRefine((guide, ctx) => {
     const chain = guideChainStatus(guide.legs, guide.connectors);

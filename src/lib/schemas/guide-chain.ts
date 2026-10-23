@@ -19,7 +19,7 @@ export interface ChainLeg {
   destination: MapPin | null;
 }
 
-/** A transfer as far as the chain cares (a stored connector fits this). */
+/** A transfer as far as the chain cares (a stored transfer fits this). */
 export interface ChainTransfer {
   from: { legId: string; end: "origin" | "destination" };
   to: { legId: string; end: "origin" | "destination" };

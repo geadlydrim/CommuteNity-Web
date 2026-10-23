@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitPinsToView, worldX, worldY } from "@/components/map/route-geometry";
+import { fitPinsToView, worldX, worldY } from "@/components/map/post-map-geometry";
 import { guideAllPins, guideMapFit } from "@/components/map/guide-geometry";
 import type { GuideLeg } from "@/lib/schemas/guide-map";
 import type { MapPin } from "@/lib/schemas/post-map";

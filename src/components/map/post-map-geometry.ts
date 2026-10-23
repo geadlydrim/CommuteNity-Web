@@ -1,7 +1,7 @@
 /**
  * Pure geometry helpers shared by:
- *   - StaticTileCanvas / StaticRouteMap (tile projection, fit-to-view)
- *   - RouteMapBuilder (Source/Layer LineString)
+ *   - StaticTileCanvas / StaticPostMap (tile projection, fit-to-view)
+ *   - PostMapBuilder (Source/Layer LineString)
  *   - FocusPostMap (MapView initialViewState)
  *
  * No "use client" — this is plain math, importable anywhere.
@@ -12,7 +12,7 @@ import type { MapPin } from "@/lib/schemas/post-map";
 // GeoJSON helpers
 // ---------------------------------------------------------------------------
 
-export interface RouteLineString {
+export interface PostMapLineString {
   type: "Feature";
   geometry: {
     type: "LineString";
@@ -22,7 +22,7 @@ export interface RouteLineString {
 }
 
 /** Build a straight GeoJSON LineString through the pins in order. */
-export function lineStringFromPins(pins: MapPin[]): RouteLineString {
+export function lineStringFromPins(pins: MapPin[]): PostMapLineString {
   return {
     type: "Feature",
     geometry: {

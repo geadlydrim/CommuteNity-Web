@@ -1,14 +1,14 @@
 "use client";
 /**
  * FocusPostMap — the interactive post map shown only in the focus view
- * (one WebGL context; the feed uses StaticRouteMap, ADR 0005).
+ * (one WebGL context; the feed uses StaticPostMap, ADR 0005).
  *
  * Pulls in MapLibre, so callers load it with `next/dynamic` to keep it out of
  * the feed bundle.
  */
 import { useState } from "react";
 import { MapView, Marker, Popup, Source, Layer } from "./primitives";
-import { lineStringFromPins, fitPinsToView } from "./route-geometry";
+import { lineStringFromPins, fitPinsToView } from "./post-map-geometry";
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
 import type { MapPin } from "@/lib/schemas/post-map";
 
@@ -28,9 +28,9 @@ export function FocusPostMap({ pins }: { pins: MapPin[] }) {
         initialViewState={fit}
       >
         {lineData && (
-          <Source id="focus-route-line" type="geojson" data={lineData}>
+          <Source id="focus-post-map-line" type="geojson" data={lineData}>
             <Layer
-              id="focus-route-line-layer"
+              id="focus-post-map-line-layer"
               type="line"
               paint={{
                 "line-color": POST_MAP_LINE_COLOR,

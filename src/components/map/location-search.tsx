@@ -2,8 +2,8 @@
 /**
  * LocationSearch — debounced geocode search input + two-line result dropdown.
  *
- * Extracted from SlotRow in route-map-builder so both the commuter builder
- * (RouteMapBuilder) and the guide builder (GuideMapBuilder) share one
+ * Extracted from SlotRow in post-map-builder so both the commuter builder
+ * (PostMapBuilder) and the guide builder (GuideMapBuilder) share one
  * implementation.
  *
  * Owns its own query / results / debounce / abort state. Calls `onPick` when

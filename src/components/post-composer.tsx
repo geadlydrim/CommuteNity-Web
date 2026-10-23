@@ -12,8 +12,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // Loaded on first open so the feed's initial bundle carries no map-builder code.
-const RouteMapBuilder = dynamic(
-  () => import("@/components/map/route-map-builder").then((m) => m.RouteMapBuilder),
+const PostMapBuilder = dynamic(
+  () => import("@/components/map/post-map-builder").then((m) => m.PostMapBuilder),
   { ssr: false }
 );
 import type { MapData } from "@/lib/schemas/post-map";
@@ -147,7 +147,7 @@ export function PostComposer({
       </div>
 
       {builderMounted && (
-        <RouteMapBuilder
+        <PostMapBuilder
           open={builderOpen}
           onOpenChange={setBuilderOpen}
           initialValue={mapData}

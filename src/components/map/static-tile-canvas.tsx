@@ -10,7 +10,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { tileUrl } from "@/lib/map/tiles";
-import { worldX, worldY, type FitResult } from "./route-geometry";
+import { worldX, worldY, type FitResult } from "./post-map-geometry";
 
 const TILE_SIZE = 256;
 

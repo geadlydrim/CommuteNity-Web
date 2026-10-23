@@ -5,7 +5,7 @@
  */
 import { PIN_COLORS } from "@/lib/map/colors";
 import type { GuideMapData } from "@/lib/schemas/guide-map";
-import { guideMapFit, legSegments, connectorSegments } from "./guide-geometry";
+import { guideMapFit, legSegments, transferSegments } from "./guide-geometry";
 import { StaticPinDot, StaticTileCanvas, type CanvasPoint } from "./static-tile-canvas";
 
 const PIN_RADIUS = 5;
@@ -23,7 +23,7 @@ export function StaticGuideMap({
   height = 240,
   className,
 }: StaticGuideMapProps) {
-  const { legs, connectors } = data;
+  const { legs, connectors: transfers } = data;
   if (legs.length === 0) return null;
 
   return (
@@ -31,7 +31,7 @@ export function StaticGuideMap({
       fit={guideMapFit(legs, width, height)}
       width={width}
       height={height}
-      ariaLabel="Guide route preview"
+      ariaLabel="Guide preview"
       className={className}
     >
       {(project) => {
@@ -66,7 +66,7 @@ export function StaticGuideMap({
                 );
               })}
               {/* Transfer lines — dashed */}
-              {connectorSegments(legs, connectors).map((seg, i) => {
+              {transferSegments(legs, transfers).map((seg, i) => {
                 const line = ends(seg.coords);
                 if (!line) return null;
                 const [a, b] = line;

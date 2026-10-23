@@ -217,7 +217,7 @@ export function CommentThread({
               {commentMapData && (
                 <div className="flex items-center gap-2 text-xs bg-muted/60 rounded-md px-2 py-1.5">
                   <span className="flex-1 truncate">
-                    🗺️ Guide route · {commentMapData.legs.length} leg{commentMapData.legs.length !== 1 ? "s" : ""}
+                    🗺️ Guide · {commentMapData.legs.length} leg{commentMapData.legs.length !== 1 ? "s" : ""}
                     {commentMapData.connectors.length > 0 && ` · ${commentMapData.connectors.length} transfer${commentMapData.connectors.length !== 1 ? "s" : ""}`}
                   </span>
                   <button
@@ -253,7 +253,7 @@ export function CommentThread({
                     type="button"
                     onClick={openGuideBuilder}
                     className="shrink-0 rounded-md border px-3 text-xs text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
-                    title="Add guide route map"
+                    title="Add guide"
                   >
                     🗺️
                   </button>
