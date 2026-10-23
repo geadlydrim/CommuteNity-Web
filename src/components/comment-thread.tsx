@@ -1,35 +1,29 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import type { TablesInsert } from "@/lib/supabase/database.types";
 import { riderMessage } from "@/lib/errors";
 import { UserAvatar } from "@/components/user-avatar";
-import { guideMapDataSchema, type GuideMapData } from "@/lib/schemas/guide-map";
-import { StaticGuideMap } from "@/components/map/static-guide-map";
+import { GuidePreview } from "@/components/map";
+import type { GuideMapData } from "@/lib/schemas/guide-map";
 import { POST_BODY_MAX } from "@/lib/schemas/post";
+import {
+  addComment,
+  listComments,
+  mergeComments,
+  type Comment,
+  type CommentCursor,
+} from "@/lib/posts/comments";
 
 // The builder pulls in MapLibre; load it only once a signed-in rider opens it.
 const GuideMapBuilder = dynamic(
   () => import("@/components/map/guide-map-builder").then((m) => m.GuideMapBuilder),
   { ssr: false }
 );
-
-type CommentRow = {
-  id: string;
-  body: string;
-  created_at: string;
-  /** Unvalidated from DB — always safeParse before rendering. */
-  map_data?: unknown;
-  users:
-    | { username: string | null; display_name: string | null; avatar_url: string | null }
-    | { username: string | null; display_name: string | null; avatar_url: string | null }[]
-    | null;
-};
 
 type Props = {
   postId: string;
@@ -54,45 +48,64 @@ export function CommentThread({
   actionsAfter,
 }: Props) {
   const [showComments, setShowComments] = useState(startOpen);
-  const [comments, setComments] = useState<CommentRow[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [commentCount, setCommentCount] = useState(initialCommentCount);
+  const [serverCount, setServerCount] = useState(initialCommentCount);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [nextCursor, setNextCursor] = useState<CommentCursor | null>(null);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [commentBody, setCommentBody] = useState("");
   const [commentPending, setCommentPending] = useState(false);
   const [commentMapData, setCommentMapData] = useState<GuideMapData | null>(null);
   const [guideBuilderOpen, setGuideBuilderOpen] = useState(false);
   // Stays true after the first open so the builder keeps its close animation.
   const [guideBuilderMounted, setGuideBuilderMounted] = useState(false);
+  // One page request at a time: double clicks and StrictMode's double effect send one.
+  const loadInFlight = useRef(false);
+
+  // Adopt the server's count when a refresh brings a new one.
+  if (serverCount !== initialCommentCount) {
+    setServerCount(initialCommentCount);
+    setCommentCount(initialCommentCount);
+  }
 
   const supabase = createClient();
 
   // Auto-load comments when in focus mode
   useEffect(() => {
     if (startOpen) {
-      loadComments();
+      loadComments(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startOpen]);
 
-  async function loadComments() {
-    if (commentsLoaded) return;
-    const { data, error } = await supabase
-      .from("comments")
-      .select("id, body, created_at, map_data, users(username, display_name, avatar_url)")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      toast.error("Couldn't load comments.");
+  /** Loads the page after `after`, or the first page when it's null. */
+  async function loadComments(after: CommentCursor | null) {
+    if (loadInFlight.current) return;
+    loadInFlight.current = true;
+    setCommentsLoading(true);
+    setLoadError(null);
+    const result = await listComments(supabase, { postId, after });
+    loadInFlight.current = false;
+    setCommentsLoading(false);
+    if (!result.ok) {
+      setLoadError(riderMessage(result.error, { fallback: "Couldn't load comments." }));
       return;
     }
-    setComments((data ?? []) as CommentRow[]);
+    setComments((prev) => mergeComments(prev, result.comments));
+    setNextCursor(result.nextCursor);
     setCommentsLoaded(true);
+  }
+
+  function retryLoad() {
+    loadComments(commentsLoaded ? nextCursor : null);
   }
 
   function toggleComments() {
     const next = !showComments;
     setShowComments(next);
-    if (next) loadComments();
+    if (next && !commentsLoaded) loadComments(null);
   }
 
   function openGuideBuilder() {
@@ -105,17 +118,16 @@ export function CommentThread({
     const body = commentBody.trim();
     if (!body || !currentUserId) return;
     setCommentPending(true);
-    const insertPayload: TablesInsert<"comments"> = { post_id: postId, author_id: currentUserId, body };
-    if (commentMapData) insertPayload.map_data = commentMapData;
-    const { data, error } = await supabase
-      .from("comments")
-      .insert(insertPayload)
-      .select("id, body, created_at, map_data, users(username, display_name, avatar_url)")
-      .single();
-    if (error) {
-      toast.error(riderMessage(error, { fallback: "Comment failed." }));
+    const result = await addComment(supabase, {
+      postId,
+      authorId: currentUserId,
+      body,
+      mapData: commentMapData,
+    });
+    if (!result.ok) {
+      toast.error(riderMessage(result.error, { fallback: "Comment failed." }));
     } else {
-      setComments((prev) => [...prev, data as CommentRow]);
+      setComments((prev) => mergeComments(prev, [result.comment]));
       setCommentCount((c) => c + 1);
       setCommentBody("");
       setCommentMapData(null);
@@ -148,7 +160,7 @@ export function CommentThread({
             <p className="text-xs text-muted-foreground">No comments yet.</p>
           )}
           {comments.map((c) => {
-            const cu = Array.isArray(c.users) ? c.users[0] : c.users;
+            const cu = c.author;
             const cDisplay = cu?.display_name ?? "Unknown";
             const cHandle = cu?.username ?? null;
             return (
@@ -164,20 +176,40 @@ export function CommentThread({
                   )}
                   <span className="text-muted-foreground whitespace-pre-wrap">{c.body}</span>
                   {/* Guide map attached to comment */}
-                  {(() => {
-                    if (!c.map_data) return null;
-                    const parsed = guideMapDataSchema.safeParse(c.map_data);
-                    if (!parsed.success) return null;
-                    return (
-                      <div className="mt-2 w-full">
-                        <StaticGuideMap data={parsed.data} width={480} height={200} />
-                      </div>
-                    );
-                  })()}
+                  {c.map_data != null && (
+                    <div className="mt-2 w-full">
+                      <GuidePreview mapData={c.map_data} />
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
+
+          {loadError ? (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-destructive">{loadError}</span>
+              <button
+                type="button"
+                onClick={retryLoad}
+                disabled={commentsLoading}
+                className="min-h-11 px-2 font-medium text-foreground hover:underline disabled:opacity-50"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            nextCursor && (
+              <button
+                type="button"
+                onClick={() => loadComments(nextCursor)}
+                disabled={commentsLoading}
+                className="min-h-11 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              >
+                {commentsLoading ? "Loading…" : "Show more comments"}
+              </button>
+            )
+          )}
 
           {currentUserId && (
             <div className="space-y-1.5">
