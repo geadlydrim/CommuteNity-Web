@@ -71,7 +71,7 @@ export function OnboardingForm({
       <CardHeader>
         <CardTitle>Pick a username</CardTitle>
         <CardDescription>
-          Choose a unique handle for your CommuteNity profile.
+          Choose a unique username for your CommuteNity profile.
         </CardDescription>
       </CardHeader>
       <CardContent>

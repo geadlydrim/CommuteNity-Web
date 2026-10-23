@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPostById } from "@/lib/posts";
-import { PostModal } from "@/components/post-modal";
+import { FocusViewDialog } from "@/components/focus-view-dialog";
 import { FocusView } from "@/components/focus-view";
 
 export default async function InterceptedPostPage({
@@ -20,8 +20,8 @@ export default async function InterceptedPostPage({
   if (!post) return null;
 
   return (
-    <PostModal>
+    <FocusViewDialog>
       <FocusView post={post} currentUserId={currentUserId} />
-    </PostModal>
+    </FocusViewDialog>
   );
 }

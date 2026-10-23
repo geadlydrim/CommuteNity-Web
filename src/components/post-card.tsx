@@ -33,12 +33,12 @@ export function PostCard({ post, initialUserVote, currentUserId, focus }: Props)
   // format renders the preview's placeholder.
   const postMap = parsePostMap(post.map_data);
   const display = u?.display_name ?? "Unknown user";
-  const handle = u?.username ?? null;
+  const authorUsername = u?.username ?? null;
 
   const authorNode = (
     <span className="min-w-0">
       <span className="font-medium">{display}</span>
-      {handle && <span className="ml-1 text-muted-foreground">@{handle}</span>}
+      {authorUsername && <span className="ml-1 text-muted-foreground">@{authorUsername}</span>}
     </span>
   );
 
@@ -57,8 +57,8 @@ export function PostCard({ post, initialUserVote, currentUserId, focus }: Props)
           <div className="flex min-w-0 items-center gap-2">
             <UserAvatar src={u?.avatar_url ?? null} name={display} className="h-8 w-8 shrink-0" />
             <p className="min-w-0 truncate text-sm">
-              {handle ? (
-                <Link href={`/u/${handle}`} className="relative z-10 hover:underline">
+              {authorUsername ? (
+                <Link href={`/u/${authorUsername}`} className="relative z-10 hover:underline">
                   {authorNode}
                 </Link>
               ) : (
