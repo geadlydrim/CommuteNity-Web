@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { getPostById } from "@/lib/posts";
 import { PostCard } from "@/components/post-card";
 
@@ -9,7 +10,12 @@ export default async function PostPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { post, initialUserVote, currentUserId } = await getPostById(id);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const currentUserId = user?.id ?? null;
+  const post = await getPostById(supabase, id, currentUserId);
 
   if (!post) notFound();
 
@@ -26,7 +32,7 @@ export default async function PostPage({
       <ul className="feed-col">
         <PostCard
           post={post}
-          initialUserVote={initialUserVote}
+          initialUserVote={post.viewerVote}
           currentUserId={currentUserId}
           focusMode
         />
