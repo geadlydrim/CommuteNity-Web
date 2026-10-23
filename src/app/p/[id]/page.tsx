@@ -1,21 +1,51 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPostById } from "@/lib/posts";
-import { PostCard } from "@/components/post-card";
+import { FocusView } from "@/components/focus-view";
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+type Params = { params: Promise<{ id: string }> };
+
+// One fetch per request, shared by generateMetadata and the page.
+const loadPost = cache(async (id: string) => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const currentUserId = user?.id ?? null;
   const post = await getPostById(supabase, id, currentUserId);
+  return { post, currentUserId };
+});
+
+/** The body on one line, cut to `max` characters with an ellipsis. */
+function excerpt(body: string, max: number): string {
+  const line = body.replace(/\s+/g, " ").trim();
+  return line.length > max ? `${line.slice(0, max - 1).trimEnd()}…` : line;
+}
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { id } = await params;
+  const { post } = await loadPost(id);
+  if (!post) return {};
+
+  const title = `${excerpt(post.body, 60)} · CommuteNity`;
+  const name = post.author?.display_name ?? null;
+  const handle = post.author?.username ? `@${post.author.username}` : null;
+  const by = name && handle ? `${name} (${handle})` : (name ?? handle ?? "A rider");
+  const description = `${by}: ${excerpt(post.body, 160)}`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "article", publishedTime: post.created_at },
+  };
+}
+
+export default async function PostPage({ params }: Params) {
+  const { id } = await params;
+  const { post, currentUserId } = await loadPost(id);
 
   if (!post) notFound();
 
@@ -29,14 +59,7 @@ export default async function PostPage({
           ← Back to feed
         </Link>
       </div>
-      <ul className="feed-col">
-        <PostCard
-          post={post}
-          initialUserVote={post.viewerVote}
-          currentUserId={currentUserId}
-          focusMode
-        />
-      </ul>
+      <FocusView post={post} currentUserId={currentUserId} className="feed-col" />
     </main>
   );
 }

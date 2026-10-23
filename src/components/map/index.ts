@@ -5,6 +5,8 @@
 // client-only primitives. Import osm-style.ts directly in server contexts.
 
 export { MapView, type MapViewProps, type MapRef } from "./map-view";
+// Interactive post map for the focus view; load it with next/dynamic.
+export { FocusPostMap } from "./focus-post-map";
 export {
   OSM_RASTER_STYLE,
   DEFAULT_VIEW_STATE,
