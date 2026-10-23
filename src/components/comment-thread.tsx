@@ -159,26 +159,26 @@ export function CommentThread({
           {comments.length === 0 && commentsLoaded && (
             <p className="text-xs text-muted-foreground">No comments yet.</p>
           )}
-          {comments.map((c) => {
-            const cu = c.author;
-            const cDisplay = cu?.display_name ?? "Unknown";
-            const cHandle = cu?.username ?? null;
+          {comments.map((comment) => {
+            const author = comment.author;
+            const authorName = author?.display_name ?? "Unknown";
+            const authorUsername = author?.username ?? null;
             return (
-              <div key={c.id} className="flex gap-2">
-                <UserAvatar src={cu?.avatar_url ?? null} name={cDisplay} className="h-6 w-6 shrink-0 mt-0.5" />
+              <div key={comment.id} className="flex gap-2">
+                <UserAvatar src={author?.avatar_url ?? null} name={authorName} className="h-6 w-6 shrink-0 mt-0.5" />
                 <div className="text-xs flex-1 min-w-0">
-                  {cHandle ? (
-                    <Link href={`/u/${cHandle}`} className="font-medium hover:underline mr-1">
-                      {cDisplay}
+                  {authorUsername ? (
+                    <Link href={`/u/${authorUsername}`} className="font-medium hover:underline mr-1">
+                      {authorName}
                     </Link>
                   ) : (
-                    <span className="font-medium mr-1">{cDisplay}</span>
+                    <span className="font-medium mr-1">{authorName}</span>
                   )}
-                  <span className="text-muted-foreground whitespace-pre-wrap">{c.body}</span>
-                  {/* Guide map attached to comment */}
-                  {c.map_data != null && (
+                  <span className="text-muted-foreground whitespace-pre-wrap">{comment.body}</span>
+                  {/* Guide attached to the comment */}
+                  {comment.map_data != null && (
                     <div className="mt-2 w-full">
-                      <GuidePreview mapData={c.map_data} />
+                      <GuidePreview mapData={comment.map_data} />
                     </div>
                   )}
                 </div>
@@ -213,7 +213,7 @@ export function CommentThread({
 
           {currentUserId && (
             <div className="space-y-1.5">
-              {/* Map chip when a guide map is attached */}
+              {/* Map chip when a guide is attached */}
               {commentMapData && (
                 <div className="flex items-center gap-2 text-xs bg-muted/60 rounded-md px-2 py-1.5">
                   <span className="flex-1 truncate">
