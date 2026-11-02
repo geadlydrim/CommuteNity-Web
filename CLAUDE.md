@@ -42,7 +42,7 @@ npm run db:types     # regenerate src/lib/supabase/database.types.ts from SUPABA
 
 ### Issue tracker
 
-Issues and specs are local markdown files under `.scratch/<feature>/` (gitignored). See `docs/agents/issue-tracker.md`.
+Issues and specs are GitHub issues on `geadlydrim/CommuteNity-Web`, managed with `gh`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

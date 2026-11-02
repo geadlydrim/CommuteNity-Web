@@ -31,5 +31,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# Local-markdown issue tracker (see docs/agents/issue-tracker.md)
+# Local scratch notes and past local-tracker efforts (issues now live on GitHub)
 .scratch/
