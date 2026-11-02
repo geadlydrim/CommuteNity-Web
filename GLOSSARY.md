@@ -74,6 +74,10 @@ _Avoid_: chord, geodesic
 The road-following line drawn between consecutive pins.
 _Avoid_: polyline, route line, snapped route
 
+**Via**:
+An unnamed point a street path is forced through, made by dragging the path; it is not a place.
+_Avoid_: waypoint, bend, shape point, vertex
+
 ### Catalog (parked)
 
 **Catalog**:
