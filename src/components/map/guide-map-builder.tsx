@@ -32,6 +32,10 @@ import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
 import { useMapEditor, useOpenSession } from "./use-map-editor";
+// PROTOTYPE — throwaway (issue #4)
+import { useReshapePrototype } from "./reshape-prototype/use-reshape-prototype";
+import type { ProtoLeg } from "./reshape-prototype/contract";
+import type { MapLayerMouseEvent } from "./primitives";
 
 // ---------------------------------------------------------------------------
 // Internal builder types
@@ -257,6 +261,26 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     };
   }, [legs, transfers, slot]);
 
+  // PROTOTYPE — throwaway (issue #4)
+  const protoLegs = useMemo<ProtoLeg[]>(
+    () =>
+      preview.legs.map((l) => ({
+        id: l.id,
+        index: legs.findIndex((x) => x.id === l.id) + 1,
+        color: MODE_META[l.mode].color,
+        origin: { lat: l.origin.lat, lng: l.origin.lng },
+        destination: { lat: l.destination.lat, lng: l.destination.lng },
+      })),
+    [preview.legs, legs]
+  );
+  const proto = useReshapePrototype(protoLegs, editor.mapRef);
+  const handleMapClick = proto
+    ? (e: MapLayerMouseEvent) => {
+        if (proto.variant.onMapClick?.(e)) return;
+        editor.onMapClick(e);
+      }
+    : editor.onMapClick;
+
   return (
     <BuilderShell
       open={open}
@@ -271,7 +295,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
         <MapView
           mapRef={editor.mapRef}
           className="h-full w-full rounded-none"
-          onClick={editor.onMapClick}
+          onClick={handleMapClick}
           onLoad={editor.onMapLoad}
           interactive
           cooperativeGestures
@@ -280,25 +304,28 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
           initialViewState={editor.initialViewState}
         >
           {/* Leg lines */}
-          {preview.legLines.map(({ id, seg }) => (
-            <Source
-              key={`leg-src-${id}`}
-              id={`leg-line-${id}`}
-              type="geojson"
-              data={{
-                type: "Feature",
-                geometry: { type: "LineString", coordinates: seg.coords },
-                properties: {},
-              }}
-            >
-              <Layer
-                id={`leg-line-layer-${id}`}
-                type="line"
-                paint={{ "line-color": seg.color, "line-width": 3, "line-opacity": 0.9 }}
-                layout={{ "line-join": "round", "line-cap": "round" }}
-              />
-            </Source>
-          ))}
+          {proto
+            ? proto.pathLayers
+            : preview.legLines.map(({ id, seg }) => (
+                <Source
+                  key={`leg-src-${id}`}
+                  id={`leg-line-${id}`}
+                  type="geojson"
+                  data={{
+                    type: "Feature",
+                    geometry: { type: "LineString", coordinates: seg.coords },
+                    properties: {},
+                  }}
+                >
+                  <Layer
+                    id={`leg-line-layer-${id}`}
+                    type="line"
+                    paint={{ "line-color": seg.color, "line-width": 3, "line-opacity": 0.9 }}
+                    layout={{ "line-join": "round", "line-cap": "round" }}
+                  />
+                </Source>
+              ))}
+          {proto?.variant.mapChildren}
           {/* Transfer lines — dashed */}
           {preview.transferLines.map(({ id, seg }) => (
             <Source
@@ -401,6 +428,8 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
               </button>
             </div>
           )}
+          {proto?.variant.panel}
+          {proto?.switcher}
         </>
       }
     />
