@@ -1,0 +1,6876 @@
+{
+ "generated": "2026-11-04T01:39:38+00:00",
+ "reference_pool": {
+  "jeepney": {
+   "relations": 314,
+   "stitched": 286,
+   "rejected": 28,
+   "reasons": {
+    "gap": 28
+   }
+  },
+  "bus": {
+   "relations": 144,
+   "stitched": 126,
+   "rejected": 18,
+   "reasons": {
+    "gap": 17,
+    "gap between way 1 and 2": 1
+   }
+  }
+ },
+ "osrm_up": false,
+ "car": [
+  {
+   "id": 14885756,
+   "label": "España Boulevard",
+   "name": "Arroceros–Project 7 via España",
+   "ref": "310",
+   "mode": "jeepney",
+   "operator": "New GSIS Transport Service Cooperative",
+   "length_km": 10.07,
+   "straight_km": 8.35,
+   "last_edit": "2026-09-06T23:44:11Z",
+   "n_ways": 112,
+   "start": [
+    121.01984,
+    14.65668
+   ],
+   "end": [
+    120.98133,
+    14.59148
+   ],
+   "oneway_share": 0.672,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 11.49,
+    "overlap_ref": 0.723,
+    "overlap_path": 0.635,
+    "ratio": 1.138,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "Quezon Avenue",
+      3.3
+     ],
+     [
+      "West Avenue",
+      2.1
+     ],
+     [
+      "España Boulevard",
+      2.0
+     ],
+     [
+      "1",
+      1.1
+     ],
+     [
+      "Quezon Boulevard",
+      1.0
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 2792,
+     "at": [
+      121.01709,
+      14.64472
+     ],
+     "ref_ways": [
+      {
+       "name": "Road A",
+       "highway": "residential",
+       "lanes": "2",
+       "way": 11625908
+      },
+      {
+       "name": "Road A",
+       "highway": "residential",
+       "lanes": "2",
+       "way": 75499041
+      },
+      {
+       "name": "Road B",
+       "highway": "residential",
+       "lanes": "1",
+       "way": 51545798
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 548380352
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 85461824
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1304487797
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 85461826
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1304487798
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1370103193
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1395603463
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 85461779
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 834381845
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1349525244
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 727174389
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1349525245
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 727174391
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 30414589
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 919052246
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 30414587
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 307309594
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1303311220
+      },
+      {
+       "name": "Fernando Poe Jr. Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 5450532
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 10.11,
+    "overlap_ref": 1.0,
+    "overlap_path": 1.0,
+    "ratio": 1.0,
+    "verdict": "useful default"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 1,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.723,
+      "overlap_path": 0.635,
+      "km": 11.46
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 1.0,
+      "overlap_path": 1.0,
+      "km": 10.07
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 1.0,
+    "vias": [
+     [
+      121.01709,
+      14.64472
+     ]
+    ],
+    "error": null,
+    "summary": "1"
+   }
+  },
+  {
+   "id": 14885770,
+   "label": "Cubao to Divisoria via Aurora",
+   "name": "Cubao–Divisoria via Santa Mesa, Aurora",
+   "ref": "372",
+   "mode": "jeepney",
+   "operator": "On-Us Solutions;Quezon City Transport Service Cooperative Inc.",
+   "length_km": 10.59,
+   "straight_km": 9.72,
+   "last_edit": "2026-09-12T23:23:24Z",
+   "n_ways": 123,
+   "start": [
+    120.96768,
+    14.6028
+   ],
+   "end": [
+    121.05517,
+    14.6245
+   ],
+   "oneway_share": 1.0,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 10.57,
+    "overlap_ref": 0.994,
+    "overlap_path": 0.996,
+    "ratio": 0.998,
+    "verdict": "useful default",
+    "top_roads": [
+     [
+      "Aurora Boulevard",
+      4.5
+     ],
+     [
+      "C. M. Recto Avenue",
+      2.8
+     ],
+     [
+      "Magsaysay Boulevard",
+      1.9
+     ],
+     [
+      "Legarda Street",
+      0.7
+     ],
+     [
+      "Legarda-Magsaysay Flyover",
+      0.5
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [],
+   "valhalla_no_tolls": {
+    "km": 10.57,
+    "overlap_ref": 0.994,
+    "overlap_path": 0.996,
+    "ratio": 0.998,
+    "verdict": "useful default"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 0,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.994,
+      "overlap_path": 0.996,
+      "km": 10.57
+     }
+    ],
+    "final_overlap_ref": 0.994,
+    "final_overlap_path": 0.996,
+    "vias": [],
+    "error": null,
+    "summary": "0"
+   }
+  },
+  {
+   "id": 9856704,
+   "label": "Quezon Avenue to Fairview",
+   "name": "Route 17: Ayala–Fairview via Quezon Avenue",
+   "ref": "17",
+   "mode": "bus",
+   "operator": "Mega Manila Consortium Corporation",
+   "length_km": 16.72,
+   "straight_km": 11.01,
+   "last_edit": "2026-09-01T10:44:59Z",
+   "n_ways": 106,
+   "start": [
+    121.04238,
+    14.63739
+   ],
+   "end": [
+    121.06121,
+    14.7347
+   ],
+   "oneway_share": 0.983,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 16.04,
+    "overlap_ref": 0.767,
+    "overlap_path": 0.803,
+    "ratio": 0.956,
+    "verdict": "close",
+    "top_roads": [
+     [
+      "Commonwealth Avenue",
+      10.4
+     ],
+     [
+      "Regalado Highway",
+      2.7
+     ],
+     [
+      "Quezon Avenue",
+      1.2
+     ],
+     [
+      "Elliptical Road",
+      0.8
+     ],
+     [
+      "1",
+      0.5
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 2806,
+     "at": [
+      121.05278,
+      14.72066
+     ],
+     "ref_ways": [
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 590131558
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1103682811
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 577597248
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 444678941
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 444678942
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 941651666
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 610046351
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 389070665
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 389070664
+      }
+     ]
+    },
+    {
+     "length_m": 1087,
+     "at": [
+      121.04188,
+      14.64205
+     ],
+     "ref_ways": [
+      {
+       "name": "NIA North Road",
+       "highway": "unclassified",
+       "lanes": "4",
+       "way": 23088398
+      },
+      {
+       "name": "NIA North Road",
+       "highway": "unclassified",
+       "lanes": "3",
+       "way": 858778225
+      },
+      {
+       "name": "NIA North Road",
+       "highway": "unclassified",
+       "lanes": "2",
+       "way": 856644224
+      },
+      {
+       "name": "NIA Road",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 22918877
+      },
+      {
+       "name": "NIA Road",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1342460068
+      },
+      {
+       "name": "NIA Road",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 856648828
+      },
+      {
+       "name": "Senator Miriam P. Defensor-Santiago Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1312049445
+      },
+      {
+       "name": "Senator Miriam P. Defensor-Santiago Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 856644234
+      },
+      {
+       "name": "Senator Miriam P. Defensor-Santiago Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 859217265
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 16.04,
+    "overlap_ref": 0.767,
+    "overlap_path": 0.803,
+    "ratio": 0.956,
+    "verdict": "close"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 3,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.767,
+      "overlap_path": 0.803,
+      "km": 15.98
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.935,
+      "overlap_path": 0.934,
+      "km": 16.74
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 0.902,
+      "overlap_path": 0.896,
+      "km": 16.8
+     },
+     {
+      "vias": 3,
+      "overlap_ref": 0.977,
+      "overlap_path": 0.965,
+      "km": 16.96
+     }
+    ],
+    "final_overlap_ref": 0.977,
+    "final_overlap_path": 0.965,
+    "vias": [
+     [
+      121.04188,
+      14.64205
+     ],
+     [
+      121.04388,
+      14.6479
+     ],
+     [
+      121.05278,
+      14.72066
+     ]
+    ],
+    "error": null,
+    "summary": "3"
+   }
+  },
+  {
+   "id": 14878113,
+   "label": "Commonwealth Avenue",
+   "name": "Bagong Silang–QMC via Commonwealth",
+   "ref": "102",
+   "mode": "jeepney",
+   "operator": "Bagong Silang Transport Service Cooperative",
+   "length_km": 20.32,
+   "straight_km": 13.77,
+   "last_edit": "2026-08-06T05:13:38Z",
+   "n_ways": 125,
+   "start": [
+    121.05116,
+    14.65315
+   ],
+   "end": [
+    121.04624,
+    14.77685
+   ],
+   "oneway_share": 0.738,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 17.09,
+    "overlap_ref": 0.298,
+    "overlap_path": 0.356,
+    "ratio": 0.838,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "Quirino Highway",
+      5.6
+     ],
+     [
+      "Zabarte Road",
+      4.9
+     ],
+     [
+      "Mindanao Avenue",
+      4.2
+     ],
+     [
+      "North Avenue",
+      1.3
+     ],
+     [
+      "Elliptical Road",
+      0.6
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 14268,
+     "at": [
+      121.08743,
+      14.69038
+     ],
+     "ref_ways": [
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 729447305
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 481337819
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 936510015
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "junction": "roundabout",
+       "lanes": "8",
+       "way": 1278335126
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 670619384
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 481337821
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 1040177953
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 85238985
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 398689859
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "10",
+       "way": 398689858
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 883266542
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 85238992
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 883266547
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 547154521
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 547598178
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 85238982
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 907594168
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 1499228076
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 1499228075
+      },
+      {
+       "name": "Elliptical Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "8",
+       "way": 670619401
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 692921141
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 398689849
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1123244163
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1112571178
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 741730141
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 670619400
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 846602461
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "access": "no",
+       "bus": "designated",
+       "lanes": "1",
+       "way": 569341852
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 908386626
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 846602452
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 846602451
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 569341845
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1409748513
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 834542168
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 572391290
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 569337867
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 569325548
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 670821761
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 389070660
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 389070659
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 389070655
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 389070663
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 913691385
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 1062980974
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 1123244165
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 389070653
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 389070658
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 149993699
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 488503930
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 1082991576
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 1062980972
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 902670238
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 1082992735
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 488503932
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "7",
+       "way": 1123244182
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1062984144
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 706245803
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 1123244180
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 1414059126
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 1418102317
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 242904491
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 1123244179
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 116782548
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 610048227
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1236745642
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 1058580953
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1058580952
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1083010914
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 704462480
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1083014691
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 704462481
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1547221051
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1547221050
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 642764216
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1103682811
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 577597248
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 444678941
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 444678942
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 941651666
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 610046352
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 610046350
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 941651669
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 872815566
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 77447670
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 872815567
+      },
+      {
+       "name": "Commonwealth Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 941645839
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 17.09,
+    "overlap_ref": 0.298,
+    "overlap_path": 0.356,
+    "ratio": 0.838,
+    "verdict": "off"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 1,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.298,
+      "overlap_path": 0.356,
+      "km": 17.02
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 1.0,
+      "overlap_path": 1.0,
+      "km": 20.3
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 1.0,
+    "vias": [
+     [
+      121.08743,
+      14.69038
+     ]
+    ],
+    "error": null,
+    "summary": "1"
+   }
+  },
+  {
+   "id": 8202646,
+   "label": "Commonwealth to SM Fairview",
+   "name": "Commonwealth–SM Fairview via Regalado",
+   "ref": "111",
+   "mode": "jeepney",
+   "operator": null,
+   "length_km": 7.22,
+   "straight_km": 5.47,
+   "last_edit": "2026-08-06T05:13:38Z",
+   "n_ways": 32,
+   "start": [
+    121.05558,
+    14.73297
+   ],
+   "end": [
+    121.08717,
+    14.69445
+   ],
+   "oneway_share": 0.998,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 7.24,
+    "overlap_ref": 1.0,
+    "overlap_path": 1.0,
+    "ratio": 0.999,
+    "verdict": "useful default",
+    "top_roads": [
+     [
+      "Commonwealth Avenue",
+      3.9
+     ],
+     [
+      "Regalado Highway",
+      2.1
+     ],
+     [
+      "Belfast Avenue",
+      0.8
+     ],
+     [
+      "Mindanao Avenue",
+      0.4
+     ],
+     [
+      "(unnamed)",
+      0.0
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [],
+   "valhalla_no_tolls": {
+    "km": 7.24,
+    "overlap_ref": 1.0,
+    "overlap_path": 1.0,
+    "ratio": 0.999,
+    "verdict": "useful default"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 0,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 1.0,
+      "overlap_path": 1.0,
+      "km": 7.21
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 1.0,
+    "vias": [],
+    "error": null,
+    "summary": "0"
+   }
+  },
+  {
+   "id": 19701253,
+   "label": "Taft Avenue",
+   "name": "Baclaran–Dapitan via Taft",
+   "ref": "325",
+   "mode": "jeepney",
+   "operator": "Metrowide Transport Cooperative",
+   "length_km": 16.67,
+   "straight_km": 12.39,
+   "last_edit": "2026-09-12T23:23:24Z",
+   "n_ways": 179,
+   "start": [
+    120.99172,
+    14.51177
+   ],
+   "end": [
+    120.99923,
+    14.62295
+   ],
+   "oneway_share": 0.923,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 16.29,
+    "overlap_ref": 0.353,
+    "overlap_path": 0.364,
+    "ratio": 0.973,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "120",
+      5.8
+     ],
+     [
+      "España Boulevard",
+      2.0
+     ],
+     [
+      "61",
+      1.9
+     ],
+     [
+      "Quezon Boulevard",
+      1.7
+     ],
+     [
+      "Padre Burgos Avenue",
+      1.2
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 8109,
+     "at": [
+      120.99688,
+      14.5555
+     ],
+     "ref_ways": [
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 878865702
+      },
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 878865703
+      },
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1210914364
+      },
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "lanes": "5",
+       "way": 878862909
+      },
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "lanes": "5",
+       "way": 1112806238
+      },
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "lanes": "5",
+       "way": 98263084
+      },
+      {
+       "name": "Roxas Boulevard Service Road",
+       "highway": "unclassified",
+       "lanes": "5",
+       "way": 1210920188
+      },
+      {
+       "name": "Cuneta Avenue",
+       "highway": "tertiary",
+       "lanes": "2",
+       "way": 4245584
+      },
+      {
+       "name": "Cuneta Avenue",
+       "highway": "tertiary",
+       "lanes": "2",
+       "way": 224039649
+      },
+      {
+       "name": "Cuneta Avenue",
+       "highway": "tertiary",
+       "lanes": "2",
+       "way": 224039648
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 262618931
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 775216093
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 914977494
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 78627391
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1293512241
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 644875503
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1293512237
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1065803126
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1293530772
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 378929022
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 861271377
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 799270936
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 919008800
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 378929023
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 936461641
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1085073502
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 919000509
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1059019696
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 919000508
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 775153832
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 671028131
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 671028138
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 156307535
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 919000510
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 760603949
+      },
+      {
+       "highway": "primary_link",
+       "lanes": "2",
+       "way": 79347809
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 160274682
+      },
+      {
+       "highway": "primary_link",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 160274690
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 743648892
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1069451465
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1069451464
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1292491518
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 2667097
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 918582446
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 918582251
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 769206233
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 653015370
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 676717184
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 435985751
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 839785503
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 303549253
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 145658056
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 915739975
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1212764024
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 145658058
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 145658050
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 145658051
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 915746067
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 492215391
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1072399999
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1072400006
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1072400008
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 839785501
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 156307542
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 840031291
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 966895269
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1238790217
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 915741887
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1072400001
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1122524649
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 422648542
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1122524648
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1311307410
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 158627311
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1088187917
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 52544289
+      }
+     ]
+    },
+    {
+     "length_m": 2671,
+     "at": [
+      120.99015,
+      14.61535
+     ],
+     "ref_ways": [
+      {
+       "name": "Mendoza Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 675183383
+      },
+      {
+       "name": "Mendoza Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 59346514
+      },
+      {
+       "name": "Mendoza Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1077811770
+      },
+      {
+       "name": "Mendoza Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1077811771
+      },
+      {
+       "name": "Mendoza Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1087467344
+      },
+      {
+       "name": "Mendoza Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 834381839
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 122606961
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1460100500
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 9496598
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1342188735
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1300969582
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 747295052
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1416704422
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 800684737
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 121379458
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 943077160
+      },
+      {
+       "name": "Laon Laan Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 121379464
+      },
+      {
+       "name": "Nicanor Roxas Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 82699035
+      },
+      {
+       "name": "Nicanor Roxas Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1072034865
+      },
+      {
+       "name": "Mayon Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1553330490
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 16.74,
+    "overlap_ref": 0.5,
+    "overlap_path": 0.501,
+    "ratio": 1.0,
+    "verdict": "off"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 6,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.353,
+      "overlap_path": 0.364,
+      "km": 16.21
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.608,
+      "overlap_path": 0.611,
+      "km": 16.62
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 0.755,
+      "overlap_path": 0.725,
+      "km": 17.38
+     },
+     {
+      "vias": 3,
+      "overlap_ref": 0.843,
+      "overlap_path": 0.774,
+      "km": 18.19
+     },
+     {
+      "vias": 4,
+      "overlap_ref": 0.865,
+      "overlap_path": 0.793,
+      "km": 18.21
+     },
+     {
+      "vias": 5,
+      "overlap_ref": 0.937,
+      "overlap_path": 0.931,
+      "km": 16.79
+     },
+     {
+      "vias": 6,
+      "overlap_ref": 0.97,
+      "overlap_path": 0.968,
+      "km": 16.72
+     }
+    ],
+    "final_overlap_ref": 0.97,
+    "final_overlap_path": 0.968,
+    "vias": [
+     [
+      120.99476,
+      14.53614
+     ],
+     [
+      120.99859,
+      14.53697
+     ],
+     [
+      121.0006,
+      14.53924
+     ],
+     [
+      120.99688,
+      14.5555
+     ],
+     [
+      120.99015,
+      14.61535
+     ],
+     [
+      120.99516,
+      14.6199
+     ]
+    ],
+    "error": null,
+    "summary": "6"
+   }
+  },
+  {
+   "id": 14885760,
+   "label": "Taft Avenue to Monumento",
+   "name": "Libertad–Monumento via Taft",
+   "ref": "3150",
+   "mode": "jeepney",
+   "operator": "Double A Transport Corporation",
+   "length_km": 14.32,
+   "straight_km": 12.12,
+   "last_edit": "2026-09-12T23:23:24Z",
+   "n_ways": 149,
+   "start": [
+    120.98385,
+    14.6557
+   ],
+   "end": [
+    120.99815,
+    14.54756
+   ],
+   "oneway_share": 0.912,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 14.43,
+    "overlap_ref": 0.57,
+    "overlap_path": 0.568,
+    "ratio": 1.003,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "Rizal Avenue",
+      3.7
+     ],
+     [
+      "120",
+      3.1
+     ],
+     [
+      "Rizal Avenue Extension",
+      2.6
+     ],
+     [
+      "Padre Burgos Avenue",
+      1.4
+     ],
+     [
+      "Senator Gil J. Puyat Avenue",
+      0.9
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 4207,
+     "at": [
+      120.99057,
+      14.57195
+     ],
+     "ref_ways": [
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1071718216
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 28596690
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 28596691
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 809323033
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 156307549
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 704746736
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 791645314
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1122524651
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 915738775
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1064083360
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1238790216
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 839785502
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 915738771
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 915738770
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 839785499
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 839785500
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 693152270
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1072400007
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 915746065
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1072399998
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 915746066
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1285082465
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 145658053
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 145658054
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1212764025
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 145658055
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 667236531
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 653015368
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 933310892
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1288427204
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 156307540
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1196005703
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 769206221
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 653015369
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1292491520
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 775153830
+      },
+      {
+       "name": "Taft Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 418272231
+      }
+     ]
+    },
+    {
+     "length_m": 1217,
+     "at": [
+      120.99354,
+      14.54741
+     ],
+     "ref_ways": [
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 675168641
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 22738927
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224028346
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224028347
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224028348
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224034854
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224034855
+      },
+      {
+       "name": "A. Arnaiz Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 224028344
+      },
+      {
+       "name": "A. Arnaiz Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1553820372
+      },
+      {
+       "name": "A. Arnaiz Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 224034848
+      },
+      {
+       "name": "A. Arnaiz Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 224039644
+      },
+      {
+       "name": "A. Arnaiz Avenue",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 224039645
+      }
+     ]
+    },
+    {
+     "length_m": 739,
+     "at": [
+      120.99355,
+      14.55353
+     ],
+     "ref_ways": [
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 671028136
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 154420560
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 930373456
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 918573172
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 824376559
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 671028141
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 675168646
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 676131024
+      },
+      {
+       "highway": "primary_link",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 22696129
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 13.57,
+    "overlap_ref": 0.869,
+    "overlap_path": 0.923,
+    "ratio": 0.943,
+    "verdict": "close"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 2,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.57,
+      "overlap_path": 0.568,
+      "km": 14.36
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.869,
+      "overlap_path": 0.923,
+      "km": 13.5
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 1.0,
+      "overlap_path": 1.0,
+      "km": 14.31
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 1.0,
+    "vias": [
+     [
+      120.99057,
+      14.57195
+     ],
+     [
+      120.9928,
+      14.55027
+     ]
+    ],
+    "error": null,
+    "summary": "2"
+   }
+  },
+  {
+   "id": 21293817,
+   "label": "Mabini / Taft side streets",
+   "name": "Baclaran–Divisoria via Mabini",
+   "ref": "327",
+   "mode": "jeepney",
+   "operator": "Alabang Transport Service Cooperative;Bacoor Transport Service & Multipurpose Cooperative",
+   "length_km": 15.09,
+   "straight_km": 10.4,
+   "last_edit": "2026-09-12T23:23:24Z",
+   "n_ways": 172,
+   "start": [
+    120.97299,
+    14.60121
+   ],
+   "end": [
+    120.99072,
+    14.50931
+   ],
+   "oneway_share": 0.789,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 12.33,
+    "overlap_ref": 0.227,
+    "overlap_path": 0.288,
+    "ratio": 0.813,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "120",
+      5.8
+     ],
+     [
+      "Padre Burgos Avenue",
+      1.9
+     ],
+     [
+      "61",
+      1.8
+     ],
+     [
+      "President Diosdado Macapagal Boulevard",
+      0.7
+     ],
+     [
+      "Juan Luna Street",
+      0.6
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 6600,
+     "at": [
+      120.98938,
+      14.56029
+     ],
+     "ref_ways": [
+      {
+       "name": "Maria Orosa Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 156307479
+      },
+      {
+       "name": "Maria Orosa Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 1064067522
+      },
+      {
+       "name": "Kalaw Avenue",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1084279056
+      },
+      {
+       "name": "Kalaw Avenue",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1064067525
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 136842226
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "tertiary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 791613113
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 791613114
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 73032542
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 250157902
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 914968158
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1063723077
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1072116328
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 156307475
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1072116326
+      },
+      {
+       "name": "Quirino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 791613110
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1069806112
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 156307465
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 2667112
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015283
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224030398
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015280
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224030397
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015282
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015278
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224030395
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015281
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015279
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224030396
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015277
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224015276
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 675168646
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 676131024
+      },
+      {
+       "highway": "primary_link",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 22696129
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 676131026
+      },
+      {
+       "name": "Senator Gil J. Puyat Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1314300092
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 675168641
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 22738927
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224028346
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224028347
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224028348
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224034854
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224034855
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 224028345
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1059061389
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224039654
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224039651
+      },
+      {
+       "name": "F. B. Harrison Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 224039655
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 840378998
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 644875507
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 644875520
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 700820553
+      }
+     ]
+    },
+    {
+     "length_m": 2506,
+     "at": [
+      120.98984,
+      14.52848
+     ],
+     "ref_ways": [
+      {
+       "name": "EDSA Extension",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 14340691
+      },
+      {
+       "name": "EDSA Extension",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 156780902
+      },
+      {
+       "name": "EDSA Extension",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1086552600
+      },
+      {
+       "name": "EDSA Extension",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 331335835
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 351794321
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 351794320
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 649167318
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 706248358
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 706248361
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 706248360
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 586033810
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 245321835
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 156420749
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 691324764
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 125530431
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 691324768
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 435413155
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 202073056
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 710595145
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 710595146
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 649167314
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 202073055
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 209860587
+      },
+      {
+       "highway": "service",
+       "way": 1371400534
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1336663599
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 780743594
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 780743589
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 780743592
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 649167312
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 202073060
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 388593348
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1013439505
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 22738470
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22738471
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 691324756
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1074261807
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 649167309
+      }
+     ]
+    },
+    {
+     "length_m": 1391,
+     "at": [
+      120.97323,
+      14.60513
+     ],
+     "ref_ways": [
+      {
+       "name": "Juan Luna Street",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1553330500
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 161306362
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 161306363
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 161306361
+      },
+      {
+       "name": "C. M. Recto Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 369833667
+      },
+      {
+       "name": "C. M. Recto Avenue",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1444847986
+      },
+      {
+       "name": "Soler Street",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 668193048
+      },
+      {
+       "name": "Soler Street",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 800184258
+      },
+      {
+       "name": "Reina Regente Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 668193049
+      },
+      {
+       "name": "Reina Regente Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1087123604
+      },
+      {
+       "name": "Reina Regente Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1085119092
+      },
+      {
+       "name": "Reina Regente Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 161306390
+      },
+      {
+       "name": "Reina Regente Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1087435180
+      },
+      {
+       "name": "Reina Regente Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 161306391
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 704489997
+      }
+     ]
+    },
+    {
+     "length_m": 973,
+     "at": [
+      120.99169,
+      14.5103
+     ],
+     "ref_ways": [
+      {
+       "name": "Kennedy Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "bus": "designated",
+       "lanes": "3",
+       "way": 625056988
+      },
+      {
+       "name": "Kennedy Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "bus": "designated",
+       "lanes": "3",
+       "way": 625056989
+      },
+      {
+       "name": "Kennedy Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 625056986
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 625056990
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 625056985
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 742363666
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 642764205
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1337861131
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1337861130
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 645337993
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 642764198
+      },
+      {
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 645337992
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 636737586
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 645165801
+      },
+      {
+       "name": "Kennedy Road",
+       "highway": "unclassified",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 645165803
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 12.81,
+    "overlap_ref": 0.339,
+    "overlap_path": 0.41,
+    "ratio": 0.845,
+    "verdict": "off"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 9,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.227,
+      "overlap_path": 0.288,
+      "km": 12.27
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.275,
+      "overlap_path": 0.332,
+      "km": 12.81
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 0.408,
+      "overlap_path": 0.426,
+      "km": 14.7
+     },
+     {
+      "vias": 3,
+      "overlap_ref": 0.528,
+      "overlap_path": 0.548,
+      "km": 14.72
+     },
+     {
+      "vias": 4,
+      "overlap_ref": 0.607,
+      "overlap_path": 0.626,
+      "km": 14.82
+     },
+     {
+      "vias": 5,
+      "overlap_ref": 0.7,
+      "overlap_path": 0.676,
+      "km": 15.78
+     },
+     {
+      "vias": 6,
+      "overlap_ref": 0.858,
+      "overlap_path": 0.91,
+      "km": 14.35
+     },
+     {
+      "vias": 7,
+      "overlap_ref": 0.922,
+      "overlap_path": 0.921,
+      "km": 15.11
+     },
+     {
+      "vias": 8,
+      "overlap_ref": 0.918,
+      "overlap_path": 0.929,
+      "km": 14.92
+     },
+     {
+      "vias": 9,
+      "overlap_ref": 0.989,
+      "overlap_path": 0.988,
+      "km": 15.23
+     }
+    ],
+    "final_overlap_ref": 0.989,
+    "final_overlap_path": 0.988,
+    "vias": [
+     [
+      120.97323,
+      14.60513
+     ],
+     [
+      120.97832,
+      14.58578
+     ],
+     [
+      120.98109,
+      14.58198
+     ],
+     [
+      120.98107,
+      14.57572
+     ],
+     [
+      120.98938,
+      14.56029
+     ],
+     [
+      120.99305,
+      14.54927
+     ],
+     [
+      120.99522,
+      14.54041
+     ],
+     [
+      120.98984,
+      14.52848
+     ],
+     [
+      120.99169,
+      14.5103
+     ]
+    ],
+    "error": null,
+    "summary": "9"
+   }
+  },
+  {
+   "id": 9453755,
+   "label": "EDSA Carousel",
+   "name": "Route 1: EDSA Carousel",
+   "ref": "1",
+   "mode": "bus",
+   "operator": "Mega Manila Consortium Corporation;Jell Transport Inc.",
+   "length_km": 26.99,
+   "straight_km": 16.25,
+   "last_edit": "2026-07-30T23:43:23Z",
+   "n_ways": 157,
+   "start": [
+    120.99175,
+    14.51116
+   ],
+   "end": [
+    120.98613,
+    14.65722
+   ],
+   "oneway_share": 1.0,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 19.84,
+    "overlap_ref": 0.084,
+    "overlap_path": 0.141,
+    "ratio": 0.731,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "120",
+      5.8
+     ],
+     [
+      "Rizal Avenue",
+      3.8
+     ],
+     [
+      "Rizal Avenue Extension",
+      2.8
+     ],
+     [
+      "61",
+      1.9
+     ],
+     [
+      "Padre Burgos Avenue",
+      1.2
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0.16
+   },
+   "off_stretches": [
+    {
+     "length_m": 22243,
+     "at": [
+      121.0595,
+      14.60098
+     ],
+     "ref_ways": [
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 853615047
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 775216094
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 775169477
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 492438272
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 22761597
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 909957673
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 909957672
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 909957674
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 576201824
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 31090929
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1311528136
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 709834489
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 642176273
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 22770630
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088352
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088351
+      },
+      {
+       "highway": "trunk_link",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 28573762
+      },
+      {
+       "name": "EDSA",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 425374849
+      },
+      {
+       "name": "EDSA",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 642764879
+      },
+      {
+       "name": "EDSA",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 425374850
+      },
+      {
+       "name": "EDSA",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 425374848
+      },
+      {
+       "name": "EDSA",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 188163092
+      },
+      {
+       "name": "EDSA",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 705233293
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 188163087
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 931457629
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 909982302
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 909982301
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1076873687
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 425374854
+      },
+      {
+       "name": "EDSA",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1300055344
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 29213184
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088347
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088349
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088344
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 140209728
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088329
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088331
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088330
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088332
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088333
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088334
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088328
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088327
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 40801501
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088319
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088320
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 935712367
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 935712366
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088315
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088314
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 1078065128
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 1078065129
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088313
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088312
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088311
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088303
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088296
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088295
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 914977496
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 914977495
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088318
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 1343298473
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088302
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088301
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 880088300
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 880088298
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 892757882
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 892757881
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "lanes": "1",
+       "way": 880088297
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088299
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088316
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 880088317
+      }
+     ]
+    },
+    {
+     "length_m": 2474,
+     "at": [
+      120.99006,
+      14.52838
+     ],
+     "ref_ways": [
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 643279433
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 710440315
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 710440314
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 200480855
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1075191740
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1074899099
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 388593347
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 691324760
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 202073058
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 741897775
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 649167294
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 202073059
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 350974436
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 688086640
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 675164186
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 435413156
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 202073057
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 156420750
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 149827864
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 699821559
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 636737607
+      },
+      {
+       "name": "President Diosdado Macapagal Boulevard",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 676131006
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 913682396
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 913682395
+      },
+      {
+       "name": "EDSA Busway",
+       "highway": "busway",
+       "oneway": "yes",
+       "access": "no",
+       "lanes": "1",
+       "way": 913682394
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 20.3,
+    "overlap_ref": 0.162,
+    "overlap_path": 0.242,
+    "ratio": 0.748,
+    "verdict": "off"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 2,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.084,
+      "overlap_path": 0.141,
+      "km": 19.74
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.908,
+      "overlap_path": 0.904,
+      "km": 27.18
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 1.0,
+      "overlap_path": 0.993,
+      "km": 27.25
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 0.993,
+    "vias": [
+     [
+      120.99005,
+      14.52843
+     ],
+     [
+      121.0595,
+      14.60098
+     ]
+    ],
+    "error": null,
+    "summary": "2"
+   }
+  },
+  {
+   "id": 15093996,
+   "label": "M.H. del Pilar to Divisoria",
+   "name": "Malanday–Divisoria via M.H. del Pilar",
+   "ref": "3162",
+   "mode": "jeepney",
+   "operator": "Metro Valenzuela Transport Service Cooperative",
+   "length_km": 13.94,
+   "straight_km": 12.76,
+   "last_edit": "2026-09-12T23:23:24Z",
+   "n_ways": 105,
+   "start": [
+    120.97217,
+    14.60634
+   ],
+   "end": [
+    120.95827,
+    14.72033
+   ],
+   "oneway_share": 0.132,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 17.56,
+    "overlap_ref": 0.252,
+    "overlap_path": 0.201,
+    "ratio": 1.255,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "E5",
+      6.4
+     ],
+     [
+      "1",
+      4.1
+     ],
+     [
+      "120",
+      3.8
+     ],
+     [
+      "(unnamed)",
+      1.9
+     ],
+     [
+      "C. M. Recto Avenue",
+      1.1
+     ]
+    ],
+    "motorway_km": 7.79,
+    "toll_km": 8.32
+   },
+   "off_stretches": [
+    {
+     "length_m": 6037,
+     "at": [
+      120.96483,
+      14.67017
+     ],
+     "ref_ways": [
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 54776752
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319665145
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319664489
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319664488
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319664485
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319664486
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319664484
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319664487
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1539888687
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319662845
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319662848
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319662849
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319662847
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319662846
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 9866818
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 159633366
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 253741145
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "lanes": "1",
+       "way": 253741144
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 349457538
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1303301827
+      },
+      {
+       "name": "M. H. del Pilar Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 49182177
+      },
+      {
+       "name": "Rodriguez Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 245280149
+      },
+      {
+       "name": "Rodriguez Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1059967288
+      },
+      {
+       "name": "Rodriguez Street",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 24531367
+      },
+      {
+       "name": "Governor I. Santiago Road",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 159633383
+      },
+      {
+       "name": "Governor I. Santiago Road",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1303316506
+      },
+      {
+       "name": "Governor I. Santiago Road",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1364385036
+      },
+      {
+       "name": "Governor I. Santiago Road",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1303316505
+      },
+      {
+       "name": "Governor I. Santiago Road",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1303316507
+      },
+      {
+       "name": "Governor I. Santiago Road",
+       "highway": "secondary",
+       "lanes": "2",
+       "way": 1350885190
+      }
+     ]
+    },
+    {
+     "length_m": 4391,
+     "at": [
+      120.97301,
+      14.62515
+     ],
+     "ref_ways": [
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 820063563
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1450851209
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 16267912
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 800225071
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1396128653
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 923276141
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22750661
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 923276142
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1450846733
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 833362297
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1450846730
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 833362237
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 22750585
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1067296110
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 421750117
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "5",
+       "way": 833696232
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696236
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 923235032
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 7715385
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696204
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696341
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696316
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696327
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696209
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833362323
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833362311
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833362319
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 833696330
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1067209400
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666487
+      },
+      {
+       "name": "Juan Luna Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666486
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666492
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1118215775
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1118215778
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666490
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 1118215779
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666488
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666489
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319666491
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319665151
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319665152
+      },
+      {
+       "name": "A. Mabini Street",
+       "highway": "secondary",
+       "lanes": "4",
+       "way": 319665150
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 14.59,
+    "overlap_ref": 0.721,
+    "overlap_path": 0.692,
+    "ratio": 1.043,
+    "verdict": "off"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 2,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.252,
+      "overlap_path": 0.201,
+      "km": 17.49
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.577,
+      "overlap_path": 0.45,
+      "km": 17.88
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 1.0,
+      "overlap_path": 1.0,
+      "km": 13.94
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 1.0,
+    "vias": [
+     [
+      120.97455,
+      14.63179
+     ],
+     [
+      120.96483,
+      14.67017
+     ]
+    ],
+    "error": null,
+    "summary": "2"
+   }
+  },
+  {
+   "id": 15094000,
+   "label": "Imelda / SSH south",
+   "name": "Alabang–Baclaran via Imelda, SSH",
+   "ref": "T430",
+   "mode": "jeepney",
+   "operator": "Alabang Transport Service Cooperative",
+   "length_km": 13.3,
+   "straight_km": 10.13,
+   "last_edit": "2026-09-06T06:18:17Z",
+   "n_ways": 102,
+   "start": [
+    120.99304,
+    14.53164
+   ],
+   "end": [
+    121.04293,
+    14.45444
+   ],
+   "oneway_share": 1.0,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 15.63,
+    "overlap_ref": 0.078,
+    "overlap_path": 0.13,
+    "ratio": 1.171,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "E2",
+      8.9
+     ],
+     [
+      "1",
+      2.6
+     ],
+     [
+      "61",
+      1.6
+     ],
+     [
+      "(unnamed)",
+      1.4
+     ],
+     [
+      "Dr. A. Santos Avenue",
+      0.8
+     ]
+    ],
+    "motorway_km": 8.01,
+    "toll_km": 9.29
+   },
+   "off_stretches": [
+    {
+     "length_m": 12270,
+     "at": [
+      120.9918,
+      14.48533
+     ],
+     "ref_ways": [
+      {
+       "name": "Roxas Boulevard",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 645165804
+      },
+      {
+       "name": "Roxas Boulevard",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 369829194
+      },
+      {
+       "name": "Roxas Boulevard",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 245317930
+      },
+      {
+       "name": "Roxas Boulevard",
+       "highway": "trunk",
+       "oneway": "yes",
+       "lanes": "6",
+       "way": 245317933
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 245238980
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 462035256
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "bus": "yes",
+       "lanes": "4",
+       "way": 456482267
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "bus": "yes",
+       "lanes": "4",
+       "way": 667607234
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "bus": "yes",
+       "lanes": "4",
+       "way": 667228849
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 22731332
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 22731329
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 667607233
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 632555250
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 4486537
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 1076197609
+      },
+      {
+       "name": "NAIA Road",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "5",
+       "way": 691386373
+      },
+      {
+       "highway": "primary_link",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 918539216
+      },
+      {
+       "highway": "primary_link",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 22731351
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 388815602
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 767767966
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 767767967
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 295991556
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 388815594
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 388815597
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 636737532
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22732426
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1076133837
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 636737556
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 800610536
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 800610535
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 81178585
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1300718947
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1300718950
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 836312450
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 920605591
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22733647
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 920605594
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22733648
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1074876958
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 798212101
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 774894642
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 774894643
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1074876956
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 920605588
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 333015188
+      },
+      {
+       "name": "Ninoy Aquino Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22733732
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772156541
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1334970157
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1393459847
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772156540
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 824730723
+      },
+      {
+       "highway": "service",
+       "oneway": "yes",
+       "way": 107457724
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 933115864
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22733733
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772066337
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772066338
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 22733802
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772046522
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772054891
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772054896
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 933981305
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 933981304
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1265865776
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772054897
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1061886011
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1063358436
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1265849720
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1061886010
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1265834045
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1265834044
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1223658409
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1223658410
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772033283
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1334918574
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1264856666
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772033275
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772033280
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 772033276
+      },
+      {
+       "name": "Dr. A. Santos Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 733432546
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 13.96,
+    "overlap_ref": 0.901,
+    "overlap_path": 0.859,
+    "ratio": 1.047,
+    "verdict": "close"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 2,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.078,
+      "overlap_path": 0.13,
+      "km": 15.57
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.629,
+      "overlap_path": 0.592,
+      "km": 14.43
+     },
+     {
+      "vias": 2,
+      "overlap_ref": 1.0,
+      "overlap_path": 1.0,
+      "km": 13.28
+     }
+    ],
+    "final_overlap_ref": 1.0,
+    "final_overlap_path": 1.0,
+    "vias": [
+     [
+      120.99981,
+      14.50435
+     ],
+     [
+      120.9918,
+      14.48533
+     ]
+    ],
+    "error": null,
+    "summary": "2"
+   }
+  },
+  {
+   "id": 4515957,
+   "label": "Katipunan to North EDSA",
+   "name": "Katipunan/LRT–North EDSA",
+   "ref": "269",
+   "mode": "jeepney",
+   "operator": "Global Electric Transportation Services Cooperative",
+   "length_km": 11.07,
+   "straight_km": 5.23,
+   "last_edit": "2026-10-26T11:50:43Z",
+   "n_ways": 94,
+   "start": [
+    121.07425,
+    14.63272
+   ],
+   "end": [
+    121.03163,
+    14.65538
+   ],
+   "oneway_share": 1.0,
+   "contraflow_m": 0,
+   "valhalla": {
+    "km": 8.94,
+    "overlap_ref": 0.23,
+    "overlap_path": 0.334,
+    "ratio": 0.805,
+    "verdict": "off",
+    "top_roads": [
+     [
+      "Carlos P. Garcia Avenue",
+      2.5
+     ],
+     [
+      "Katipunan Avenue",
+      1.7
+     ],
+     [
+      "North Avenue",
+      1.7
+     ],
+     [
+      "Commonwealth Avenue",
+      1.1
+     ],
+     [
+      "Mindanao Avenue",
+      0.9
+     ]
+    ],
+    "motorway_km": 0,
+    "toll_km": 0
+   },
+   "off_stretches": [
+    {
+     "length_m": 8048,
+     "at": [
+      121.05941,
+      14.67312
+     ],
+     "ref_ways": [
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1371070157
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1061858545
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1123244186
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1123244176
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1176115146
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 834542166
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1061858544
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1061858543
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1061858542
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1061858539
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 765145497
+      },
+      {
+       "name": "Katipunan Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1061858538
+      },
+      {
+       "name": "Tandang Sora Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 225928466
+      },
+      {
+       "name": "Tandang Sora Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1086484267
+      },
+      {
+       "name": "Tandang Sora Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 834542158
+      },
+      {
+       "name": "Tandang Sora Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 216702187
+      },
+      {
+       "name": "Tandang Sora Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 569322627
+      },
+      {
+       "name": "Tandang Sora Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 225928459
+      },
+      {
+       "name": "Luzon Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 72508164
+      },
+      {
+       "name": "Luzon Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 72508166
+      },
+      {
+       "name": "Luzon Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 225878673
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 51319278
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 834542165
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 643224139
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 834542162
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 146591588
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 834542174
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 834542172
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1305140315
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 146591574
+      },
+      {
+       "name": "Congressional Avenue Extension",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1115422338
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1086507384
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "2",
+       "way": 1302964701
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 934067054
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 934067053
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 277508202
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1193904710
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 934084489
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 865188123
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 760517777
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 369688327
+      },
+      {
+       "name": "Congressional Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 760517775
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 121507789
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 923703587
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 44634974
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1061834689
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 44634961
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 44635224
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 1061823670
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "3",
+       "way": 877734550
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1387977174
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 923720399
+      },
+      {
+       "name": "Mindanao Avenue",
+       "highway": "primary",
+       "oneway": "yes",
+       "lanes": "4",
+       "way": 1350922343
+      }
+     ]
+    },
+    {
+     "length_m": 470,
+     "at": [
+      121.03249,
+      14.65715
+     ],
+     "ref_ways": [
+      {
+       "name": "East Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 1231011515
+      },
+      {
+       "name": "East Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 1083342752
+      },
+      {
+       "name": "East Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 1278337044
+      },
+      {
+       "name": "East Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 804241060
+      },
+      {
+       "name": "East Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 550866355
+      },
+      {
+       "name": "East Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 546768515
+      },
+      {
+       "name": "North Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 5131468
+      },
+      {
+       "name": "West Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 550866359
+      },
+      {
+       "name": "West Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 1338768887
+      },
+      {
+       "name": "West Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 915718665
+      },
+      {
+       "name": "West Road",
+       "highway": "service",
+       "oneway": "yes",
+       "way": 1086780873
+      }
+     ]
+    }
+   ],
+   "valhalla_no_tolls": {
+    "km": 8.94,
+    "overlap_ref": 0.23,
+    "overlap_path": 0.334,
+    "ratio": 0.805,
+    "verdict": "off"
+   },
+   "via_sim": {
+    "reached": true,
+    "vias_used": 1,
+    "history": [
+     {
+      "vias": 0,
+      "overlap_ref": 0.23,
+      "overlap_path": 0.334,
+      "km": 8.91
+     },
+     {
+      "vias": 1,
+      "overlap_ref": 0.958,
+      "overlap_path": 0.995,
+      "km": 10.65
+     }
+    ],
+    "final_overlap_ref": 0.958,
+    "final_overlap_path": 0.995,
+    "vias": [
+     [
+      121.05941,
+      14.67312
+     ]
+    ],
+    "error": null,
+    "summary": "1"
+   }
+  }
+ ],
+ "posts": [
+  {
+   "kind": "post",
+   "mode": null,
+   "from": "C. M. Recto Avenue",
+   "to": "Legarda Street",
+   "costing": "auto",
+   "straight_km": 1.82,
+   "routed_km": 3.19,
+   "ratio": 1.76,
+   "error": null
+  },
+  {
+   "kind": "post",
+   "mode": null,
+   "from": "SM Valenzuela",
+   "to": "San Pablo City Central Terminal",
+   "costing": "auto",
+   "straight_km": 77.13,
+   "routed_km": 95.42,
+   "ratio": 1.24,
+   "error": null
+  },
+  {
+   "kind": "post",
+   "mode": null,
+   "from": "Karuhatan",
+   "to": "Ramen Nagi",
+   "costing": "auto",
+   "straight_km": 4.06,
+   "routed_km": 5.01,
+   "ratio": 1.24,
+   "error": null
+  },
+  {
+   "kind": "post",
+   "mode": null,
+   "from": "MacArthur Highway",
+   "to": "Bonifacio Global City",
+   "costing": "auto",
+   "straight_km": 18.25,
+   "routed_km": 27.22,
+   "ratio": 1.49,
+   "error": null
+  },
+  {
+   "kind": "guide leg",
+   "mode": "bus",
+   "from": "SM Valenzuela",
+   "to": "San Pablo City Central Terminal",
+   "costing": "auto",
+   "straight_km": 77.15,
+   "routed_km": 95.45,
+   "ratio": 1.24,
+   "error": null
+  },
+  {
+   "kind": "guide leg",
+   "mode": "jeepney",
+   "from": "SM City San Pablo",
+   "to": "Sampaloc Lake",
+   "costing": "auto",
+   "straight_km": 3.12,
+   "routed_km": 4.69,
+   "ratio": 1.5,
+   "error": null
+  },
+  {
+   "kind": "guide leg",
+   "mode": "jeepney",
+   "from": "Jeepney Market",
+   "to": "People Power Monument",
+   "costing": "auto",
+   "straight_km": 13.64,
+   "routed_km": 17.85,
+   "ratio": 1.31,
+   "error": null
+  },
+  {
+   "kind": "guide leg",
+   "mode": "bus",
+   "from": "Yamaha Monumento",
+   "to": "Guadalupe",
+   "costing": "auto",
+   "straight_km": 11.75,
+   "routed_km": 23.32,
+   "ratio": 1.99,
+   "error": null
+  },
+  {
+   "kind": "guide leg",
+   "mode": "jeepney",
+   "from": "T. Mapua Street",
+   "to": "Magsaysay Boulevard",
+   "costing": "auto",
+   "straight_km": 1.84,
+   "routed_km": 2.77,
+   "ratio": 1.51,
+   "error": null
+  },
+  {
+   "kind": "guide leg",
+   "mode": "bus",
+   "from": "Legarda Street",
+   "to": "NLEX-SLEX Connector Road",
+   "costing": "auto",
+   "straight_km": 0.96,
+   "routed_km": 0.96,
+   "ratio": 1.0,
+   "error": null
+  }
+ ],
+ "walk_anchors": {
+  "cubao": {
+   "name": "MRT-3 Cubao station",
+   "osm": "node/11329697351",
+   "lng": 121.05107,
+   "lat": 14.61948
+  },
+  "gateway": {
+   "name": "Gateway Mall 1",
+   "osm": "way/30146167",
+   "lng": 121.05312,
+   "lat": 14.62174
+  },
+  "quiapo": {
+   "name": "Quiapo Church",
+   "osm": "way/27086772",
+   "lng": 120.98379,
+   "lat": 14.59882
+  },
+  "carriedo": {
+   "name": "Carriedo LRT-1 station",
+   "osm": "way/288089644",
+   "lng": 120.98136,
+   "lat": 14.59917
+  },
+  "ayala": {
+   "name": "Ayala MRT-3 station",
+   "osm": "way/27663063",
+   "lng": 121.02792,
+   "lat": 14.54919
+  },
+  "glorietta": {
+   "name": "Glorietta mall",
+   "osm": "way/40190900",
+   "lng": 121.02533,
+   "lat": 14.55122
+  },
+  "recto": {
+   "name": "Recto LRT-2 station",
+   "osm": "way/179240108",
+   "lng": 120.98337,
+   "lat": 14.60351
+  },
+  "168": {
+   "name": "168 Shopping Mall",
+   "osm": "way/319524305",
+   "lng": 120.97175,
+   "lat": 14.60481
+  }
+ },
+ "walk": [
+  {
+   "label": "Cubao MRT-3 to Gateway Mall",
+   "from": "MRT-3 Cubao station",
+   "to": "Gateway Mall 1",
+   "from_ll": [
+    121.05107,
+    14.61948
+   ],
+   "to_ll": [
+    121.05312,
+    14.62174
+   ],
+   "straight_m": 334,
+   "pedestrian": {
+    "km": 0.451,
+    "minutes": 5.4,
+    "ratio": 1.35,
+    "use_share": {
+     "road": 0.532,
+     "service_road": 0.33,
+     "footway": 0.073,
+     "steps": 0.06,
+     "pedestrian_crossing": 0.004
+    },
+    "road_m": 240,
+    "road_with_mapped_sidewalk_m": 0,
+    "bridge_m": 33,
+    "bridge_footway_m": 33,
+    "tunnel_m": 179,
+    "steps_m": 27,
+    "elevator_m": 0,
+    "escalator_m": 0,
+    "crossings": 1,
+    "sequence": [
+     {
+      "use": "footway",
+      "name": null,
+      "bridge": true,
+      "tunnel": false,
+      "m": 33
+     },
+     {
+      "use": "steps",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 27
+     },
+     {
+      "use": "pedestrian_crossing",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 2
+     },
+     {
+      "use": "service_road",
+      "name": "Central Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 149
+     },
+     {
+      "use": "road",
+      "name": "General Araneta Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 10
+     },
+     {
+      "use": "road",
+      "name": "General Araneta Avenue",
+      "bridge": false,
+      "tunnel": true,
+      "m": 92
+     },
+     {
+      "use": "road",
+      "name": "General Araneta Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 16
+     },
+     {
+      "use": "road",
+      "name": "General Roxas Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 35
+     },
+     {
+      "use": "road",
+      "name": "General Roxas Avenue",
+      "bridge": false,
+      "tunnel": true,
+      "m": 87
+     }
+    ]
+   },
+   "auto": {
+    "km": 1.799,
+    "minutes": 3.2,
+    "ratio": 5.39,
+    "pedestrian_within_25m_of_auto": 0.115
+   }
+  },
+  {
+   "label": "Quiapo Church to Carriedo LRT-1",
+   "from": "Quiapo Church",
+   "to": "Carriedo LRT-1 station",
+   "from_ll": [
+    120.98379,
+    14.59882
+   ],
+   "to_ll": [
+    120.98136,
+    14.59917
+   ],
+   "straight_m": 264,
+   "pedestrian": {
+    "km": 0.279,
+    "minutes": 3.3,
+    "ratio": 1.06,
+    "use_share": {
+     "road": 0.907,
+     "footway": 0.093
+    },
+    "road_m": 253,
+    "road_with_mapped_sidewalk_m": 219,
+    "bridge_m": 0,
+    "bridge_footway_m": 0,
+    "tunnel_m": 0,
+    "steps_m": 0,
+    "elevator_m": 0,
+    "escalator_m": 0,
+    "crossings": 0,
+    "sequence": [
+     {
+      "use": "footway",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 26
+     },
+     {
+      "use": "road",
+      "name": "Evangelista Street",
+      "bridge": false,
+      "tunnel": false,
+      "m": 17
+     },
+     {
+      "use": "road",
+      "name": "Carriedo Street",
+      "bridge": false,
+      "tunnel": false,
+      "m": 219
+     },
+     {
+      "use": "road",
+      "name": "Rizal Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 17
+     }
+    ]
+   },
+   "auto": {
+    "km": 3.616,
+    "minutes": 4.2,
+    "ratio": 13.7,
+    "pedestrian_within_25m_of_auto": 0.15
+   }
+  },
+  {
+   "label": "Ayala MRT-3 to Glorietta",
+   "from": "Ayala MRT-3 station",
+   "to": "Glorietta mall",
+   "from_ll": [
+    121.02792,
+    14.54919
+   ],
+   "to_ll": [
+    121.02533,
+    14.55122
+   ],
+   "straight_m": 358,
+   "pedestrian": {
+    "km": 0.505,
+    "minutes": 6.0,
+    "ratio": 1.41,
+    "use_share": {
+     "road": 0.827,
+     "footway": 0.127,
+     "steps": 0.032,
+     "driveway": 0.014
+    },
+    "road_m": 412,
+    "road_with_mapped_sidewalk_m": 0,
+    "bridge_m": 2,
+    "bridge_footway_m": 2,
+    "tunnel_m": 50,
+    "steps_m": 16,
+    "elevator_m": 0,
+    "escalator_m": 0,
+    "crossings": 0,
+    "sequence": [
+     {
+      "use": "footway",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 50
+     },
+     {
+      "use": "footway",
+      "name": null,
+      "bridge": true,
+      "tunnel": false,
+      "m": 2
+     },
+     {
+      "use": "steps",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 16
+     },
+     {
+      "use": "footway",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 11
+     },
+     {
+      "use": "road",
+      "name": "Station Road",
+      "bridge": false,
+      "tunnel": false,
+      "m": 50
+     },
+     {
+      "use": "road",
+      "name": "Station Road",
+      "bridge": false,
+      "tunnel": true,
+      "m": 50
+     },
+     {
+      "use": "road",
+      "name": "Station Road",
+      "bridge": false,
+      "tunnel": false,
+      "m": 35
+     },
+     {
+      "use": "road",
+      "name": "Palm Drive",
+      "bridge": false,
+      "tunnel": false,
+      "m": 277
+     },
+     {
+      "use": "driveway",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 7
+     }
+    ]
+   },
+   "auto": {
+    "km": 3.111,
+    "minutes": 3.5,
+    "ratio": 8.69,
+    "pedestrian_within_25m_of_auto": 0.417
+   }
+  },
+  {
+   "label": "Recto LRT-2 to 168 Mall",
+   "from": "Recto LRT-2 station",
+   "to": "168 Shopping Mall",
+   "from_ll": [
+    120.98337,
+    14.60351
+   ],
+   "to_ll": [
+    120.97175,
+    14.60481
+   ],
+   "straight_m": 1258,
+   "pedestrian": {
+    "km": 1.565,
+    "minutes": 18.5,
+    "ratio": 1.24,
+    "use_share": {
+     "road": 0.897,
+     "service_road": 0.103
+    },
+    "road_m": 1402,
+    "road_with_mapped_sidewalk_m": 291,
+    "bridge_m": 42,
+    "bridge_footway_m": 0,
+    "tunnel_m": 0,
+    "steps_m": 0,
+    "elevator_m": 0,
+    "escalator_m": 0,
+    "crossings": 0,
+    "sequence": [
+     {
+      "use": "road",
+      "name": "C. M. Recto Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 574
+     },
+     {
+      "use": "road",
+      "name": "C. M. Recto Avenue",
+      "bridge": true,
+      "tunnel": false,
+      "m": 17
+     },
+     {
+      "use": "road",
+      "name": "C. M. Recto Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 246
+     },
+     {
+      "use": "road",
+      "name": "C. M. Recto Avenue",
+      "bridge": true,
+      "tunnel": false,
+      "m": 25
+     },
+     {
+      "use": "road",
+      "name": "C. M. Recto Avenue",
+      "bridge": false,
+      "tunnel": false,
+      "m": 540
+     },
+     {
+      "use": "service_road",
+      "name": null,
+      "bridge": false,
+      "tunnel": false,
+      "m": 161
+     }
+    ]
+   },
+   "auto": {
+    "km": 2.205,
+    "minutes": 3.9,
+    "ratio": 1.75,
+    "pedestrian_within_25m_of_auto": 0.499
+   }
+  }
+ ],
+ "latency": [
+  {
+   "series": "valhalla auto, 0 vias",
+   "requests": 50,
+   "failed": 0,
+   "p50_ms": 16.2,
+   "p95_ms": 23.3,
+   "max_ms": 35.1
+  },
+  {
+   "series": "valhalla auto, 5 vias",
+   "requests": 50,
+   "failed": 0,
+   "p50_ms": 24.2,
+   "p95_ms": 40.1,
+   "max_ms": 51.7
+  },
+  {
+   "series": "valhalla auto, 10 vias",
+   "requests": 50,
+   "failed": 0,
+   "p50_ms": 30.8,
+   "p95_ms": 58.0,
+   "max_ms": 68.6
+  },
+  {
+   "series": "valhalla pedestrian, 0 vias",
+   "requests": 50,
+   "failed": 0,
+   "p50_ms": 14.1,
+   "p95_ms": 19.2,
+   "max_ms": 19.6
+  }
+ ],
+ "latency_note": "sequential client on the same machine, 3 warm-up requests per series not counted; corridors cycle through the car references; each request is an ~8 km (or shorter) stretch of a reference route"
+}
