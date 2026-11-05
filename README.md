@@ -21,7 +21,7 @@ Maps whose lines follow the streets, then a searchable catalog of routes and sto
 
 ## Built with
 
-Next.js, Supabase (Postgres + PostGIS), MapLibre with OpenStreetMap tiles, and Nominatim geocoding.
+Next.js, Supabase (Postgres + PostGIS), MapLibre with OpenStreetMap tiles, Nominatim geocoding, and a self-hosted Valhalla router for street paths.
 
 ## Run it locally
 
@@ -36,6 +36,20 @@ npm run dev                  # http://localhost:3000
 ```
 
 `GEOCODER_USER_AGENT` must identify your deployment and include a contact (`Name/version (https://… or email)`), as required by [Nominatim's](https://operations.osmfoundation.org/policies/nominatim/) and [OpenStreetMap's tile](https://operations.osmfoundation.org/policies/tiles/) usage policies. Geocoding and map tiles go through the app's own server routes with this agent; in production they fail with 502 until it's set.
+
+### Running the street-path router locally
+
+Street paths come from [Valhalla](https://github.com/valhalla/valhalla), which only our server calls, through `/api/route` (ADR 0007). Without a router the app still works and draws straight lines. To run one on your machine you need Podman or Docker, about 4 GB of free memory for the build, and about 3 GB of disk. The scripts keep everything in `~/.cache/commutenity/router/` (override with `ROUTER_HOME`), never in the repo.
+
+```bash
+scripts/router/download.sh   # Philippines extract from Geofabrik, md5 checked (about 600 MB)
+scripts/router/build.sh      # Valhalla tiles with the pinned ghcr.io/valhalla/valhalla:3.9.1 image, 4 GB cap
+scripts/router/serve.sh      # starts the router on http://127.0.0.1:8002 (serve.sh stop ends it)
+```
+
+Then put `ROUTER_URL=http://127.0.0.1:8002` in `.env.local` and restart `npm run dev`. `CONTAINER_RUNTIME=docker` forces Docker; Podman is used when both are installed. Download and build are one-time steps; rerun them to refresh the OpenStreetMap data (bump `PBF_NAME` in `scripts/router/env.sh` when Geofabrik retires the pinned dated file).
+
+`ROUTER_SECRET` is optional: when set, `/api/route` sends it to the router as an `X-Router-Secret` header for a front proxy to check. A stopped or unreachable router makes `/api/route` answer 502 or 504 within 5 seconds; with `ROUTER_URL` unset it answers 503.
 
 Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run typecheck`.
 
