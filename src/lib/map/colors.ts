@@ -15,6 +15,9 @@ export const PIN_COLORS = {
 /** Line through a post map's pins. Indigo-700: no transport mode uses it (bus is blue-500). */
 export const POST_MAP_LINE_COLOR = "#4338ca";
 
+/** Halo under the guide leg being reshaped, so it stands out from the others. */
+export const RESHAPE_CASING_COLOR = "#ffffff";
+
 /** Role colour of pin `index` in an ordered list of `total` pins (first = origin, last = destination). */
 export function pinColor(index: number, total: number): string {
   if (index === 0) return PIN_COLORS.origin;
