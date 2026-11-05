@@ -21,6 +21,7 @@ import { ArrowUp, ArrowDown, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { GeocodeResult } from "@/lib/geo";
+import { useRoutingAvailable } from "@/components/routing-availability";
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
 import { fitPostMap } from "@/lib/map/fit-document";
 import { CURRENT_POST_MAP_VERSION, mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
@@ -183,7 +184,8 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     }
     return result;
   }, [placed]);
-  const { state: routing, hold: holdPairs, release: releasePairs } = useRouting(pairs, seedPairs, open);
+  const routingAvailable = useRoutingAvailable();
+  const { state: routing, hold: holdPairs, release: releasePairs } = useRouting(pairs, seedPairs, open, routingAvailable);
   /** The pairs a pin belongs to: the ones a drag of that pin changes. */
   function pairIdsOf(key: string): string[] {
     const i = placed.findIndex((p) => p.key === key);

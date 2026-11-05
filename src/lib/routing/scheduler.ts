@@ -21,7 +21,8 @@
  *    they are and never retried.
  *  - Unavailable: the first `unavailable` reply means no router is configured.
  *    Every other live job is aborted and answered `unavailable`, and the rest
- *    of the session makes no more requests.
+ *    of the session makes no more requests. A session that already knows (the
+ *    server reported no router) starts in this state and never asks.
  */
 import type { RouteRequest } from "@/lib/schemas/route";
 import type { RouteOutcome } from "./client";
@@ -49,6 +50,8 @@ export interface RouteSchedulerOptions {
   /** Makes one request; `fetchRoute` in the browser. Must resolve `aborted` once `signal` aborts. */
   route: (request: RouteRequest, signal: AbortSignal) => Promise<RouteOutcome>;
   timers?: Timers;
+  /** The server has no router configured: every job is answered `unavailable` and `route` is never called. */
+  unavailable?: boolean;
 }
 
 export interface RouteScheduler {
@@ -65,7 +68,7 @@ export interface RouteScheduler {
   release(key: string): void;
   /** Drops the key's job (aborting its request) without calling back. */
   cancel(key: string): void;
-  /** The builder closed: drops every job, hold, and cached result, and forgets `unavailable`. */
+  /** The builder closed: drops every job, hold, and cached result, and forgets an `unavailable` reply (not a known-unavailable start). */
   reset(): void;
 }
 
@@ -85,7 +88,11 @@ interface Job {
   controller?: AbortController;
 }
 
-export function createRouteScheduler({ route, timers = BROWSER_TIMERS }: RouteSchedulerOptions): RouteScheduler {
+export function createRouteScheduler({
+  route,
+  timers = BROWSER_TIMERS,
+  unavailable: knownUnavailable = false,
+}: RouteSchedulerOptions): RouteScheduler {
   /** The live job of each key. */
   const jobs = new Map<string, Job>();
   /** Jobs waiting for a slot, oldest first; superseded ones are skipped when their turn comes. */
@@ -94,7 +101,7 @@ export function createRouteScheduler({ route, timers = BROWSER_TIMERS }: RouteSc
   /** Insertion order is recency: the first entry is the least recently used. */
   const cache = new Map<string, RouteResult & { status: "ok" }>();
   let running = 0;
-  let unavailable = false;
+  let unavailable = knownUnavailable;
 
   const isLive = (job: Job) => jobs.get(job.key) === job;
 
@@ -232,7 +239,7 @@ export function createRouteScheduler({ route, timers = BROWSER_TIMERS }: RouteSc
       queue.length = 0;
       held.clear();
       cache.clear();
-      unavailable = false;
+      unavailable = knownUnavailable;
     },
   };
 }

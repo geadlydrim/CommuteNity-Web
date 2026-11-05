@@ -75,8 +75,12 @@ The road-following line drawn between consecutive pins.
 _Avoid_: polyline, route line, snapped route
 
 **Via**:
-An unnamed point a street path is forced through, made by dragging the path; it is not a place.
+An unnamed point a street path is forced through, added in **Reshape mode**; it is not a place. A road or walking leg holds up to 10; rail legs have none.
 _Avoid_: waypoint, bend, shape point, vertex
+
+**Reshape mode**:
+Editing one leg's street path: tapping the map adds a numbered via to the nearest part of that leg's path, a via can be dragged to move it, and × removes it. Taps never place pins.
+_Avoid_: edit mode, drawing mode
 
 **Station**:
 A named boarding point on an MRT or LRT line; a rail leg's line runs between two stations.

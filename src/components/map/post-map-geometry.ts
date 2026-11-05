@@ -8,7 +8,7 @@
  * decoder (`@/lib/map/path`) is pure too, so server-rendered thumbnails can use it.
  */
 import { decodePath, type LatLng } from "@/lib/map/path";
-import type { MapData, MapPin } from "@/lib/schemas/post-map";
+import type { MapData } from "@/lib/schemas/post-map";
 
 // ---------------------------------------------------------------------------
 // GeoJSON helpers
@@ -21,11 +21,6 @@ export interface PostMapLineString {
     coordinates: [number, number][]; // [lng, lat]
   };
   properties: Record<string, never>;
-}
-
-/** Build a straight GeoJSON LineString through the pins in order. */
-export function lineStringFromPins(pins: MapPin[]): PostMapLineString {
-  return lineStringFromPoints(pins);
 }
 
 /** Build a GeoJSON LineString through the points in order. */
@@ -190,11 +185,6 @@ export function fitPointsToView(
   }
 
   return { longitude: centerLng, latitude: centerLat, zoom };
-}
-
-/** Fit just the pins (maps with no stored paths yet, e.g. the builders' seeds). */
-export function fitPinsToView(pins: readonly MapPin[], width: number, height: number): FitResult {
-  return fitPointsToView(pins, width, height);
 }
 
 /** Fit a post map: its pins plus every stored path point, so a path that bulges past its pins stays in frame. */

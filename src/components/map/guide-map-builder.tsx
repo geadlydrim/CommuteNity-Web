@@ -52,8 +52,9 @@ import { legOptions } from "@/lib/schemas/leg-options";
 import { pinSchema } from "@/lib/schemas/post-map";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useRoutingAvailable } from "@/components/routing-availability";
 import { MapView, Marker, Source, Layer, type MapLayerMouseEvent } from "./primitives";
-import { transferSegments } from "./guide-geometry";
+import { guideFramingPoints, transferSegments } from "./guide-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
@@ -265,7 +266,11 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     () => legs.flatMap((l) => [endKey(l.id, "origin"), endKey(l.id, "destination")]),
     [legs]
   );
-  const editor = useMapEditor({ initialSlots: seed.slots, order });
+  /** A reopened draft frames its stored street paths as well as its pins. */
+  const [framingPoints] = useState(() =>
+    initialValue && initialValue.legs.length >= 1 ? guideFramingPoints(initialValue.legs) : undefined
+  );
+  const editor = useMapEditor({ initialSlots: seed.slots, order, framingPoints });
 
   // --- Leg mutations ---
 
@@ -364,7 +369,12 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   // --- Routing ---
 
   const stretches = useMemo(() => legStretches(viaLegs, endsOf), [viaLegs, endsOf]);
-  const { state: routing, hold: holdRoutes, release: releaseRoutes } = useRouting(stretches, seedStretches, open);
+  const routingAvailable = useRoutingAvailable();
+  const {
+    state: routing,
+    hold: holdRoutes,
+    release: releaseRoutes,
+  } = useRouting(stretches, seedStretches, open, routingAvailable);
   const views = stretches.map((stretch) => ({ id: stretch.id, ...stretchView(routing, stretch) }));
   const routingCount = views.filter((v) => v.phase === "routing").length;
   /** Leg numbers (1-based, as the cards show them) whose routing failed. */

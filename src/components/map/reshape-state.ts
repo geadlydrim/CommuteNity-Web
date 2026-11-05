@@ -19,7 +19,7 @@
  *   when Reshape ends or moves to another leg. Undo restores vias, not the
  *   notice.
  */
-import type { LatLng } from "@/lib/map/path";
+import { distanceToSegmentMeters, haversineMeters, type LatLng } from "@/lib/map/path";
 import { legOptions } from "@/lib/schemas/leg-options";
 import { MAX_VIAS_PER_LEG, type Via } from "@/lib/schemas/guide-map";
 import type { TransportMode } from "@/lib/schemas/modes";
@@ -30,8 +30,6 @@ export const BIG_MOVE_METRES = 1000;
 /** Undo steps kept per leg. */
 export const MAX_UNDO_STEPS = 50;
 
-const EARTH_RADIUS_METRES = 6_371_008.8;
-const METRES_PER_DEGREE = (EARTH_RADIUS_METRES * Math.PI) / 180;
 const NO_VIAS: readonly Via[] = [];
 
 export interface ReshapeState {
@@ -83,36 +81,18 @@ export type ReshapeAction =
 // Geometry
 // ---------------------------------------------------------------------------
 
-/** Great-circle distance between two points, in metres. */
-function distanceMetres(a: LatLng, b: LatLng): number {
-  const toRad = Math.PI / 180;
-  const dLat = (b.lat - a.lat) * toRad;
-  const dLng = (b.lng - a.lng) * toRad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * toRad) * Math.cos(b.lat * toRad) * Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_METRES * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
 /**
  * The index in a leg's via list that a new via at `tap` is inserted at: the
- * segment of `points` (origin, ...vias, destination) nearest the tap, measured
- * in metres on a local equirectangular projection around the tap. Segment `i`
- * runs from `points[i]` to `points[i + 1]`, so a tap beside it inserts at via
- * index `i`. Ties go to the earlier segment.
+ * segment of `points` (origin, ...vias, destination) nearest the tap, by
+ * `distanceToSegmentMeters`. Segment `i` runs from `points[i]` to
+ * `points[i + 1]`, so a tap beside it inserts at via index `i`. Ties go to the
+ * earlier segment.
  */
 export function nearestInsertIndex(points: readonly LatLng[], tap: LatLng): number {
-  const lngScale = Math.cos((tap.lat * Math.PI) / 180) * METRES_PER_DEGREE;
-  const toXY = (p: LatLng) => ({ x: (p.lng - tap.lng) * lngScale, y: (p.lat - tap.lat) * METRES_PER_DEGREE });
   let best = 0;
   let bestDistance = Infinity;
   for (let i = 0; i + 1 < points.length; i += 1) {
-    const a = toXY(points[i]!);
-    const b = toXY(points[i + 1]!);
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const length2 = dx * dx + dy * dy;
-    // The tap is the projection's origin, so the projection of (0, 0) onto a→b.
-    const t = length2 === 0 ? 0 : Math.max(0, Math.min(1, -(a.x * dx + a.y * dy) / length2));
-    const distance = Math.hypot(a.x + t * dx, a.y + t * dy);
+    const distance = distanceToSegmentMeters(tap, points[i]!, points[i + 1]!);
     if (distance < bestDistance) {
       bestDistance = distance;
       best = i;
@@ -199,7 +179,7 @@ export function reshapeReducer(state: ReshapeState, action: ReshapeAction): Resh
 
     case "pinMoved": {
       const bigMove =
-        action.source === "search" || (action.from !== null && distanceMetres(action.from, action.to) > BIG_MOVE_METRES);
+        action.source === "search" || (action.from !== null && haversineMeters(action.from, action.to) > BIG_MOVE_METRES);
       if (!bigMove || viasOf(state, action.legId).length === 0 || state.stale.includes(action.legId)) return state;
       return { ...state, stale: [...state.stale, action.legId] };
     }

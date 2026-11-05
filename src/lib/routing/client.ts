@@ -17,6 +17,13 @@ import {
 
 export const ROUTE_ENDPOINT = "/api/route";
 
+/**
+ * Client deadline for one request: just over the endpoint's own 5 s router
+ * timeout, so a hung connection resolves as a failure and can't hold a
+ * builder's Save.
+ */
+export const ROUTE_CLIENT_TIMEOUT_MS = 6000;
+
 /** A street path has at least a start and an end. */
 const MIN_PATH_POINTS = 2;
 
@@ -33,18 +40,35 @@ function failed(code: RouteErrorCode | "network" | "unexpected", message: string
   return { status: "failed", code, message };
 }
 
-/** Asks the routing endpoint for one street path. */
+/**
+ * Asks the routing endpoint for one street path. Gives up after
+ * `ROUTE_CLIENT_TIMEOUT_MS` with a `timeout` failure; the caller's `signal`
+ * still wins as `aborted`.
+ */
 export async function fetchRoute(request: RouteRequest, signal?: AbortSignal): Promise<RouteOutcome> {
+  if (signal?.aborted) return { status: "aborted" };
+
+  // One controller for the fetch and the body read: the caller's abort and the deadline both trip it.
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, ROUTE_CLIENT_TIMEOUT_MS);
+  const onCallerAbort = () => controller.abort();
+  signal?.addEventListener("abort", onCallerAbort, { once: true });
+
   try {
     const res = await fetch(ROUTE_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
-      signal,
+      signal: controller.signal,
     });
     const body: unknown = await res.json().catch(() => null);
 
     if (signal?.aborted) return { status: "aborted" };
+    if (timedOut) return failed("timeout", "Routing took too long");
     if (!res.ok) {
       const error = routeErrorSchema.safeParse(body);
       if (!error.success) return failed("unexpected", `Routing failed (${res.status})`);
@@ -63,7 +87,13 @@ export async function fetchRoute(request: RouteRequest, signal?: AbortSignal): P
     }
     return { status: "ok", route: route.data };
   } catch {
-    // fetch rejects on a cancelled request and on a network failure.
-    return signal?.aborted ? { status: "aborted" } : failed("network", "Couldn't reach the routing service");
+    // fetch rejects on a cancelled request, a missed deadline, and a network failure.
+    if (signal?.aborted) return { status: "aborted" };
+    return timedOut
+      ? failed("timeout", "Routing took too long")
+      : failed("network", "Couldn't reach the routing service");
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", onCallerAbort);
   }
 }

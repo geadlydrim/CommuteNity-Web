@@ -116,7 +116,7 @@ export function chainDistanceMeters(points: readonly LatLng[]): number {
  * Distance in metres from `p` to the segment `a`–`b`, on a flat plane scaled
  * at the segment's mean latitude (error far below a metre at path scale).
  */
-function distanceToSegmentMeters(p: LatLng, a: LatLng, b: LatLng): number {
+export function distanceToSegmentMeters(p: LatLng, a: LatLng, b: LatLng): number {
   const mPerDegLat = EARTH_RADIUS_M * DEG_TO_RAD;
   const mPerDegLng = mPerDegLat * Math.cos(((a.lat + b.lat) / 2) * DEG_TO_RAD);
   const dx = (b.lng - a.lng) * mPerDegLng;
