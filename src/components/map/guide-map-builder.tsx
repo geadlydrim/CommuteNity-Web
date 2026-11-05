@@ -22,13 +22,20 @@
  * line with a hint saying why. Save waits until no leg is routing or waiting
  * for the rail file, and fits the document to the size budget (`fitGuide`)
  * before handing it over.
+ *
+ * Each road or walking leg has a Reshape button (rail legs don't): Reshape
+ * mode (`useReshape`, state in `reshape-state.ts`, pieces in
+ * `reshape-panel.tsx`) is on one leg at a time, and a map tap then adds a via
+ * to that leg instead of placing a pin. The vias live in the Reshape state, not
+ * in `BuilderLeg`, and are written to each leg's `vias` on save; a leg that
+ * becomes a rail leg drops its vias and leaves Reshape mode, and saves `vias: []`.
  */
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { Plus, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { GeocodeResult } from "@/lib/geo";
-import { PIN_COLORS, modeColor } from "@/lib/map/colors";
+import { PIN_COLORS, RESHAPE_CASING_COLOR, modeColor } from "@/lib/map/colors";
 import { fitGuide } from "@/lib/map/fit-document";
 import type { LatLng } from "@/lib/map/path";
 import { ENABLED_MODES, MODE_META, type TransportMode } from "@/lib/schemas/modes";
@@ -45,7 +52,7 @@ import { legOptions } from "@/lib/schemas/leg-options";
 import { pinSchema } from "@/lib/schemas/post-map";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { MapView, Marker, Source, Layer } from "./primitives";
+import { MapView, Marker, Source, Layer, type MapLayerMouseEvent } from "./primitives";
 import { transferSegments } from "./guide-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
@@ -59,10 +66,21 @@ import {
   type StretchLineFeature,
 } from "./routing-state";
 import { hasExpresswaysChoice, legStretch, legStretches, withMode } from "./route-stretches";
+import { ReshapeBanner, ReshapePanel, StaleViasNotice, ViaMarkers } from "./reshape-panel";
+import {
+  activeViasOf,
+  atViaLimit,
+  canUndoVias,
+  staleViasNotice,
+  viasOf,
+  type PinMoveSource,
+  type SeedVias,
+} from "./reshape-state";
 import { useMapEditor, useOpenSession } from "./use-map-editor";
 import { isRailMode, railLegOutcomes, type RailLegOutcome } from "./rail-legs";
 import { useRail } from "./use-rail";
 import { useRouting } from "./use-routing";
+import { useReshape, type LegEnds } from "./use-reshape";
 
 // ---------------------------------------------------------------------------
 // Internal builder types
@@ -74,9 +92,10 @@ interface BuilderLeg {
   mode: TransportMode;
   /** Whether the leg's street path may use expressways; the mode's default until the author flips it. */
   expressways: boolean;
-  /** Kept as stored; reshaping (adding vias) comes later. */
-  vias: Via[];
 }
+
+/** A leg with the vias Reshape mode holds for it. */
+type ViaLeg = BuilderLeg & { vias: readonly Via[] };
 
 interface BuilderTransfer {
   id: string;
@@ -105,8 +124,15 @@ function endKey(legId: string, end: LegEnd): string {
   return `${legId}:${end}`;
 }
 
+/** The leg and end an editor slot key names, or `null` for a key that isn't one. */
+function legEndOfKey(key: string): { legId: string; end: LegEnd } | null {
+  const cut = key.lastIndexOf(":");
+  const end = key.slice(cut + 1);
+  return cut > 0 && (end === "origin" || end === "destination") ? { legId: key.slice(0, cut), end } : null;
+}
+
 function newLeg(): BuilderLeg {
-  return { id: crypto.randomUUID(), mode: "jeepney", expressways: legOptions("jeepney").expressways, vias: [] };
+  return { id: crypto.randomUUID(), mode: "jeepney", expressways: legOptions("jeepney").expressways };
 }
 
 /** A placed end's position, or `null` while it is empty. */
@@ -134,13 +160,16 @@ function seedGuide(initialValue: GuideMapData | null): {
   legs: BuilderLeg[];
   transfers: BuilderTransfer[];
   slots: SeedSlot[];
+  /** The saved legs' vias, which Reshape mode takes over. */
+  legVias: SeedVias[];
 } {
   if (!initialValue || initialValue.legs.length < 1) {
     const leg = newLeg();
-    return { legs: [leg], transfers: [], slots: emptyEnds(leg.id) };
+    return { legs: [leg], transfers: [], slots: emptyEnds(leg.id), legVias: [] };
   }
   return {
-    legs: initialValue.legs.map((l) => ({ id: l.id, mode: l.mode, expressways: l.expressways, vias: l.vias })),
+    legs: initialValue.legs.map((l) => ({ id: l.id, mode: l.mode, expressways: l.expressways })),
+    legVias: initialValue.legs.map((l) => ({ id: l.id, vias: l.vias })),
     transfers: (initialValue.connectors ?? []).map((c) => ({
       id: c.id,
       mode: c.mode,
@@ -167,7 +196,7 @@ type BuiltGuide = { ok: true; data: GuideMapData } | { ok: false; message: strin
 
 /** The guide document Save writes (each leg with its routed path, or `null`), or the first problem (also the Save hint). */
 function buildGuide(
-  legs: BuilderLeg[],
+  legs: ViaLeg[],
   transfers: BuilderTransfer[],
   slotOf: (key: string) => EditorSlot,
   pathOf: (legId: string) => string | null
@@ -183,7 +212,7 @@ function buildGuide(
     origin: endPin(l.id, "origin"),
     destination: endPin(l.id, "destination"),
     // A rail leg follows a fixed track: it never keeps vias from an earlier mode.
-    vias: isRailMode(l.mode) ? [] : l.vias,
+    vias: isRailMode(l.mode) ? [] : [...l.vias],
     expressways: l.expressways,
     path: pathOf(l.id),
   }));
@@ -285,18 +314,56 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     setTransfers((prev) => prev.filter((c) => c.id !== id));
   }
 
-  // --- Routing ---
+  // --- Editor pins ---
 
   const { slot } = editor;
-  /** The road and walking legs with both ends placed; each is routed on its own, transfers never. */
-  const stretches = useMemo(
-    () =>
-      legStretches(legs, (legId) => ({
-        origin: placedPoint(slot(endKey(legId, "origin"))),
-        destination: placedPoint(slot(endKey(legId, "destination"))),
-      })),
-    [legs, slot]
+  /** A leg's pins as placed points. */
+  const endsOf = useCallback(
+    (legId: string): LegEnds => ({
+      origin: placedPoint(slot(endKey(legId, "origin"))),
+      destination: placedPoint(slot(endKey(legId, "destination"))),
+    }),
+    [slot]
   );
+
+  // --- Reshape ---
+
+  const reshape = useReshape(legs, seed.legVias, endsOf);
+  const { vias: viasByLeg, active: activeLegId } = reshape.state;
+  /** Each leg with the vias Reshape mode holds for it. */
+  const viaLegs = useMemo<ViaLeg[]>(() => legs.map((l) => ({ ...l, vias: viasByLeg[l.id] ?? [] })), [legs, viasByLeg]);
+  const activeIndex = legs.findIndex((l) => l.id === activeLegId);
+  const activeLeg = legs[activeIndex];
+
+  /** One of a leg's pins is about to move; Reshape keeps its vias and decides whether they are now stale. */
+  function notePinMove(legId: string, end: LegEnd, to: LatLng, source: PinMoveSource) {
+    reshape.pinMoved(legId, placedPoint(slot(endKey(legId, end))), to, source);
+  }
+
+  function dragPin(legId: string, end: LegEnd, lat: number, lng: number) {
+    notePinMove(legId, end, { lat, lng }, "drag");
+    editor.placeAt(endKey(legId, end), lat, lng);
+  }
+
+  function pickPin(legId: string, end: LegEnd, result: GeocodeResult) {
+    notePinMove(legId, end, { lat: result.lat, lng: result.lon }, "search");
+    editor.pick(endKey(legId, end), result);
+  }
+
+  /** A tap adds a via while a leg is reshaped, never a pin; otherwise it fills the active pin. */
+  function handleMapClick(e: MapLayerMouseEvent) {
+    if (activeLegId !== null) {
+      reshape.tap({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      return;
+    }
+    const target = editor.activeKey === null ? null : legEndOfKey(editor.activeKey);
+    if (target) notePinMove(target.legId, target.end, { lat: e.lngLat.lat, lng: e.lngLat.lng }, "drag");
+    editor.onMapClick(e);
+  }
+
+  // --- Routing ---
+
+  const stretches = useMemo(() => legStretches(viaLegs, endsOf), [viaLegs, endsOf]);
   const { state: routing, hold: holdRoutes, release: releaseRoutes } = useRouting(stretches, seedStretches, open);
   const views = stretches.map((stretch) => ({ id: stretch.id, ...stretchView(routing, stretch) }));
   const routingCount = views.filter((v) => v.phase === "routing").length;
@@ -328,8 +395,8 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const built = useMemo(() => {
     const pathOf = new Map(stretches.map((s) => [s.id, stretchView(routing, s).path]));
     for (const [id, outcome] of railOutcomes) pathOf.set(id, outcome.ok ? outcome.path : null);
-    return buildGuide(legs, transfers, slot, (legId) => pathOf.get(legId) ?? null);
-  }, [legs, transfers, slot, stretches, routing, railOutcomes]);
+    return buildGuide(viaLegs, transfers, slot, (legId) => pathOf.get(legId) ?? null);
+  }, [viaLegs, transfers, slot, stretches, routing, railOutcomes]);
   const canSave = built.ok && !pending;
   const saveHint = !built.ok ? built.message : pending ? "Waiting for routes…" : null;
 
@@ -351,7 +418,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   // --- Map preview data ---
 
   const preview = useMemo(() => {
-    const placedLegs = legs.flatMap((l) => {
+    const placedLegs = viaLegs.flatMap((l) => {
       const origin = slot(endKey(l.id, "origin"));
       const destination = slot(endKey(l.id, "destination"));
       return isPlaced(origin) && isPlaced(destination)
@@ -361,7 +428,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
               mode: l.mode,
               origin: slotToPin(origin),
               destination: slotToPin(destination),
-              vias: l.vias,
+              vias: [...l.vias],
               expressways: l.expressways,
               path: null,
             } satisfies GuideLeg,
@@ -395,14 +462,18 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
         ...legLines,
         features: legLines.features.map((f) => ({
           ...f,
-          properties: { ...f.properties, color: colorById.get(f.properties.id) ?? "" },
+          properties: {
+            ...f.properties,
+            color: colorById.get(f.properties.id) ?? "",
+            active: f.properties.id === activeLegId,
+          },
         })),
       },
       transferLines: validTransfers.flatMap((c) =>
         transferSegments(placedLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
       ),
     };
-  }, [legs, transfers, slot, stretches, routing, railOutcomes, railLoading]);
+  }, [viaLegs, transfers, slot, stretches, routing, railOutcomes, railLoading, activeLegId]);
 
   return (
     <BuilderShell
@@ -419,7 +490,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
           <MapView
             mapRef={editor.mapRef}
             className="h-full w-full rounded-none"
-            onClick={editor.onMapClick}
+            onClick={handleMapClick}
             onLoad={editor.onMapLoad}
             interactive
             cooperativeGestures
@@ -429,11 +500,27 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
           >
             {/* Leg lines: each in its mode colour; routed or straight (idle) solid, routing dimmed and dashed, failed dashed */}
             <Source id="guide-leg-lines" type="geojson" data={preview.legLines}>
+              {/* A halo under the leg being reshaped (not while it routes or failed: those draw dashed) */}
+              <Layer
+                id="guide-leg-lines-casing-layer"
+                type="line"
+                filter={[
+                  "all",
+                  ["==", ["get", "active"], true],
+                  ["any", ["==", ["get", "phase"], "ok"], ["==", ["get", "phase"], "idle"]],
+                ]}
+                paint={{ "line-color": RESHAPE_CASING_COLOR, "line-width": 8, "line-opacity": 0.9 }}
+                layout={{ "line-join": "round", "line-cap": "round" }}
+              />
               <Layer
                 id="guide-leg-lines-layer"
                 type="line"
                 filter={["any", ["==", ["get", "phase"], "ok"], ["==", ["get", "phase"], "idle"]]}
-                paint={{ "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.9 }}
+                paint={{
+                  "line-color": ["get", "color"],
+                  "line-width": ["case", ["get", "active"], 5, 3],
+                  "line-opacity": 0.9,
+                }}
                 layout={{ "line-join": "round", "line-cap": "round" }}
               />
               <Layer
@@ -442,7 +529,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                 filter={["==", ["get", "phase"], "routing"]}
                 paint={{
                   "line-color": ["get", "color"],
-                  "line-width": 3,
+                  "line-width": ["case", ["get", "active"], 5, 3],
                   "line-opacity": 0.35,
                   "line-dasharray": [2, 2],
                 }}
@@ -454,7 +541,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                 filter={["==", ["get", "phase"], "failed"]}
                 paint={{
                   "line-color": ["get", "color"],
-                  "line-width": 3,
+                  "line-width": ["case", ["get", "active"], 5, 3],
                   "line-opacity": 0.9,
                   "line-dasharray": [2, 2],
                 }}
@@ -497,7 +584,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                   onDragStart={() => holdRoutes([l.id])}
                   onDragEnd={(e) => {
                     // The pin moves only now, on release, so nothing routes during the drag.
-                    editor.placeAt(endKey(l.id, "origin"), e.lngLat.lat, e.lngLat.lng);
+                    dragPin(l.id, "origin", e.lngLat.lat, e.lngLat.lng);
                     releaseRoutes([l.id]);
                   }}
                 />
@@ -508,16 +595,29 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                   draggable
                   onDragStart={() => holdRoutes([l.id])}
                   onDragEnd={(e) => {
-                    editor.placeAt(endKey(l.id, "destination"), e.lngLat.lat, e.lngLat.lng);
+                    dragPin(l.id, "destination", e.lngLat.lat, e.lngLat.lng);
                     releaseRoutes([l.id]);
                   }}
                 />
               </Fragment>
             ))}
+            {/* The reshaped leg's vias: numbered, draggable; the leg routes through them on release */}
+            {activeLeg && (
+              <ViaMarkers
+                vias={activeViasOf(reshape.state)}
+                color={modeColor(activeLeg.mode)}
+                onDragStart={() => holdRoutes([activeLeg.id])}
+                onDragEnd={(index, point) => {
+                  reshape.moveVia(activeLeg.id, index, point);
+                  releaseRoutes([activeLeg.id]);
+                }}
+              />
+            )}
           </MapView>
 
-          {(routingCount > 0 || failedLegs.length > 0) && (
-            <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col items-start gap-1">
+          {(activeLeg || routingCount > 0 || failedLegs.length > 0) && (
+            <div className="pointer-events-none absolute left-2 right-12 top-2 z-10 flex flex-col items-start gap-1">
+              {activeLeg && <ReshapeBanner legNumber={activeIndex + 1} onDone={reshape.exit} />}
               {routingCount > 0 && (
                 <span role="status" className={ROUTE_CHIP_CLASS}>
                   Routing…
@@ -537,6 +637,9 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
           {/* Interleaved leg cards + transfer slots */}
           {legs.map((leg, i) => {
             const next = legs[i + 1];
+            const ends = endsOf(leg.id);
+            const reshaping = activeLegId === leg.id;
+            const staleVias = staleViasNotice(reshape.state, leg.id);
             return (
               <div key={leg.id}>
                 <LegCard
@@ -552,13 +655,39 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                         : null
                   }
                   onActivate={(end) => editor.select(endKey(leg.id, end))}
-                  onPick={(end, r) => editor.pick(endKey(leg.id, end), r)}
+                  onPick={(end, r) => pickPin(leg.id, end, r)}
                   onLabelChange={(end, v) => editor.setLabel(endKey(leg.id, end), v)}
                   onModeChange={(m) => setLegMode(leg.id, m)}
                   onExpresswaysChange={(v) => setLegExpressways(leg.id, v)}
                   railHint={railHints.get(leg.id) ?? null}
                   onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
+                  reshape={
+                    legOptions(leg.mode).profile === "rail"
+                      ? null
+                      : {
+                          viaCount: viasOf(reshape.state, leg.id).length,
+                          ready: ends.origin !== null && ends.destination !== null,
+                          active: reshaping,
+                          onEnter: () => reshape.enter(leg.id, leg.mode),
+                        }
+                  }
                 />
+                {staleVias && (
+                  <StaleViasNotice viaCount={staleVias.viaCount} onClear={() => reshape.clearVias(leg.id)} />
+                )}
+                {reshaping && (
+                  <ReshapePanel
+                    legNumber={i + 1}
+                    color={modeColor(leg.mode)}
+                    vias={viasOf(reshape.state, leg.id)}
+                    atLimit={atViaLimit(reshape.state, leg.id)}
+                    canUndo={canUndoVias(reshape.state, leg.id)}
+                    onRemove={(index) => reshape.removeVia(leg.id, index)}
+                    onUndo={() => reshape.undo(leg.id)}
+                    onClearAll={() => reshape.clearVias(leg.id)}
+                    onDone={reshape.exit}
+                  />
+                )}
                 {/* Transfer slot between this leg and the next */}
                 {next && (
                   <TransferSlot
@@ -658,6 +787,16 @@ function TransferSlot({ transfer, onAdd, onRemove, onModeChange }: TransferSlotP
 // LegCard — one leg's editor (mode selector + origin/dest search rows)
 // ---------------------------------------------------------------------------
 
+/** The Reshape button of a leg card: absent for a rail leg. */
+interface ReshapeControl {
+  viaCount: number;
+  /** Both pins are placed, so a tap has a path to land on. */
+  ready: boolean;
+  /** This leg is the one being reshaped. */
+  active: boolean;
+  onEnter: () => void;
+}
+
 interface LegCardProps {
   leg: BuilderLeg;
   index: number;
@@ -673,6 +812,7 @@ interface LegCardProps {
   /** Why this rail leg stays a straight line, if it does. */
   railHint: string | null;
   onRemove?: () => void;
+  reshape: ReshapeControl | null;
 }
 
 function LegCard({
@@ -688,6 +828,7 @@ function LegCard({
   onExpresswaysChange,
   railHint,
   onRemove,
+  reshape,
 }: LegCardProps) {
   return (
     <div className="rounded-md border bg-card p-2.5 text-xs space-y-2">
@@ -770,6 +911,23 @@ function LegCard({
         onPick={(r) => onPick("destination", r)}
         onLabelChange={(v) => onLabelChange("destination", v)}
       />
+
+      {/* Reshape: road and walking legs only */}
+      {reshape && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-medium text-muted-foreground">
+            {reshape.viaCount} {reshape.viaCount === 1 ? "via" : "vias"}
+          </span>
+          <button
+            onClick={reshape.onEnter}
+            disabled={reshape.active || !reshape.ready}
+            title={reshape.ready ? undefined : "Place both pins to reshape this leg"}
+            className="inline-flex min-h-7 items-center justify-center rounded-md border px-2.5 text-xs font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+          >
+            {reshape.active ? "Reshaping" : "Reshape"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
