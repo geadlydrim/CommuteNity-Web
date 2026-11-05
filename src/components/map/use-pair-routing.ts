@@ -1,83 +1,65 @@
 /**
  * usePairRouting — runs the street-path requests for a post map's pin pairs.
  * The state and every decision (which pair is stale, what to request, what to
- * cancel) live in `pair-routing-state.ts`; this hook only keeps the state in
- * sync with the builder's pairs, starts and cancels the requests it asks for,
- * and aborts them all on unmount.
+ * cancel) live in `pair-routing-state.ts`; `driveRouting` hands them to a route
+ * scheduler (`@/lib/routing/scheduler`: 300 ms debounce, latest wins, a session
+ * cache, 4 requests at a time). This hook keeps the state in sync with the
+ * builder's pairs and owns one scheduler per builder session, reset when the
+ * builder closes or unmounts so its cache goes with it.
  *
- * One request per pair at a time: re-requesting a pair aborts its running
- * request, and a result carries the token of the request it answers, so a
- * stale one never applies. No debounce, cache, or concurrency cap yet.
+ * `hold` / `release` bracket a pin drag: a pair being held makes no request
+ * until the drag ends.
  */
-import { useEffect, useReducer, useState } from "react";
-import { fetchRoute, type RouteOutcome } from "@/lib/routing/client";
+import { useCallback, useEffect, useReducer, useState } from "react";
+import { fetchRoute } from "@/lib/routing/client";
+import { createRouteScheduler } from "@/lib/routing/scheduler";
+import { driveRouting } from "./pair-routing-driver";
 import {
   createPairRoutingState,
   pairRoutingReducer,
-  routingWork,
   type PairInput,
-  type PairOutcome,
   type SeedPair,
 } from "./pair-routing-state";
-
-/** What the state needs to know of a finished request; `null` when it was cancelled. */
-function toPairOutcome(outcome: RouteOutcome): PairOutcome | null {
-  switch (outcome.status) {
-    case "ok":
-      return { status: "ok", path: outcome.route.path };
-    case "unavailable":
-      return { status: "unavailable" };
-    case "failed":
-      return { status: "failed" };
-    case "aborted":
-      return null;
-  }
-}
-
-interface Running {
-  token: number;
-  controller: AbortController;
-}
 
 /**
  * @param pairs consecutive placed pins; memoize it, the hook re-syncs when its identity changes.
  * @param seed pairs of a reopened draft with their stored paths; read once, on mount.
+ * @param open whether the builder is open; closing drops every request and the cache.
  */
-export function usePairRouting(pairs: readonly PairInput[], seed: readonly SeedPair[]) {
+export function usePairRouting(pairs: readonly PairInput[], seed: readonly SeedPair[], open = true) {
   const [state, dispatch] = useReducer(pairRoutingReducer, seed, createPairRoutingState);
-  const [running] = useState(() => new Map<string, Running>());
+  const [scheduler] = useState(() => createRouteScheduler({ route: fetchRoute }));
+  /** Pair id → token of the job scheduled for it. */
+  const [tracked] = useState(() => new Map<string, number>());
 
   useEffect(() => {
     dispatch({ type: "sync", pairs });
   }, [pairs]);
 
   useEffect(() => {
-    const tokens = new Map([...running].map(([id, run]) => [id, run.token]));
-    const { start, abort } = routingWork(state, tokens);
+    if (open) driveRouting(state, tracked, scheduler, dispatch);
+  }, [state, open, scheduler, tracked]);
 
-    for (const id of abort) {
-      running.get(id)?.controller.abort();
-      running.delete(id);
-    }
-    for (const { id, token, request } of start) {
-      const controller = new AbortController();
-      running.set(id, { token, controller });
-      void fetchRoute(request, controller.signal).then((outcome) => {
-        if (controller.signal.aborted) return;
-        if (running.get(id)?.controller === controller) running.delete(id);
-        const result = toPairOutcome(outcome);
-        if (result) dispatch({ type: "result", id, token, outcome: result });
-      });
-    }
-  }, [state, running]);
+  useEffect(() => {
+    if (!open) return;
+    return () => {
+      scheduler.reset();
+      tracked.clear();
+    };
+  }, [open, scheduler, tracked]);
 
-  useEffect(
-    () => () => {
-      for (const run of running.values()) run.controller.abort();
-      running.clear();
+  const hold = useCallback(
+    (ids: readonly string[]) => {
+      for (const id of ids) scheduler.hold(id);
     },
-    [running]
+    [scheduler]
+  );
+  const release = useCallback(
+    (ids: readonly string[]) => {
+      for (const id of ids) scheduler.release(id);
+    },
+    [scheduler]
   );
 
-  return state;
+  return { state, hold, release };
 }
