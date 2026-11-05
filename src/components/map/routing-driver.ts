@@ -1,20 +1,15 @@
 /**
- * Brings a route scheduler in line with the pair routing state: schedules a
- * job for every pair the state is waiting on, cancels the jobs of pairs that
- * are gone or waiting for a newer token, and feeds each result back as an
- * action. No React, so Node tests run it with the real reducer and a fake
- * scheduler; `use-pair-routing.ts` calls it after every state change.
+ * Brings a route scheduler in line with the routing state: schedules a job for
+ * every stretch the state is waiting on, cancels the jobs of stretches that are
+ * gone or waiting for a newer token, and feeds each result back as an action.
+ * No React, so Node tests run it with the real reducer and a fake scheduler;
+ * `use-routing.ts` calls it after every state change.
  */
 import type { RouteResult, RouteScheduler } from "@/lib/routing/scheduler";
-import {
-  routingWork,
-  type PairOutcome,
-  type PairRoutingAction,
-  type PairRoutingState,
-} from "./pair-routing-state";
+import { routingWork, type RoutingAction, type RoutingOutcome, type RoutingState } from "./routing-state";
 
 /** What the state needs to know of a finished job. */
-function toPairOutcome(result: RouteResult): PairOutcome {
+function toOutcome(result: RouteResult): RoutingOutcome {
   switch (result.status) {
     case "ok":
       return { status: "ok", path: result.route.path };
@@ -26,18 +21,18 @@ function toPairOutcome(result: RouteResult): PairOutcome {
 }
 
 /**
- * @param tracked pair id → token of the job scheduled for it; owned by the
+ * @param tracked stretch id → token of the job scheduled for it; owned by the
  * caller and cleared by it when the scheduler is reset.
  */
 export function driveRouting(
-  state: PairRoutingState,
+  state: RoutingState,
   tracked: Map<string, number>,
   scheduler: RouteScheduler,
-  dispatch: (action: PairRoutingAction) => void
+  dispatch: (action: RoutingAction) => void
 ): void {
   const { start, abort } = routingWork(state, tracked);
 
-  // Cancel before scheduling: a pair that moved appears in both lists.
+  // Cancel before scheduling: a stretch that moved appears in both lists.
   for (const id of abort) {
     scheduler.cancel(id);
     tracked.delete(id);
@@ -46,7 +41,7 @@ export function driveRouting(
     tracked.set(id, token);
     scheduler.schedule(id, request, (result) => {
       if (tracked.get(id) === token) tracked.delete(id);
-      dispatch({ type: "result", id, token, outcome: toPairOutcome(result) });
+      dispatch({ type: "result", id, token, outcome: toOutcome(result) });
     });
   }
 }

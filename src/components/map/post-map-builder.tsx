@@ -9,7 +9,7 @@
  * (`useMapEditor`); this file keeps only the ordered-pins shape.
  *
  * Each consecutive pair of placed pins is routed for a street path
- * (`usePairRouting`, state in `pair-routing-state.ts`): a routing pair draws
+ * (`useRouting`, state in `routing-state.ts`): a routing pair draws
  * dimmed and dashed, a failed one dashed and straight, a routed one solid.
  * Save waits until no pair is routing, and fits the document to the size
  * budget (`fitPostMap`) before handing it over.
@@ -31,15 +31,15 @@ import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
 import {
   hasPendingRoutes,
-  pairId,
-  pairLines,
-  pairView,
   savedPaths,
-  type PairInput,
-  type SeedPair,
-} from "./pair-routing-state";
+  stretchLines,
+  stretchView,
+  type SeedStretch,
+  type StretchInput,
+} from "./routing-state";
+import { pairId, pairStretch } from "./route-stretches";
 import { useMapEditor, useOpenSession } from "./use-map-editor";
-import { usePairRouting } from "./use-pair-routing";
+import { useRouting } from "./use-routing";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,12 +78,12 @@ function seedSlots(initialValue: MapData | null): SeedSlot[] {
 }
 
 /** Each pair of a reopened draft with the path it was saved with. */
-function seedPairsFrom(seed: readonly SeedSlot[], initialValue: MapData | null): SeedPair[] {
+function seedPairsFrom(seed: readonly SeedSlot[], initialValue: MapData | null): SeedStretch[] {
   if (!initialValue || initialValue.pins.length < 2) return [];
   return initialValue.paths.flatMap((path, i) => {
     const from = seed[i];
     const to = seed[i + 1];
-    return from?.pin && to?.pin ? [{ id: pairId(from.key, to.key), from: from.pin, to: to.pin, path }] : [];
+    return from?.pin && to?.pin ? [{ ...pairStretch(pairId(from.key, to.key), from.pin, to.pin), path }] : [];
   });
 }
 
@@ -168,20 +168,22 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const pins: MapPin[] = placed.map(({ slot }) => slotToPin(slot));
   /** Consecutive placed pins; each is routed on its own. */
   const pairs = useMemo(() => {
-    const result: PairInput[] = [];
+    const result: StretchInput[] = [];
     for (let i = 1; i < placed.length; i++) {
       const from = placed[i - 1];
       const to = placed[i];
       if (!from || !to) continue;
-      result.push({
-        id: pairId(from.key, to.key),
-        from: { lat: from.slot.lat, lng: from.slot.lng },
-        to: { lat: to.slot.lat, lng: to.slot.lng },
-      });
+      result.push(
+        pairStretch(
+          pairId(from.key, to.key),
+          { lat: from.slot.lat, lng: from.slot.lng },
+          { lat: to.slot.lat, lng: to.slot.lng }
+        )
+      );
     }
     return result;
   }, [placed]);
-  const { state: routing, hold: holdPairs, release: releasePairs } = usePairRouting(pairs, seedPairs, open);
+  const { state: routing, hold: holdPairs, release: releasePairs } = useRouting(pairs, seedPairs, open);
   /** The pairs a pin belongs to: the ones a drag of that pin changes. */
   function pairIdsOf(key: string): string[] {
     const i = placed.findIndex((p) => p.key === key);
@@ -192,13 +194,13 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       ...(after ? [pairId(key, after.key)] : []),
     ];
   }
-  const phases = pairs.map((pair) => pairView(routing, pair).phase);
+  const phases = pairs.map((pair) => stretchView(routing, pair).phase);
   const routingCount = phases.filter((phase) => phase === "routing").length;
   const failedCount = phases.filter((phase) => phase === "failed").length;
   const pending = hasPendingRoutes(routing, pairs);
   const canSave = endsPlaced && !pending;
   const saveHint = !endsPlaced ? "Set both an origin and a destination." : pending ? "Waiting for routes…" : null;
-  const lineData = pairs.length > 0 ? pairLines(routing, pairs) : null;
+  const lineData = pairs.length > 0 ? stretchLines(routing, pairs) : null;
 
   // --- Save ---
 
