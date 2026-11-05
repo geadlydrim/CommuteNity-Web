@@ -1,15 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { driveRouting } from "@/components/map/pair-routing-driver";
+import { driveRouting } from "@/components/map/routing-driver";
+import { pairStretch } from "@/components/map/route-stretches";
 import {
-  createPairRoutingState,
-  pairRoutingReducer,
-  pairView,
+  createRoutingState,
+  routingReducer,
+  stretchView,
   savedPaths,
-  type PairInput,
-  type PairRoutingAction,
-  type PairRoutingState,
-  type SeedPair,
-} from "@/components/map/pair-routing-state";
+  type RoutingAction,
+  type StretchInput,
+  type RoutingState,
+  type SeedStretch,
+} from "@/components/map/routing-state";
 import { fetchRoute, type RouteOutcome } from "@/lib/routing/client";
 import {
   CACHE_LIMIT,
@@ -610,17 +611,17 @@ describe("reopening a draft", () => {
   const BAGUIO = { lat: 16.4023, lng: 120.596 };
   const LA_UNION = { lat: 16.6159, lng: 120.3209 };
 
-  const first: PairInput = { id: "o>w", from: MANILA, to: ANGELES };
-  const second: PairInput = { id: "w>x", from: ANGELES, to: BAGUIO };
-  const third: PairInput = { id: "x>d", from: BAGUIO, to: LA_UNION };
+  const first = pairStretch("o>w", MANILA, ANGELES);
+  const second = pairStretch("w>x", ANGELES, BAGUIO);
+  const third = pairStretch("x>d", BAGUIO, LA_UNION);
 
   /** The builder's loop: a reducer, with `driveRouting` after every state change, as the hook does. */
-  function openBuilder(seed: readonly SeedPair[]) {
-    let state: PairRoutingState = createPairRoutingState(seed);
+  function openBuilder(seed: readonly SeedStretch[]) {
+    let state: RoutingState = createRoutingState(seed);
     const tracked = new Map<string, number>();
     let dirty = false;
-    const dispatch = (action: PairRoutingAction) => {
-      state = pairRoutingReducer(state, action);
+    const dispatch = (action: RoutingAction) => {
+      state = routingReducer(state, action);
       dirty = true;
     };
     const drive = () => {
@@ -633,8 +634,8 @@ describe("reopening a draft", () => {
       get state() {
         return state;
       },
-      show(pairs: readonly PairInput[]) {
-        dispatch({ type: "sync", pairs });
+      show(stretches: readonly StretchInput[]) {
+        dispatch({ type: "sync", stretches });
         drive();
       },
       async settle() {
@@ -653,8 +654,8 @@ describe("reopening a draft", () => {
       { ...third, path: PATH_B },
     ]);
     builder.show([first, second, third]);
-    expect(pairView(builder.state, first).phase).toBe("ok");
-    expect(pairView(builder.state, second).phase).toBe("routing");
+    expect(stretchView(builder.state, first).phase).toBe("ok");
+    expect(stretchView(builder.state, second).phase).toBe("routing");
 
     clock.advance(DEBOUNCE_MS);
     await builder.settle();
@@ -678,7 +679,7 @@ describe("reopening a draft", () => {
     calls[0]?.reply({ error: "Busy", code: "busy" }, 429);
     await builder.settle();
 
-    expect(pairView(builder.state, second).phase).toBe("failed");
+    expect(stretchView(builder.state, second).phase).toBe("failed");
     expect(savedPaths(builder.state, [first, second])).toEqual([PATH_A, null]);
     clock.advance(10 * 60_000);
     await builder.settle();
@@ -708,11 +709,11 @@ describe("reopening a draft", () => {
 
     calls[0]?.reply({ error: "Routing is off", code: "unavailable" }, 503);
     await builder.settle();
-    expect(pairView(builder.state, first).phase).toBe("idle");
-    expect(pairView(builder.state, second).phase).toBe("idle");
+    expect(stretchView(builder.state, first).phase).toBe("idle");
+    expect(stretchView(builder.state, second).phase).toBe("idle");
 
     // The author keeps editing: a moved pin, a new pair.
-    const moved: PairInput = { ...second, to: LA_UNION };
+    const moved = pairStretch(second.id, ANGELES, LA_UNION);
     builder.show([first, moved, third]);
     clock.advance(60_000);
     await builder.settle();
