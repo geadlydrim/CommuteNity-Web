@@ -9,6 +9,15 @@
  * prevented by UI construction. Chain integrity is validated on save.
  * Placement, labeling, and the camera come from the shared map-editing core
  * (`useMapEditor`); this file keeps only the legs-and-transfers shape.
+ *
+ * Each road or walking leg is routed for a street path by its mode's profile,
+ * through the leg's vias if it has any (`useRouting`, state in
+ * `routing-state.ts`, what to route in `route-stretches.ts`): a routing leg
+ * draws dimmed and dashed, a failed one dashed and straight, a routed one
+ * solid, all in its mode's colour. Vehicle legs carry a "Uses expressways"
+ * switch, preset to the mode's default and reset when the mode changes. Save
+ * waits until no leg is routing, and fits the document to the size budget
+ * (`fitGuide`) before handing it over.
  */
 import { Fragment, useMemo, useState } from "react";
 import { Plus, X, Trash2 } from "lucide-react";
@@ -16,6 +25,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { GeocodeResult } from "@/lib/geo";
 import { PIN_COLORS, modeColor } from "@/lib/map/colors";
+import { fitGuide } from "@/lib/map/fit-document";
+import type { LatLng } from "@/lib/map/path";
 import { ENABLED_MODES, MODE_META, type TransportMode } from "@/lib/schemas/modes";
 import {
   CURRENT_GUIDE_VERSION,
@@ -23,16 +34,29 @@ import {
   type GuideMapData,
   type GuideLeg,
   type GuideTransfer,
+  type Via,
 } from "@/lib/schemas/guide-map";
 import { guideChainStatus } from "@/lib/schemas/guide-chain";
 import { legOptions } from "@/lib/schemas/leg-options";
 import { pinSchema } from "@/lib/schemas/post-map";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { MapView, Marker, Source, Layer } from "./primitives";
-import { legSegments, transferSegments } from "./guide-geometry";
+import { transferSegments } from "./guide-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
+import {
+  hasPendingRoutes,
+  stretchLine,
+  stretchView,
+  type SeedStretch,
+  type StretchLineCollection,
+  type StretchLineFeature,
+} from "./routing-state";
+import { hasExpresswaysChoice, legStretch, legStretches, withMode } from "./route-stretches";
 import { useMapEditor, useOpenSession } from "./use-map-editor";
+import { useRouting } from "./use-routing";
 
 // ---------------------------------------------------------------------------
 // Internal builder types
@@ -42,6 +66,10 @@ import { useMapEditor, useOpenSession } from "./use-map-editor";
 interface BuilderLeg {
   id: string;
   mode: TransportMode;
+  /** Whether the leg's street path may use expressways; the mode's default until the author flips it. */
+  expressways: boolean;
+  /** Kept as stored; reshaping (adding vias) comes later. */
+  vias: Via[];
 }
 
 interface BuilderTransfer {
@@ -61,13 +89,31 @@ type LegEnd = "origin" | "destination";
 
 const MAX_LEGS = 8;
 
+const GUIDE_TOO_LARGE = "This guide is too big to save. Remove some legs and try again.";
+
+const ROUTE_CHIP_CLASS =
+  "rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium shadow ring-1 ring-border";
+
 /** Editor slot key of one end of a leg. */
 function endKey(legId: string, end: LegEnd): string {
   return `${legId}:${end}`;
 }
 
 function newLeg(): BuilderLeg {
-  return { id: crypto.randomUUID(), mode: "jeepney" };
+  return { id: crypto.randomUUID(), mode: "jeepney", expressways: legOptions("jeepney").expressways, vias: [] };
+}
+
+/** A placed end's position, or `null` while it is empty. */
+function placedPoint(slot: EditorSlot): LatLng | null {
+  return isPlaced(slot) ? { lat: slot.lat, lng: slot.lng } : null;
+}
+
+/** Each leg of a reopened draft with the path it was saved with. */
+function seedStretchesFrom(initialValue: GuideMapData | null): SeedStretch[] {
+  return (initialValue?.legs ?? []).flatMap((l) => {
+    const stretch = legStretch(l, l.origin, l.destination);
+    return stretch ? [{ ...stretch, path: l.path }] : [];
+  });
 }
 
 function emptyEnds(legId: string): SeedSlot[] {
@@ -88,7 +134,7 @@ function seedGuide(initialValue: GuideMapData | null): {
     return { legs: [leg], transfers: [], slots: emptyEnds(leg.id) };
   }
   return {
-    legs: initialValue.legs.map((l) => ({ id: l.id, mode: l.mode })),
+    legs: initialValue.legs.map((l) => ({ id: l.id, mode: l.mode, expressways: l.expressways, vias: l.vias })),
     transfers: (initialValue.connectors ?? []).map((c) => ({
       id: c.id,
       mode: c.mode,
@@ -111,18 +157,14 @@ function toTransfer(c: BuilderTransfer): GuideTransfer {
   };
 }
 
-/** A leg's path fields before anything is routed: no vias, no path, the mode's expressways default. */
-function legPathDefaults(mode: TransportMode): Pick<GuideLeg, "vias" | "expressways" | "path"> {
-  return { vias: [], expressways: legOptions(mode).expressways, path: null };
-}
-
 type BuiltGuide = { ok: true; data: GuideMapData } | { ok: false; message: string };
 
-/** The guide document Save writes, or the first problem (also the Save hint). */
+/** The guide document Save writes (each leg with its routed path, or `null`), or the first problem (also the Save hint). */
 function buildGuide(
   legs: BuilderLeg[],
   transfers: BuilderTransfer[],
-  slotOf: (key: string) => EditorSlot
+  slotOf: (key: string) => EditorSlot,
+  pathOf: (legId: string) => string | null
 ): BuiltGuide {
   const endPin = (legId: string, end: LegEnd) => {
     const slot = slotOf(endKey(legId, end));
@@ -134,7 +176,9 @@ function buildGuide(
     mode: l.mode,
     origin: endPin(l.id, "origin"),
     destination: endPin(l.id, "destination"),
-    ...legPathDefaults(l.mode),
+    vias: l.vias,
+    expressways: l.expressways,
+    path: pathOf(l.id),
   }));
   const guideTransfers = transfers.map(toTransfer);
 
@@ -177,6 +221,8 @@ export function GuideMapBuilder(props: Props) {
 
 function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const [seed] = useState(() => seedGuide(initialValue));
+  /** The draft's stored leg paths; its `null` legs get routed again. */
+  const [seedStretches] = useState(() => seedStretchesFrom(initialValue));
   const [legs, setLegs] = useState<BuilderLeg[]>(seed.legs);
   const [transfers, setTransfers] = useState<BuilderTransfer[]>(seed.transfers);
   const order = useMemo(
@@ -188,7 +234,12 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   // --- Leg mutations ---
 
   function setLegMode(legId: string, mode: TransportMode) {
-    setLegs((prev) => prev.map((l) => (l.id === legId ? { ...l, mode } : l)));
+    // Switching mode resets the expressways choice to the new mode's default.
+    setLegs((prev) => prev.map((l) => (l.id === legId ? withMode(l, mode) : l)));
+  }
+
+  function setLegExpressways(legId: string, expressways: boolean) {
+    setLegs((prev) => prev.map((l) => (l.id === legId ? { ...l, expressways } : l)));
   }
 
   function addLeg() {
@@ -227,24 +278,53 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     setTransfers((prev) => prev.filter((c) => c.id !== id));
   }
 
-  // --- Save ---
+  // --- Routing ---
 
   const { slot } = editor;
-  const built = useMemo(() => buildGuide(legs, transfers, slot), [legs, transfers, slot]);
+  /** The road and walking legs with both ends placed; each is routed on its own, transfers never. */
+  const stretches = useMemo(
+    () =>
+      legStretches(legs, (legId) => ({
+        origin: placedPoint(slot(endKey(legId, "origin"))),
+        destination: placedPoint(slot(endKey(legId, "destination"))),
+      })),
+    [legs, slot]
+  );
+  const { state: routing, hold: holdRoutes, release: releaseRoutes } = useRouting(stretches, seedStretches, open);
+  const views = stretches.map((stretch) => ({ id: stretch.id, ...stretchView(routing, stretch) }));
+  const routingCount = views.filter((v) => v.phase === "routing").length;
+  /** Leg numbers (1-based, as the cards show them) whose routing failed. */
+  const failedLegs = legs.flatMap((l, i) => (views.some((v) => v.id === l.id && v.phase === "failed") ? [i + 1] : []));
+  const pending = hasPendingRoutes(routing, stretches);
+
+  // --- Save ---
+
+  const built = useMemo(() => {
+    const pathOf = new Map(stretches.map((s) => [s.id, stretchView(routing, s).path]));
+    return buildGuide(legs, transfers, slot, (legId) => pathOf.get(legId) ?? null);
+  }, [legs, transfers, slot, stretches, routing]);
+  const canSave = built.ok && !pending;
+  const saveHint = !built.ok ? built.message : pending ? "Waiting for routes…" : null;
 
   function handleSave() {
     if (!built.ok) {
       toast.error(built.message);
       return;
     }
-    onSave(built.data);
+    if (pending) return;
+    const fitted = fitGuide(built.data);
+    if (!fitted.ok) {
+      toast.error(GUIDE_TOO_LARGE);
+      return;
+    }
+    onSave(fitted.value);
     onOpenChange(false);
   }
 
   // --- Map preview data ---
 
   const preview = useMemo(() => {
-    const validLegs: GuideLeg[] = legs.flatMap((l) => {
+    const placedLegs = legs.flatMap((l) => {
       const origin = slot(endKey(l.id, "origin"));
       const destination = slot(endKey(l.id, "destination"));
       return isPlaced(origin) && isPlaced(destination)
@@ -254,23 +334,53 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
               mode: l.mode,
               origin: slotToPin(origin),
               destination: slotToPin(destination),
-              ...legPathDefaults(l.mode),
-            },
+              vias: l.vias,
+              expressways: l.expressways,
+              path: null,
+            } satisfies GuideLeg,
           ]
         : [];
     });
-    const placedIds = new Set(validLegs.map((l) => l.id));
+    const stretchById = new Map(stretches.map((s) => [s.id, s]));
+    const legLines: StretchLineCollection = {
+      type: "FeatureCollection",
+      features: placedLegs.map((l): StretchLineFeature => {
+        const stretch = stretchById.get(l.id);
+        // A leg that isn't routed (rail) is a straight line.
+        return stretch
+          ? stretchLine(routing, stretch)
+          : {
+              type: "Feature",
+              geometry: {
+                type: "LineString",
+                coordinates: [
+                  [l.origin.lng, l.origin.lat],
+                  [l.destination.lng, l.destination.lat],
+                ],
+              },
+              properties: { id: l.id, phase: "idle" },
+            };
+      }),
+    };
+    const colorById = new Map(placedLegs.map((l) => [l.id, modeColor(l.mode)]));
+    const placedIds = new Set(placedLegs.map((l) => l.id));
     const validTransfers = transfers.filter(
       (c) => placedIds.has(c.fromLegId) && placedIds.has(c.toLegId)
     );
     return {
-      legs: validLegs,
-      legLines: validLegs.flatMap((l) => legSegments([l]).map((seg) => ({ id: l.id, seg }))),
+      legs: placedLegs,
+      legLines: {
+        ...legLines,
+        features: legLines.features.map((f) => ({
+          ...f,
+          properties: { ...f.properties, color: colorById.get(f.properties.id) ?? "" },
+        })),
+      },
       transferLines: validTransfers.flatMap((c) =>
-        transferSegments(validLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
+        transferSegments(placedLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
       ),
     };
-  }, [legs, transfers, slot]);
+  }, [legs, transfers, slot, stretches, routing]);
 
   return (
     <BuilderShell
@@ -279,90 +389,126 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       title="Add guide"
       description="Add legs (origin → destination + mode). Connect legs via transfers to build the full guide."
       saveLabel="Save guide"
-      canSave={built.ok}
-      hint={built.ok ? null : built.message}
+      canSave={canSave}
+      hint={saveHint}
       onSave={handleSave}
       map={
-        <MapView
-          mapRef={editor.mapRef}
-          className="h-full w-full rounded-none"
-          onClick={editor.onMapClick}
-          onLoad={editor.onMapLoad}
-          interactive
-          cooperativeGestures
-          restrictToPhilippines
-          showNavigationControl
-          initialViewState={editor.initialViewState}
-        >
-          {/* Leg lines */}
-          {preview.legLines.map(({ id, seg }) => (
-            <Source
-              key={`leg-src-${id}`}
-              id={`leg-line-${id}`}
-              type="geojson"
-              data={{
-                type: "Feature",
-                geometry: { type: "LineString", coordinates: seg.coords },
-                properties: {},
-              }}
-            >
+        <div className="relative h-full w-full">
+          <MapView
+            mapRef={editor.mapRef}
+            className="h-full w-full rounded-none"
+            onClick={editor.onMapClick}
+            onLoad={editor.onMapLoad}
+            interactive
+            cooperativeGestures
+            restrictToPhilippines
+            showNavigationControl
+            initialViewState={editor.initialViewState}
+          >
+            {/* Leg lines: each in its mode colour; routed or straight (idle) solid, routing dimmed and dashed, failed dashed */}
+            <Source id="guide-leg-lines" type="geojson" data={preview.legLines}>
               <Layer
-                id={`leg-line-layer-${id}`}
+                id="guide-leg-lines-layer"
                 type="line"
-                paint={{ "line-color": seg.color, "line-width": 3, "line-opacity": 0.9 }}
+                filter={["any", ["==", ["get", "phase"], "ok"], ["==", ["get", "phase"], "idle"]]}
+                paint={{ "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.9 }}
                 layout={{ "line-join": "round", "line-cap": "round" }}
               />
-            </Source>
-          ))}
-          {/* Transfer lines — dashed */}
-          {preview.transferLines.map(({ id, seg }) => (
-            <Source
-              key={`transfer-src-${id}`}
-              id={`transfer-line-${id}`}
-              type="geojson"
-              data={{
-                type: "Feature",
-                geometry: { type: "LineString", coordinates: seg.coords },
-                properties: {},
-              }}
-            >
               <Layer
-                id={`transfer-line-layer-${id}`}
+                id="guide-leg-lines-routing-layer"
                 type="line"
+                filter={["==", ["get", "phase"], "routing"]}
                 paint={{
-                  "line-color": seg.color,
-                  "line-width": 2,
-                  "line-opacity": 0.75,
+                  "line-color": ["get", "color"],
+                  "line-width": 3,
+                  "line-opacity": 0.35,
                   "line-dasharray": [2, 2],
                 }}
-                layout={{ "line-join": "round", "line-cap": "round" }}
+                layout={{ "line-join": "round", "line-cap": "butt" }}
+              />
+              <Layer
+                id="guide-leg-lines-failed-layer"
+                type="line"
+                filter={["==", ["get", "phase"], "failed"]}
+                paint={{
+                  "line-color": ["get", "color"],
+                  "line-width": 3,
+                  "line-opacity": 0.9,
+                  "line-dasharray": [2, 2],
+                }}
+                layout={{ "line-join": "round", "line-cap": "butt" }}
               />
             </Source>
-          ))}
-          {/* Markers */}
-          {preview.legs.map((l) => (
-            <Fragment key={l.id}>
-              <Marker
-                longitude={l.origin.lng}
-                latitude={l.origin.lat}
-                color={PIN_COLORS.origin}
-                draggable
-                onDragEnd={(e) => {
-                  editor.placeAt(endKey(l.id, "origin"), e.lngLat.lat, e.lngLat.lng);
+            {/* Transfer lines — dashed */}
+            {preview.transferLines.map(({ id, seg }) => (
+              <Source
+                key={`transfer-src-${id}`}
+                id={`transfer-line-${id}`}
+                type="geojson"
+                data={{
+                  type: "Feature",
+                  geometry: { type: "LineString", coordinates: seg.coords },
+                  properties: {},
                 }}
-              />
-              <Marker
-                longitude={l.destination.lng}
-                latitude={l.destination.lat}
-                color={PIN_COLORS.destination}
-                draggable
-                onDragEnd={(e) => {
-                  editor.placeAt(endKey(l.id, "destination"), e.lngLat.lat, e.lngLat.lng);
-                }}
-              />
-            </Fragment>
-          ))}
-        </MapView>
+              >
+                <Layer
+                  id={`transfer-line-layer-${id}`}
+                  type="line"
+                  paint={{
+                    "line-color": seg.color,
+                    "line-width": 2,
+                    "line-opacity": 0.75,
+                    "line-dasharray": [2, 2],
+                  }}
+                  layout={{ "line-join": "round", "line-cap": "round" }}
+                />
+              </Source>
+            ))}
+            {/* Markers */}
+            {preview.legs.map((l) => (
+              <Fragment key={l.id}>
+                <Marker
+                  longitude={l.origin.lng}
+                  latitude={l.origin.lat}
+                  color={PIN_COLORS.origin}
+                  draggable
+                  onDragStart={() => holdRoutes([l.id])}
+                  onDragEnd={(e) => {
+                    // The pin moves only now, on release, so nothing routes during the drag.
+                    editor.placeAt(endKey(l.id, "origin"), e.lngLat.lat, e.lngLat.lng);
+                    releaseRoutes([l.id]);
+                  }}
+                />
+                <Marker
+                  longitude={l.destination.lng}
+                  latitude={l.destination.lat}
+                  color={PIN_COLORS.destination}
+                  draggable
+                  onDragStart={() => holdRoutes([l.id])}
+                  onDragEnd={(e) => {
+                    editor.placeAt(endKey(l.id, "destination"), e.lngLat.lat, e.lngLat.lng);
+                    releaseRoutes([l.id]);
+                  }}
+                />
+              </Fragment>
+            ))}
+          </MapView>
+
+          {(routingCount > 0 || failedLegs.length > 0) && (
+            <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col items-start gap-1">
+              {routingCount > 0 && (
+                <span role="status" className={ROUTE_CHIP_CLASS}>
+                  Routing…
+                </span>
+              )}
+              {failedLegs.map((n) => (
+                <span key={n} role="status" className={cn(ROUTE_CHIP_CLASS, "text-destructive")}>
+                  Couldn&apos;t reshape Leg {n} — showing a straight line
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       }
       panel={
         <>
@@ -387,6 +533,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                   onPick={(end, r) => editor.pick(endKey(leg.id, end), r)}
                   onLabelChange={(end, v) => editor.setLabel(endKey(leg.id, end), v)}
                   onModeChange={(m) => setLegMode(leg.id, m)}
+                  onExpresswaysChange={(v) => setLegExpressways(leg.id, v)}
                   onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
                 />
                 {/* Transfer slot between this leg and the next */}
@@ -499,6 +646,7 @@ interface LegCardProps {
   onPick: (end: LegEnd, r: GeocodeResult) => void;
   onLabelChange: (end: LegEnd, value: string) => void;
   onModeChange: (mode: TransportMode) => void;
+  onExpresswaysChange: (expressways: boolean) => void;
   onRemove?: () => void;
 }
 
@@ -512,6 +660,7 @@ function LegCard({
   onPick,
   onLabelChange,
   onModeChange,
+  onExpresswaysChange,
   onRemove,
 }: LegCardProps) {
   return (
@@ -551,6 +700,21 @@ function LegCard({
           </button>
         ))}
       </div>
+
+      {/* Expressways: vehicle legs on the road only */}
+      {hasExpresswaysChoice(leg.mode) && (
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor={`expressways-${leg.id}`} className="text-[10px] font-medium text-muted-foreground">
+            Uses expressways
+          </Label>
+          <Switch
+            id={`expressways-${leg.id}`}
+            size="sm"
+            checked={leg.expressways}
+            onCheckedChange={onExpresswaysChange}
+          />
+        </div>
+      )}
 
       {/* Origin */}
       <EndRow
