@@ -15,9 +15,13 @@
  * `routing-state.ts`, what to route in `route-stretches.ts`): a routing leg
  * draws dimmed and dashed, a failed one dashed and straight, a routed one
  * solid, all in its mode's colour. Vehicle legs carry a "Uses expressways"
- * switch, preset to the mode's default and reset when the mode changes. Save
- * waits until no leg is routing, and fits the document to the size budget
- * (`fitGuide`) before handing it over.
+ * switch, preset to the mode's default and reset when the mode changes. A rail
+ * leg (MRT, LRT) is never routed and has no switch: once the rail file has
+ * loaded (`useRail`, only when a rail leg exists) its path is the slice of the
+ * track between the stations nearest its pins (`rail-legs.ts`), or a straight
+ * line with a hint saying why. Save waits until no leg is routing or waiting
+ * for the rail file, and fits the document to the size budget (`fitGuide`)
+ * before handing it over.
  */
 import { Fragment, useMemo, useState } from "react";
 import { Plus, X, Trash2 } from "lucide-react";
@@ -56,6 +60,8 @@ import {
 } from "./routing-state";
 import { hasExpresswaysChoice, legStretch, legStretches, withMode } from "./route-stretches";
 import { useMapEditor, useOpenSession } from "./use-map-editor";
+import { isRailMode, railLegOutcomes, type RailLegOutcome } from "./rail-legs";
+import { useRail } from "./use-rail";
 import { useRouting } from "./use-routing";
 
 // ---------------------------------------------------------------------------
@@ -176,7 +182,8 @@ function buildGuide(
     mode: l.mode,
     origin: endPin(l.id, "origin"),
     destination: endPin(l.id, "destination"),
-    vias: l.vias,
+    // A rail leg follows a fixed track: it never keeps vias from an earlier mode.
+    vias: isRailMode(l.mode) ? [] : l.vias,
     expressways: l.expressways,
     path: pathOf(l.id),
   }));
@@ -295,14 +302,34 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const routingCount = views.filter((v) => v.phase === "routing").length;
   /** Leg numbers (1-based, as the cards show them) whose routing failed. */
   const failedLegs = legs.flatMap((l, i) => (views.some((v) => v.id === l.id && v.phase === "failed") ? [i + 1] : []));
-  const pending = hasPendingRoutes(routing, stretches);
+
+  // Rail legs follow the rail file instead of a router: sliced here, synchronously, once it has loaded.
+  const railLoad = useRail(legs.some((l) => isRailMode(l.mode)));
+  const railLoading = railLoad.status === "loading";
+  const railOutcomes = useMemo(
+    () =>
+      railLoad.status === "ready" || railLoad.status === "failed"
+        ? railLegOutcomes(railLoad.status === "ready" ? railLoad.rail : null, legs, (legId) => ({
+            origin: placedPoint(slot(endKey(legId, "origin"))),
+            destination: placedPoint(slot(endKey(legId, "destination"))),
+          }))
+        : new Map<string, RailLegOutcome>(),
+    [railLoad, legs, slot]
+  );
+  /** Why each rail leg without a slice stays straight, by leg id. */
+  const railHints = useMemo(
+    () => new Map([...railOutcomes].flatMap(([id, outcome]) => (outcome.ok ? [] : [[id, outcome.hint] as const]))),
+    [railOutcomes]
+  );
+  const pending = hasPendingRoutes(routing, stretches) || railLoading;
 
   // --- Save ---
 
   const built = useMemo(() => {
     const pathOf = new Map(stretches.map((s) => [s.id, stretchView(routing, s).path]));
+    for (const [id, outcome] of railOutcomes) pathOf.set(id, outcome.ok ? outcome.path : null);
     return buildGuide(legs, transfers, slot, (legId) => pathOf.get(legId) ?? null);
-  }, [legs, transfers, slot, stretches, routing]);
+  }, [legs, transfers, slot, stretches, routing, railOutcomes]);
   const canSave = built.ok && !pending;
   const saveHint = !built.ok ? built.message : pending ? "Waiting for routes…" : null;
 
@@ -346,20 +373,15 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       type: "FeatureCollection",
       features: placedLegs.map((l): StretchLineFeature => {
         const stretch = stretchById.get(l.id);
-        // A leg that isn't routed (rail) is a straight line.
-        return stretch
-          ? stretchLine(routing, stretch)
-          : {
-              type: "Feature",
-              geometry: {
-                type: "LineString",
-                coordinates: [
-                  [l.origin.lng, l.origin.lat],
-                  [l.destination.lng, l.destination.lat],
-                ],
-              },
-              properties: { id: l.id, phase: "idle" },
-            };
+        if (stretch) return stretchLine(routing, stretch);
+        // A rail leg follows its slice; one without a slice (or still loading) is a straight line.
+        const rail = railOutcomes.get(l.id);
+        const points = rail?.ok ? rail.points : [l.origin, l.destination];
+        return {
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: points.map((p): [number, number] => [p.lng, p.lat]) },
+          properties: { id: l.id, phase: rail?.ok ? "ok" : railLoading && isRailMode(l.mode) ? "routing" : "idle" },
+        };
       }),
     };
     const colorById = new Map(placedLegs.map((l) => [l.id, modeColor(l.mode)]));
@@ -380,7 +402,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
         transferSegments(placedLegs, [toTransfer(c)]).map((seg) => ({ id: c.id, seg }))
       ),
     };
-  }, [legs, transfers, slot, stretches, routing]);
+  }, [legs, transfers, slot, stretches, routing, railOutcomes, railLoading]);
 
   return (
     <BuilderShell
@@ -534,6 +556,7 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                   onLabelChange={(end, v) => editor.setLabel(endKey(leg.id, end), v)}
                   onModeChange={(m) => setLegMode(leg.id, m)}
                   onExpresswaysChange={(v) => setLegExpressways(leg.id, v)}
+                  railHint={railHints.get(leg.id) ?? null}
                   onRemove={legs.length > 1 ? () => removeLeg(leg.id) : undefined}
                 />
                 {/* Transfer slot between this leg and the next */}
@@ -647,6 +670,8 @@ interface LegCardProps {
   onLabelChange: (end: LegEnd, value: string) => void;
   onModeChange: (mode: TransportMode) => void;
   onExpresswaysChange: (expressways: boolean) => void;
+  /** Why this rail leg stays a straight line, if it does. */
+  railHint: string | null;
   onRemove?: () => void;
 }
 
@@ -661,6 +686,7 @@ function LegCard({
   onLabelChange,
   onModeChange,
   onExpresswaysChange,
+  railHint,
   onRemove,
 }: LegCardProps) {
   return (
@@ -714,6 +740,13 @@ function LegCard({
             onCheckedChange={onExpresswaysChange}
           />
         </div>
+      )}
+
+      {/* Rail legs that can't follow a line: why the straight line stays */}
+      {railHint && (
+        <p role="status" className="text-[10px] text-muted-foreground">
+          {railHint}
+        </p>
       )}
 
       {/* Origin */}
