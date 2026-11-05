@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  fitPinsToView,
   fitPointsToView,
   fitPostMapToView,
   lineStringFromPoints,
@@ -58,9 +57,9 @@ describe("Web Mercator projection", () => {
   });
 });
 
-describe("fitPinsToView", () => {
+describe("fitPointsToView", () => {
   it("centres two pins at the tightest zoom that still fits them", () => {
-    const fit = fitPinsToView([QUIAPO, CUBAO], WIDTH, HEIGHT);
+    const fit = fitPointsToView([QUIAPO, CUBAO], WIDTH, HEIGHT);
 
     expect(fit.longitude).toBeCloseTo((QUIAPO.lng + CUBAO.lng) / 2, 9);
     expect(fit.latitude).toBeCloseTo((QUIAPO.lat + CUBAO.lat) / 2, 9);
@@ -70,7 +69,7 @@ describe("fitPinsToView", () => {
   });
 
   it("centres a single pin at a street-level zoom", () => {
-    expect(fitPinsToView([QUIAPO], WIDTH, HEIGHT)).toEqual({
+    expect(fitPointsToView([QUIAPO], WIDTH, HEIGHT)).toEqual({
       longitude: QUIAPO.lng,
       latitude: QUIAPO.lat,
       zoom: 14,
@@ -78,7 +77,7 @@ describe("fitPinsToView", () => {
   });
 
   it("treats two identical pins like one, with no NaN or Infinity", () => {
-    const fit = fitPinsToView([QUIAPO, { ...QUIAPO, label: "Same spot" }], WIDTH, HEIGHT);
+    const fit = fitPointsToView([QUIAPO, { ...QUIAPO, label: "Same spot" }], WIDTH, HEIGHT);
 
     expect(fit).toEqual({ longitude: QUIAPO.lng, latitude: QUIAPO.lat, zoom: 14 });
     expect(Number.isFinite(worldX(fit.longitude, fit.zoom))).toBe(true);
@@ -86,7 +85,7 @@ describe("fitPinsToView", () => {
   });
 
   it("falls back to Metro Manila with no pins", () => {
-    expect(fitPinsToView([], WIDTH, HEIGHT)).toEqual({
+    expect(fitPointsToView([], WIDTH, HEIGHT)).toEqual({
       longitude: 120.9842,
       latitude: 14.5995,
       zoom: 11,
@@ -153,14 +152,14 @@ describe("post map framing", () => {
     expect(fit.longitude).toBeCloseTo((120.9842 + 121.2) / 2, 9);
     expect(fits(BULGE, fit.zoom)).toBe(true);
     expect(fits(BULGE, fit.zoom + 1)).toBe(false);
-    expect(fit.zoom).toBeLessThan(fitPinsToView([QUIAPO, CUBAO], WIDTH, HEIGHT).zoom);
+    expect(fit.zoom).toBeLessThan(fitPointsToView([QUIAPO, CUBAO], WIDTH, HEIGHT).zoom);
   });
 
   it("frames a map with no stored paths exactly as its pins", () => {
     const map = postMap([QUIAPO, CUBAO, MAKATI], [null, null]);
 
     expect(fitPostMapToView(map, WIDTH, HEIGHT)).toEqual(
-      fitPinsToView([QUIAPO, CUBAO, MAKATI], WIDTH, HEIGHT)
+      fitPointsToView([QUIAPO, CUBAO, MAKATI], WIDTH, HEIGHT)
     );
   });
 
@@ -246,7 +245,7 @@ describe("guideMapFit", () => {
     const pins = guideAllPins(legs);
 
     expect(pins).toHaveLength(4);
-    expect(fit).toEqual(fitPinsToView(pins, WIDTH, HEIGHT));
+    expect(fit).toEqual(fitPointsToView(pins, WIDTH, HEIGHT));
     expect(fits(pins, fit.zoom)).toBe(true);
     expect(fits(pins, fit.zoom + 1)).toBe(false);
   });
@@ -285,7 +284,7 @@ describe("guide street paths", () => {
     expect(fit.longitude).toBeCloseTo((120.9842 + 121.2) / 2, 9);
     expect(fits(BULGE, fit.zoom)).toBe(true);
     expect(fits(BULGE, fit.zoom + 1)).toBe(false);
-    expect(fit.zoom).toBeLessThan(fitPinsToView([QUIAPO, CUBAO], WIDTH, HEIGHT).zoom);
+    expect(fit.zoom).toBeLessThan(fitPointsToView([QUIAPO, CUBAO], WIDTH, HEIGHT).zoom);
   });
 
   it("lets null legs contribute only their pins", () => {
