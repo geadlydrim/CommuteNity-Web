@@ -67,3 +67,31 @@ export function geocoderUserAgent(): string {
   cachedGeocoderUserAgent = value;
   return value;
 }
+
+export type RouterConfig = {
+  /** Base URL of the Valhalla router, without a trailing slash. */
+  url: string;
+  /** Sent to the router's front proxy as a header when set. */
+  secret: string | undefined;
+};
+
+/**
+ * Server-only. Where the routing endpoint reaches the router (ADR 0007), or
+ * `undefined` when `ROUTER_URL` is unset: routing is then unavailable and
+ * builders draw straight lines. A blank value counts as unset, and CI never
+ * sets it. Throws when `ROUTER_URL` is set but isn't an http(s) URL. Read on
+ * every call, so it follows the environment and nothing is cached.
+ */
+export function routerConfig(): RouterConfig | undefined {
+  const url = process.env.ROUTER_URL?.trim();
+  if (!url) return undefined;
+  if (!/^https?:\/\/[^\s/]+/i.test(url) || !z.url().safeParse(url).success) {
+    throw new Error(
+      "Invalid environment variables:\n- ROUTER_URL must be an http(s) URL like \"http://127.0.0.1:8002\"",
+    );
+  }
+  return {
+    url: url.replace(/\/+$/, ""),
+    secret: process.env.ROUTER_SECRET?.trim() || undefined,
+  };
+}

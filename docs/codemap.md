@@ -21,7 +21,7 @@ Code uses the glossary's terms. The one deliberate exception is a stored JSON ke
 
 ## Request flow
 
-1. `src/middleware.ts` → `updateSession` in `src/lib/supabase/middleware.ts`: refreshes the session cookie, reads the rider's `users.username` by id, and applies `gateDecision` from `src/lib/identity.ts` (no username → `/onboarding/username`; the paths allowed without one live only there). Skips static files, `/api/geocode*`, and `/api/tiles/*`.
+1. `src/middleware.ts` → `updateSession` in `src/lib/supabase/middleware.ts`: refreshes the session cookie, reads the rider's `users.username` by id, and applies `gateDecision` from `src/lib/identity.ts` (no username → `/onboarding/username`; the paths allowed without one live only there). Skips static files, `/api/geocode*`, `/api/route`, and `/api/tiles/*`.
 2. Pages under `src/app/` are server components that read with `createClient` from `@/lib/supabase/server`.
 3. Interactive pieces are client components that write directly with `createClient` from `@/lib/supabase/client`. Reads of posts go through `@/lib/posts`; there are no server actions, and RLS in the migrations is the only authority on who can write what.
 
@@ -43,12 +43,15 @@ Code uses the glossary's terms. The one deliberate exception is a stored JSON ke
 
 **Geocoding**: browser → `geocode` / `reverseGeocode` in `src/lib/geo/index.ts` → `/api/geocode` or `/api/geocode/reverse` → the shared `nominatim` instance from `createNominatimClient` in `src/lib/geo/nominatim.ts` (one serialized queue ≥1 s apart across both routes, max 4 waiting → 503, 8 s budget → 504, retries, LRU cache) → `label.ts` builds place labels. Request and response shapes are Zod schemas in `src/lib/schemas/geocode.ts`, shared by routes and the browser client. Builders use it through `LocationSearch` and map clicks.
 
+**Routing** (ADR 0007): a builder (later tickets) → `POST /api/route` (`src/app/api/route/route.ts`) → in order: signed-in check with the server Supabase client (401; middleware skips this route), per-rider 60/min counter in `src/lib/routing/rate-limit.ts` (429, in memory per instance), `routeRequestSchema` from `src/lib/schemas/route.ts` (2–12 points inside the Philippine bounds, `car`|`walk`, `expressways`; 400), straight-line span ≤ 500 km car / 25 km walk (400), `routerConfig()` in `src/lib/env.ts` (`ROUTER_URL` unset → 503 `unavailable`) → `requestRoute` in `src/lib/routing/valhalla.ts` (Valhalla `/route`, `auto`|`pedestrian`, vias as `through`, `use_tolls`/`use_highways`, `X-Router-Secret` header when `ROUTER_SECRET` is set, 5 s abort → 504, any other failure → 502) → `src/lib/map/path.ts` decodes the precision-6 shape, simplifies at 2 m, joins the ends to the requested points, and encodes precision 5. The answer is only `{ path, distanceKm, durationMin }`; every response is `no-store`; errors carry a `code` (`routeErrorCodeSchema`). `src/lib/map/path.ts` is the one place that encodes, decodes, simplifies, and joins paths (pure, shared with the browser). The local router is run by `scripts/router/` (`download.sh`, `build.sh`, `serve.sh`; data in `~/.cache/commutenity/router/`, see the README).
+
 **Maps**: `@/components/map` is a server-safe barrel (static previews only). Feed thumbnails are `<img>` tiles + SVG drawn by `StaticTileCanvas` (`static-*-map.tsx` are thin mappers onto it). Every tile URL comes from `src/lib/map/tiles.ts` and is served by the caching, Philippines-only proxy `src/app/api/tiles/[z]/[x]/[y]/route.ts`. Live MapLibre (`MapView`) mounts only in the focus view and the two builders, loaded with `next/dynamic`; `react-map-gl` is re-exported only by `src/components/map/primitives.ts` for use inside the folder. Reading stored maps: `parsePostMap` / `parseGuide` (unknown newer versions show a placeholder).
 
 ## Edits that must land in several places
 
 - **Post reads**: one selection in `src/lib/posts/select.ts`, the UI type `Post` in `src/lib/posts/types.ts` (normalized by `toPost`), reads in `src/lib/posts/queries.ts`. A new column is a `select.ts` + `types.ts` change; regenerate row types first if it's a new database column.
 - **Map editing**: both builders run on one core: pure slot transitions, per-slot request tokens, and the Philippines bounds check in `src/components/map/map-editor-state.ts`; the `useMapEditor` hook (`use-map-editor.ts`) for active slot, picking, placement, reverse-geocode aborts, fly-to, and fitting seeded pins; shared `BuilderShell` and `SlotFields`. A placement or labeling fix goes there, not in a builder.
+- **Routing limits**: 2–12 points, the 500 km / 25 km spans, and the response shape live in `src/lib/schemas/route.ts`; the 60/min and 5 s limits in `src/lib/routing/` (`ROUTE_LIMIT`, `ROUTER_TIMEOUT_MS`); the 2 m simplification in the route handler. Philippine bounds are `PH_LAT_RANGE`/`PH_LNG_RANGE` from `post-map.ts`, reused by the route schema. Changing the profile or option mapping touches `valhallaRequestBody` in `src/lib/routing/valhalla.ts`.
 - **Colours**: one source, `src/lib/map/colors.ts` (pin roles, post-map line, `modeColor`), used by thumbnails, live maps, and builders.
 - **Username rules**: the regex lives in `src/lib/schemas/profile.ts` and the `users_username_format` CHECK, and `handle_new_user` re-checks it at sign-up.
 - **Database error messages**: one mapper, `riderMessage` in `src/lib/errors.ts`, used by every form and write; add new error cases there, keyed on codes and the database's named exceptions (`username_cooldown`, `avatar_url_invalid`), never on loose message text. A new named exception raised in SQL needs a case there.
@@ -78,8 +81,8 @@ Each table's current shape is the sum of its migrations; later files alter earli
 
 - `tests/db/`: act as a rider against the database in `SUPABASE_DB_URL` (the linked, live project) inside transactions that always roll back; `tests/db/rider.ts` is the harness (`withRollback`, `createRider`, `actAs`, `run`). `DB_TEST_MIGRATION=<file.sql>` applies an unpushed migration inside each test first, so a new migration can go red → green before `supabase db push`. These suites skip when `SUPABASE_DB_URL` is unset.
 - Concurrency tests need real commits: `withCommittedFixtures` in the same harness opens separate sessions and always deletes the riders it created (cascading to their posts and votes). `DB_TEST_MIGRATION` can't apply to these, so they go red before the push and green after.
-- `tests/unit/`: pure modules in Node (e.g. the error mapper).
-- `tests/api/`: call route handlers directly with a `NextRequest` and spy on `fetch`.
+- `tests/unit/`: pure modules in Node (e.g. the error mapper, the path codec in `path.test.ts`).
+- `tests/api/`: call route handlers directly with a `NextRequest` and spy on `fetch`; the routing test also stubs the session (`@/lib/supabase/server`) and the router environment.
 - No component tests; client components have no injection seam yet.
 
 ## Keeping this file true
