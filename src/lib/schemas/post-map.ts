@@ -24,11 +24,22 @@ export type MapPin = z.infer<typeof pinSchema>;
 //
 // A post map is a versioned document in posts.map_data. Readers accept every
 // version ever written and migrate it to the current shape; writers always
-// write CURRENT_POST_MAP_VERSION. To change the shape, add a v2 schema to
+// write CURRENT_POST_MAP_VERSION. To change the shape, add a version schema to
 // `storedPostMapSchema`, point `mapDataSchema` at it, and add a migrate case.
 // ---------------------------------------------------------------------------
 
-export const CURRENT_POST_MAP_VERSION = 1;
+export const CURRENT_POST_MAP_VERSION = 2;
+
+/**
+ * A street path in the document: a Google encoded polyline at precision 5.
+ * `null` stands for a straight line (no path found, or a map saved before paths).
+ */
+export const encodedPathSchema = z.string().min(1);
+
+const pinsSchema = z
+  .array(pinSchema)
+  .min(2, "At least an origin and destination are required")
+  .max(10, "Maximum 10 pins");
 
 /**
  * Version 1. Roles are position-derived, NOT stored:
@@ -40,22 +51,45 @@ export const CURRENT_POST_MAP_VERSION = 1;
  */
 const postMapV1Schema = z.object({
   version: z.literal(1),
-  pins: z
-    .array(pinSchema)
-    .min(2, "At least an origin and destination are required")
-    .max(10, "Maximum 10 pins"),
+  pins: pinsSchema,
 });
 
+/**
+ * Version 2: version 1 plus `paths`, one entry per consecutive pin pair
+ * (`pins.length - 1`), each an encoded street path or `null` for a straight line.
+ */
+const postMapV2Schema = z
+  .object({
+    version: z.literal(2),
+    pins: pinsSchema,
+    paths: z.array(encodedPathSchema.nullable()),
+  })
+  .superRefine((doc, ctx) => {
+    if (doc.paths.length !== doc.pins.length - 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["paths"],
+        message: "Each pair of consecutive pins needs exactly one path entry",
+      });
+    }
+  });
+
 /** The current version: what writers validate before saving. */
-export const mapDataSchema = postMapV1Schema;
+export const mapDataSchema = postMapV2Schema;
 export type MapData = z.infer<typeof mapDataSchema>;
 
 /** Every post-map version ever written. */
-const storedPostMapSchema = z.discriminatedUnion("version", [postMapV1Schema]);
+const storedPostMapSchema = z.discriminatedUnion("version", [postMapV1Schema, postMapV2Schema]);
 
 function migratePostMap(doc: z.infer<typeof storedPostMapSchema>): MapData {
   switch (doc.version) {
     case 1:
+      return {
+        version: 2,
+        pins: doc.pins,
+        paths: doc.pins.slice(1).map(() => null),
+      };
+    case 2:
       return doc;
   }
 }

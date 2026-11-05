@@ -8,9 +8,11 @@ Code uses the glossary's terms. The one deliberate exception is a stored JSON ke
 
 | Glossary | Code |
 |---|---|
-| Post map | `map_data` on `posts`; `PostMapBuilder`, `StaticPostMap`, `PostMapPreview`, `post-map-geometry.ts`, `post-map.ts` (`parsePostMap`, `mapDataSchema`, `pinSchema`, `CURRENT_POST_MAP_VERSION`) |
-| Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `GuidePreview`, `guide-geometry.ts`, `guide-map.ts` (`parseGuide`, `guideMapDataSchema`, `CURRENT_GUIDE_VERSION`), chain rule `guideChainStatus` in `guide-chain.ts` |
-| Transfer | `GuideTransfer`, `transferSchema`, `transferSegments`; stored under the JSON key `connectors` in guide v1 |
+| Post map | `map_data` on `posts`; `PostMapBuilder`, `StaticPostMap`, `PostMapPreview`, `post-map-geometry.ts`, `post-map.ts` (`parsePostMap`, `mapDataSchema`, `pinSchema`, `encodedPathSchema`, `CURRENT_POST_MAP_VERSION`). Version 2 adds `paths`: one entry per consecutive pin pair, an encoded street path or `null` (straight line); a version 1 map migrates to all-`null` paths |
+| Guide | `map_data` on `comments` with `kind: "guide"`; `GuideMapBuilder`, `StaticGuideMap`, `GuidePreview`, `guide-geometry.ts`, `guide-map.ts` (`parseGuide`, `guideMapDataSchema`, `legSchema`, `CURRENT_GUIDE_VERSION`), chain rule `guideChainStatus` in `guide-chain.ts`. Version 2 legs add `vias`, `expressways`, and `path`; a version 1 leg migrates to `vias: []`, `expressways` = its mode's default, `path: null` |
+| Via | `Via`, `viaSchema`, `MAX_VIAS_PER_LEG` (10) in `guide-map.ts`; stored as `vias` on a guide v2 leg, inside the Philippine pin bounds. Post maps have none |
+| Leg options | `legOptions` in `src/lib/schemas/leg-options.ts`: a mode (or `POST_MAP_PAIR`) → routing profile (`walk`/`car`/`rail`) and expressways default. Also the migration's source for a v1 leg's `expressways`. The profile is derived, never stored |
+| Transfer | `GuideTransfer`, `transferSchema`, `transferSegments`; stored under the JSON key `connectors` in guide v1 and v2 |
 | Mode | `TransportMode`, `MODE_META`, `ENABLED_MODES` in `src/lib/schemas/modes.ts`; colour via `modeColor` in `src/lib/map/colors.ts` |
 | Focus view | `FocusView`; `focus` prop on `PostCard`; `FocusViewDialog` (dialog shell taking children); routes `/p/[id]` and `@modal/(.)p/[id]` |
 | Post vote | `post_votes` table, `net_votes` column (catalog votes are the separate `votes` table) |

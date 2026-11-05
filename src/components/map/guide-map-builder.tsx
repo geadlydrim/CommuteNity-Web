@@ -25,6 +25,7 @@ import {
   type GuideTransfer,
 } from "@/lib/schemas/guide-map";
 import { guideChainStatus } from "@/lib/schemas/guide-chain";
+import { legOptions } from "@/lib/schemas/leg-options";
 import { pinSchema } from "@/lib/schemas/post-map";
 import { MapView, Marker, Source, Layer } from "./primitives";
 import { legSegments, transferSegments } from "./guide-geometry";
@@ -110,6 +111,11 @@ function toTransfer(c: BuilderTransfer): GuideTransfer {
   };
 }
 
+/** A leg's path fields before anything is routed: no vias, no path, the mode's expressways default. */
+function legPathDefaults(mode: TransportMode): Pick<GuideLeg, "vias" | "expressways" | "path"> {
+  return { vias: [], expressways: legOptions(mode).expressways, path: null };
+}
+
 type BuiltGuide = { ok: true; data: GuideMapData } | { ok: false; message: string };
 
 /** The guide document Save writes, or the first problem (also the Save hint). */
@@ -128,6 +134,7 @@ function buildGuide(
     mode: l.mode,
     origin: endPin(l.id, "origin"),
     destination: endPin(l.id, "destination"),
+    ...legPathDefaults(l.mode),
   }));
   const guideTransfers = transfers.map(toTransfer);
 
@@ -241,7 +248,15 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       const origin = slot(endKey(l.id, "origin"));
       const destination = slot(endKey(l.id, "destination"));
       return isPlaced(origin) && isPlaced(destination)
-        ? [{ id: l.id, mode: l.mode, origin: slotToPin(origin), destination: slotToPin(destination) }]
+        ? [
+            {
+              id: l.id,
+              mode: l.mode,
+              origin: slotToPin(origin),
+              destination: slotToPin(destination),
+              ...legPathDefaults(l.mode),
+            },
+          ]
         : [];
     });
     const placedIds = new Set(validLegs.map((l) => l.id));
