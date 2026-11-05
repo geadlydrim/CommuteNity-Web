@@ -603,6 +603,26 @@ describe("routing unavailable", () => {
     await flush();
     expect(calls).toHaveLength(2);
   });
+
+  describe("when the server already reports no router", () => {
+    it("answers at once and never calls the route function, before and after reset", async () => {
+      const route = vi.fn<typeof fetchRoute>();
+      const known = createRouteScheduler({ route, timers: clock, unavailable: true });
+      const heard: RouteResult[] = [];
+
+      known.schedule("a", request(0), (result) => heard.push(result));
+      expect(heard).toEqual([{ status: "unavailable" }]);
+
+      known.reset();
+      known.schedule("a", request(0), (result) => heard.push(result));
+      clock.advance(60_000);
+      await flush();
+
+      expect(heard).toEqual([{ status: "unavailable" }, { status: "unavailable" }]);
+      expect(route).not.toHaveBeenCalled();
+      expect(calls).toHaveLength(0);
+    });
+  });
 });
 
 describe("reopening a draft", () => {

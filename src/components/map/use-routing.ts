@@ -8,6 +8,11 @@
  * stretches and owns one scheduler per builder session, reset when the builder
  * closes or unmounts so its cache goes with it.
  *
+ * When the server has no router (`available` false) the scheduler starts in
+ * its unavailable state: every stretch settles as a straight line and no
+ * request is made, not even a probe. If `available` is wrong (a router that
+ * isn't actually configured), the endpoint's 503 still stops the session.
+ *
  * `hold` / `release` bracket a pin drag: a stretch being held makes no request
  * until the drag ends.
  */
@@ -21,10 +26,16 @@ import { createRoutingState, routingReducer, type SeedStretch, type StretchInput
  * @param stretches the builder's current stretches; memoize it, the hook re-syncs when its identity changes.
  * @param seed stretches of a reopened draft with their stored paths; read once, on mount.
  * @param open whether the builder is open; closing drops every request and the cache.
+ * @param available whether the server has a router configured (`useRoutingAvailable()`); read once, on mount.
  */
-export function useRouting(stretches: readonly StretchInput[], seed: readonly SeedStretch[], open = true) {
+export function useRouting(
+  stretches: readonly StretchInput[],
+  seed: readonly SeedStretch[],
+  open: boolean,
+  available: boolean
+) {
   const [state, dispatch] = useReducer(routingReducer, seed, createRoutingState);
-  const [scheduler] = useState(() => createRouteScheduler({ route: fetchRoute }));
+  const [scheduler] = useState(() => createRouteScheduler({ route: fetchRoute, unavailable: !available }));
   /** Stretch id → token of the job scheduled for it. */
   const [tracked] = useState(() => new Map<string, number>());
 

@@ -52,6 +52,7 @@ import { legOptions } from "@/lib/schemas/leg-options";
 import { pinSchema } from "@/lib/schemas/post-map";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useRoutingAvailable } from "@/components/routing-availability";
 import { MapView, Marker, Source, Layer, type MapLayerMouseEvent } from "./primitives";
 import { transferSegments } from "./guide-geometry";
 import { BuilderShell } from "./builder-shell";
@@ -364,7 +365,12 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   // --- Routing ---
 
   const stretches = useMemo(() => legStretches(viaLegs, endsOf), [viaLegs, endsOf]);
-  const { state: routing, hold: holdRoutes, release: releaseRoutes } = useRouting(stretches, seedStretches, open);
+  const routingAvailable = useRoutingAvailable();
+  const {
+    state: routing,
+    hold: holdRoutes,
+    release: releaseRoutes,
+  } = useRouting(stretches, seedStretches, open, routingAvailable);
   const views = stretches.map((stretch) => ({ id: stretch.id, ...stretchView(routing, stretch) }));
   const routingCount = views.filter((v) => v.phase === "routing").length;
   /** Leg numbers (1-based, as the cards show them) whose routing failed. */
