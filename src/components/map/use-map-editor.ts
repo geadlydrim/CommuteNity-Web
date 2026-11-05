@@ -13,9 +13,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import { reverseGeocode, type GeocodeResult, type ReverseGeocodeResult } from "@/lib/geo";
-import type { MapPin } from "@/lib/schemas/post-map";
+import type { LatLng } from "@/lib/map/path";
 import type { MapLayerMouseEvent, MapRef } from "./primitives";
-import { fitPinsToView, type FitResult } from "./post-map-geometry";
+import { fitPointsToView, type FitResult } from "./post-map-geometry";
 import {
   EMPTY_SLOT,
   activeSlotKey,
@@ -53,20 +53,26 @@ export interface UseMapEditorOptions {
   initialSlots: readonly SeedSlot[];
   /** Every slot key in display order; with nothing selected, a click fills the first empty one. */
   order: readonly string[];
+  /**
+   * What the first camera frames; read once, on mount. Defaults to the seeded
+   * pins; a builder whose seed has more to show (a draft's stored street
+   * paths) passes every point to keep in view.
+   */
+  framingPoints?: readonly LatLng[];
 }
 
-export function useMapEditor({ initialSlots, order }: UseMapEditorOptions) {
+export function useMapEditor({ initialSlots, order, framingPoints }: UseMapEditorOptions) {
   const [state, dispatch] = useReducer(mapEditorReducer, initialSlots, createEditorState);
   // Re-renders after a refused drag so the marker snaps back to its slot.
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const mapRef = useRef<MapRef | null>(null);
   const lastToken = useRef(0);
   const [lookups] = useState(() => new Map<string, AbortController>());
-  const [seedPins] = useState<MapPin[]>(() =>
-    initialSlots.flatMap(({ pin }) => (pin ? [pin] : []))
+  const [seedPoints] = useState<readonly LatLng[]>(
+    () => framingPoints ?? initialSlots.flatMap(({ pin }) => (pin ? [pin] : []))
   );
   const [initialViewState] = useState<FitResult | undefined>(() =>
-    seedPins.length > 0 ? fitPinsToView(seedPins, FIRST_FRAME.width, FIRST_FRAME.height) : undefined
+    seedPoints.length > 0 ? fitPointsToView(seedPoints, FIRST_FRAME.width, FIRST_FRAME.height) : undefined
   );
 
   useEffect(
@@ -155,7 +161,7 @@ export function useMapEditor({ initialSlots, order }: UseMapEditorOptions) {
 
   /** Fits the camera to the seeded pins at the map's real size. */
   const onMapLoad = useCallback(() => {
-    const bounds = pinBounds(seedPins);
+    const bounds = pinBounds(seedPoints);
     if (bounds) {
       mapRef.current?.fitBounds(bounds, {
         padding: FIT_PADDING_PX,
@@ -163,7 +169,7 @@ export function useMapEditor({ initialSlots, order }: UseMapEditorOptions) {
         duration: 0,
       });
     }
-  }, [seedPins]);
+  }, [seedPoints]);
 
   const select = useCallback((key: string) => dispatch({ type: "select", key }), []);
 

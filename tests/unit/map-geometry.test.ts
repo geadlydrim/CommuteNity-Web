@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { fitPinsToView, worldX, worldY } from "@/components/map/post-map-geometry";
+import {
+  fitPinsToView,
+  fitPointsToView,
+  fitPostMapToView,
+  lineStringFromPoints,
+  pairLinePoints,
+  pointBounds,
+  postMapFramingPoints,
+  postMapLinePoints,
+  worldX,
+  worldY,
+} from "@/components/map/post-map-geometry";
 import { guideAllPins, guideMapFit } from "@/components/map/guide-geometry";
+import { encodePath, type LatLng } from "@/lib/map/path";
 import type { GuideLeg } from "@/lib/schemas/guide-map";
-import type { MapPin } from "@/lib/schemas/post-map";
+import type { MapData, MapPin } from "@/lib/schemas/post-map";
 
 const WIDTH = 600;
 const HEIGHT = 240;
@@ -12,8 +24,8 @@ const QUIAPO: MapPin = { lat: 14.5995, lng: 120.9842, label: "Quiapo" };
 const CUBAO: MapPin = { lat: 14.6197, lng: 121.0527, label: "Cubao" };
 const MAKATI: MapPin = { lat: 14.5547, lng: 121.0244, label: "Ayala" };
 
-/** Do all pins fit inside the padded viewport at this zoom? */
-function fits(pins: MapPin[], zoom: number): boolean {
+/** Do all points fit inside the padded viewport at this zoom? */
+function fits(pins: readonly LatLng[], zoom: number): boolean {
   const xs = pins.map((p) => worldX(p.lng, zoom));
   const ys = pins.map((p) => worldY(p.lat, zoom));
   return (
@@ -72,6 +84,141 @@ describe("fitPinsToView", () => {
       latitude: 14.5995,
       zoom: 11,
     });
+  });
+});
+
+// A street path from Quiapo to Cubao that swings south of and east past both pins.
+const BULGE: LatLng[] = [
+  { lat: 14.5995, lng: 120.9842 },
+  { lat: 14.5, lng: 121.0 },
+  { lat: 14.52, lng: 121.2 },
+  { lat: 14.6197, lng: 121.0527 },
+];
+
+const postMap = (pins: MapPin[], paths: (string | null)[]): MapData => ({
+  version: 2,
+  pins,
+  paths,
+});
+
+describe("pointBounds", () => {
+  it("is the smallest box around the points", () => {
+    expect(pointBounds(BULGE)).toEqual({
+      minLat: 14.5,
+      maxLat: 14.6197,
+      minLng: 120.9842,
+      maxLng: 121.2,
+    });
+  });
+
+  it("is null with no points", () => {
+    expect(pointBounds([])).toBeNull();
+  });
+});
+
+describe("post map framing", () => {
+  it("includes path points beyond the pins", () => {
+    const map = postMap([QUIAPO, CUBAO], [encodePath(BULGE)]);
+    const bounds = pointBounds(postMapFramingPoints(map));
+
+    expect(bounds).not.toBeNull();
+    expect(bounds!.minLat).toBeCloseTo(14.5, 9);
+    expect(bounds!.maxLat).toBeCloseTo(14.6197, 9);
+    expect(bounds!.minLng).toBeCloseTo(120.9842, 9);
+    expect(bounds!.maxLng).toBeCloseTo(121.2, 9);
+  });
+
+  it("lets a null pair contribute only its pins", () => {
+    const map = postMap([QUIAPO, CUBAO, MAKATI], [null, null]);
+
+    expect(postMapFramingPoints(map)).toEqual([
+      { lat: 14.5995, lng: 120.9842 },
+      { lat: 14.6197, lng: 121.0527 },
+      { lat: 14.5547, lng: 121.0244 },
+    ]);
+  });
+
+  it("centres and zooms on the whole path, not just the pins", () => {
+    const map = postMap([QUIAPO, CUBAO], [encodePath(BULGE)]);
+    const fit = fitPostMapToView(map, WIDTH, HEIGHT);
+
+    expect(fit.latitude).toBeCloseTo((14.5 + 14.6197) / 2, 9);
+    expect(fit.longitude).toBeCloseTo((120.9842 + 121.2) / 2, 9);
+    expect(fits(BULGE, fit.zoom)).toBe(true);
+    expect(fits(BULGE, fit.zoom + 1)).toBe(false);
+    expect(fit.zoom).toBeLessThan(fitPinsToView([QUIAPO, CUBAO], WIDTH, HEIGHT).zoom);
+  });
+
+  it("frames a map with no stored paths exactly as its pins", () => {
+    const map = postMap([QUIAPO, CUBAO, MAKATI], [null, null]);
+
+    expect(fitPostMapToView(map, WIDTH, HEIGHT)).toEqual(
+      fitPinsToView([QUIAPO, CUBAO, MAKATI], WIDTH, HEIGHT)
+    );
+  });
+
+  it("treats a stored path that doesn't decode like a null pair", () => {
+    const map = postMap([QUIAPO, CUBAO], ["~"]);
+
+    expect(postMapFramingPoints(map)).toHaveLength(2);
+    expect(pairLinePoints(map, 0)).toEqual([
+      { lat: 14.5995, lng: 120.9842 },
+      { lat: 14.6197, lng: 121.0527 },
+    ]);
+  });
+
+  it("fits any list of points, for guides to reuse", () => {
+    expect(fitPointsToView(BULGE, WIDTH, HEIGHT)).toEqual(
+      fitPostMapToView(postMap([QUIAPO, CUBAO], [encodePath(BULGE)]), WIDTH, HEIGHT)
+    );
+  });
+});
+
+describe("post map line", () => {
+  it("draws a pair's stored street path as written", () => {
+    const map = postMap([QUIAPO, CUBAO], [encodePath(BULGE)]);
+    const line = pairLinePoints(map, 0);
+
+    expect(line).toHaveLength(4);
+    line.forEach((p, i) => {
+      expect(p.lat).toBeCloseTo(BULGE[i]!.lat, 9);
+      expect(p.lng).toBeCloseTo(BULGE[i]!.lng, 9);
+    });
+  });
+
+  it("draws a null pair as the straight line between its pins", () => {
+    const map = postMap([QUIAPO, CUBAO], [null]);
+
+    expect(pairLinePoints(map, 0)).toEqual([
+      { lat: 14.5995, lng: 120.9842 },
+      { lat: 14.6197, lng: 121.0527 },
+    ]);
+  });
+
+  it("chains a street path and a straight pair without repeating the shared pin", () => {
+    const map = postMap([QUIAPO, CUBAO, MAKATI], [encodePath(BULGE), null]);
+    const line = postMapLinePoints(map);
+
+    expect(line).toHaveLength(5);
+    expect(line[3]!.lat).toBeCloseTo(14.6197, 9);
+    expect(line[3]!.lng).toBeCloseTo(121.0527, 9);
+    expect(line[4]).toEqual({ lat: 14.5547, lng: 121.0244 });
+  });
+
+  it("is today's straight line through the pins when every pair is null", () => {
+    const map = postMap([QUIAPO, CUBAO, MAKATI], [null, null]);
+
+    expect(postMapLinePoints(map)).toEqual([
+      { lat: 14.5995, lng: 120.9842 },
+      { lat: 14.6197, lng: 121.0527 },
+      { lat: 14.5547, lng: 121.0244 },
+    ]);
+  });
+
+  it("writes GeoJSON coordinates as [lng, lat]", () => {
+    expect(lineStringFromPoints([{ lat: 14.5995, lng: 120.9842 }]).geometry.coordinates).toEqual([
+      [120.9842, 14.5995],
+    ]);
   });
 });
 
