@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchRoute } from "@/lib/routing/client";
+import { fetchRoute, ROUTE_CLIENT_TIMEOUT_MS } from "@/lib/routing/client";
 import type { RouteRequest } from "@/lib/schemas/route";
 
 const REQUEST: RouteRequest = {
@@ -25,6 +25,7 @@ function stubFetch(reply: () => Response | Promise<Response>) {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -101,6 +102,81 @@ describe("fetchRoute", () => {
     controller.abort();
 
     expect(await pending).toEqual({ status: "aborted" });
-    expect(spy.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+  });
+
+  /** A fetch that never answers, and rejects like the real one once its signal aborts. */
+  function stubHungFetch() {
+    const spy = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("The operation was aborted.", "AbortError"))
+          );
+        })
+    );
+    vi.stubGlobal("fetch", spy);
+    return spy;
+  }
+
+  it("gives up on a hung connection after the client deadline, as a timeout failure", async () => {
+    vi.useFakeTimers();
+    stubHungFetch();
+
+    const pending = fetchRoute(REQUEST);
+    await vi.advanceTimersByTimeAsync(ROUTE_CLIENT_TIMEOUT_MS - 1);
+    let settled = false;
+    void pending.then(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toMatchObject({ status: "failed", code: "timeout" });
+  });
+
+  it("gives up when the reply's body never finishes arriving", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: RequestInit) =>
+          Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              new Promise((_resolve, reject) => {
+                init?.signal?.addEventListener("abort", () =>
+                  reject(new DOMException("The operation was aborted.", "AbortError"))
+                );
+              }),
+          } as unknown as Response)
+      )
+    );
+
+    const pending = fetchRoute(REQUEST);
+    await vi.advanceTimersByTimeAsync(ROUTE_CLIENT_TIMEOUT_MS);
+
+    expect(await pending).toMatchObject({ status: "failed", code: "timeout" });
+  });
+
+  it("reports the caller's cancel as aborted even when it comes before the deadline", async () => {
+    vi.useFakeTimers();
+    stubHungFetch();
+    const controller = new AbortController();
+
+    const pending = fetchRoute(REQUEST, controller.signal);
+    await vi.advanceTimersByTimeAsync(ROUTE_CLIENT_TIMEOUT_MS - 1);
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(ROUTE_CLIENT_TIMEOUT_MS);
+
+    expect(await pending).toEqual({ status: "aborted" });
+  });
+
+  it("makes no request for a signal that is already aborted", async () => {
+    const spy = stubFetch(() => json({ path: PATH, distanceKm: 1, durationMin: 1 }));
+    const controller = new AbortController();
+    controller.abort();
+
+    expect(await fetchRoute(REQUEST, controller.signal)).toEqual({ status: "aborted" });
+    expect(spy).not.toHaveBeenCalled();
   });
 });
