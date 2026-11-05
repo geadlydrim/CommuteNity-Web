@@ -81,6 +81,9 @@ describe("guideMapFit", () => {
     mode: "jeepney",
     origin,
     destination,
+    vias: [],
+    expressways: false,
+    path: null,
   });
 
   it("fits every leg's origin and destination", () => {
