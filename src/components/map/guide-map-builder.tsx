@@ -54,7 +54,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useRoutingAvailable } from "@/components/routing-availability";
 import { MapView, Marker, Source, Layer, type MapLayerMouseEvent } from "./primitives";
-import { transferSegments } from "./guide-geometry";
+import { guideFramingPoints, transferSegments } from "./guide-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
@@ -266,7 +266,11 @@ function GuideMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     () => legs.flatMap((l) => [endKey(l.id, "origin"), endKey(l.id, "destination")]),
     [legs]
   );
-  const editor = useMapEditor({ initialSlots: seed.slots, order });
+  /** A reopened draft frames its stored street paths as well as its pins. */
+  const [framingPoints] = useState(() =>
+    initialValue && initialValue.legs.length >= 1 ? guideFramingPoints(initialValue.legs) : undefined
+  );
+  const editor = useMapEditor({ initialSlots: seed.slots, order, framingPoints });
 
   // --- Leg mutations ---
 
