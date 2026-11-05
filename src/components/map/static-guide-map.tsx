@@ -1,7 +1,8 @@
 /**
  * StaticGuideMap — guide thumbnail on the shared StaticTileCanvas: one solid
- * line per leg in its mode colour, dashed transfer lines, and origin /
- * destination dots per leg. No WebGL.
+ * line per leg in its mode colour (the leg's stored street path, or a straight
+ * line when it has none), dashed transfer lines, and origin / destination
+ * dots per leg. No WebGL.
  */
 import { PIN_COLORS } from "@/lib/map/colors";
 import type { GuideMapData } from "@/lib/schemas/guide-map";
@@ -48,23 +49,24 @@ export function StaticGuideMap({
               height={height}
               aria-hidden
             >
-              {/* Leg lines — solid */}
-              {legSegments(legs).map((seg, i) => {
-                const line = ends(seg.coords);
-                if (!line) return null;
-                const [a, b] = line;
-                return (
-                  <line
-                    key={`leg-${i}`}
-                    x1={a.x} y1={a.y}
-                    x2={b.x} y2={b.y}
-                    stroke={seg.color}
-                    strokeWidth={2.5}
-                    strokeLinecap="round"
-                    opacity={0.9}
-                  />
-                );
-              })}
+              {/* Leg lines — solid; each follows its stored street path, or runs straight between the ends */}
+              {legSegments(legs).map((seg, i) => (
+                <polyline
+                  key={`leg-${i}`}
+                  points={seg.coords
+                    .map(([lng, lat]) => {
+                      const { x, y } = project(lat, lng);
+                      return `${x},${y}`;
+                    })
+                    .join(" ")}
+                  fill="none"
+                  stroke={seg.color}
+                  strokeWidth={2.5}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  opacity={0.9}
+                />
+              ))}
               {/* Transfer lines — dashed */}
               {transferSegments(legs, transfers).map((seg, i) => {
                 const line = ends(seg.coords);
