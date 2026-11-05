@@ -8,21 +8,38 @@
  * Placement, labeling, and the camera come from the shared map-editing core
  * (`useMapEditor`); this file keeps only the ordered-pins shape.
  *
+ * Each consecutive pair of placed pins is routed for a street path
+ * (`usePairRouting`, state in `pair-routing-state.ts`): a routing pair draws
+ * dimmed and dashed, a failed one dashed and straight, a routed one solid.
+ * Save waits until no pair is routing, and fits the document to the size
+ * budget (`fitPostMap`) before handing it over.
+ *
  * One bounded WebGL context while the dialog is open — no issue.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowUp, ArrowDown, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { GeocodeResult } from "@/lib/geo";
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
+import { fitPostMap } from "@/lib/map/fit-document";
 import { CURRENT_POST_MAP_VERSION, mapDataSchema, type MapData, type MapPin } from "@/lib/schemas/post-map";
 import { MapView, Marker, Source, Layer } from "./primitives";
-import { lineStringFromPins } from "./post-map-geometry";
+import { postMapFramingPoints } from "./post-map-geometry";
 import { BuilderShell } from "./builder-shell";
 import { SlotFields } from "./slot-fields";
 import { isPlaced, slotToPin, type EditorSlot, type SeedSlot } from "./map-editor-state";
+import {
+  hasPendingRoutes,
+  pairId,
+  pairLines,
+  pairView,
+  savedPaths,
+  type PairInput,
+  type SeedPair,
+} from "./pair-routing-state";
 import { useMapEditor, useOpenSession } from "./use-map-editor";
+import { usePairRouting } from "./use-pair-routing";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,6 +77,21 @@ function seedSlots(initialValue: MapData | null): SeedSlot[] {
   ];
 }
 
+/** Each pair of a reopened draft with the path it was saved with. */
+function seedPairsFrom(seed: readonly SeedSlot[], initialValue: MapData | null): SeedPair[] {
+  if (!initialValue || initialValue.pins.length < 2) return [];
+  return initialValue.paths.flatMap((path, i) => {
+    const from = seed[i];
+    const to = seed[i + 1];
+    return from?.pin && to?.pin ? [{ id: pairId(from.key, to.key), from: from.pin, to: to.pin, path }] : [];
+  });
+}
+
+const MAP_TOO_LARGE = "This map is too big to save. Remove some pins and try again.";
+
+const ROUTE_CHIP_CLASS =
+  "rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium shadow ring-1 ring-border";
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -72,9 +104,14 @@ export function PostMapBuilder(props: Props) {
 
 function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
   const [seed] = useState(() => seedSlots(initialValue));
+  /** The draft's stored paths, by pair; its `null` pairs get routed again. */
+  const [seedPairs] = useState(() => seedPairsFrom(seed, initialValue));
   /** Slot keys in pin order: origin, waypoints, destination. */
   const [order, setOrder] = useState(() => seed.map((s) => s.key));
-  const editor = useMapEditor({ initialSlots: seed, order });
+  const [framingPoints] = useState(() =>
+    initialValue && initialValue.pins.length >= 2 ? postMapFramingPoints(initialValue) : undefined
+  );
+  const editor = useMapEditor({ initialSlots: seed, order, framingPoints });
 
   // --- Shape mutations ---
 
@@ -114,32 +151,68 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
 
   const first = order.at(0);
   const last = order.at(-1);
-  const canSave =
+  const endsPlaced =
     first !== undefined &&
     last !== undefined &&
     isPlaced(editor.slot(first)) &&
     isPlaced(editor.slot(last));
-  const pins: MapPin[] = order.flatMap((key) => {
-    const slot = editor.slot(key);
-    return isPlaced(slot) ? [slotToPin(slot)] : [];
-  });
-  const lineData = pins.length >= 2 ? lineStringFromPins(pins) : null;
+  /** Placed slots in pin order; unplaced waypoints are skipped, as in the saved document. */
+  const placed = useMemo(
+    () =>
+      order.flatMap((key) => {
+        const slot = editor.slots.get(key);
+        return slot && isPlaced(slot) ? [{ key, slot }] : [];
+      }),
+    [order, editor.slots]
+  );
+  const pins: MapPin[] = placed.map(({ slot }) => slotToPin(slot));
+  /** Consecutive placed pins; each is routed on its own. */
+  const pairs = useMemo(() => {
+    const result: PairInput[] = [];
+    for (let i = 1; i < placed.length; i++) {
+      const from = placed[i - 1];
+      const to = placed[i];
+      if (!from || !to) continue;
+      result.push({
+        id: pairId(from.key, to.key),
+        from: { lat: from.slot.lat, lng: from.slot.lng },
+        to: { lat: to.slot.lat, lng: to.slot.lng },
+      });
+    }
+    return result;
+  }, [placed]);
+  const routing = usePairRouting(pairs, seedPairs);
+  const phases = pairs.map((pair) => pairView(routing, pair).phase);
+  const routingCount = phases.filter((phase) => phase === "routing").length;
+  const failedCount = phases.filter((phase) => phase === "failed").length;
+  const pending = hasPendingRoutes(routing, pairs);
+  const canSave = endsPlaced && !pending;
+  const saveHint = !endsPlaced ? "Set both an origin and a destination." : pending ? "Waiting for routes…" : null;
+  const lineData = pairs.length > 0 ? pairLines(routing, pairs) : null;
 
   // --- Save ---
 
   function handleSave() {
-    if (!canSave) {
+    if (!endsPlaced) {
       toast.error("Set both an origin and a destination.");
       return;
     }
-    // Street paths aren't routed yet: every pair keeps its straight line (`null`).
-    const paths = pins.slice(1).map(() => null);
-    const result = mapDataSchema.safeParse({ version: CURRENT_POST_MAP_VERSION, pins, paths });
+    if (pending) return;
+    const result = mapDataSchema.safeParse({
+      version: CURRENT_POST_MAP_VERSION,
+      pins,
+      paths: savedPaths(routing, pairs),
+    });
     if (!result.success) {
       toast.error(result.error.issues[0]?.message ?? "Invalid map data");
       return;
     }
-    onSave(result.data);
+    const fitted = fitPostMap(result.data);
+    if (!fitted.ok) {
+      toast.error(MAP_TOO_LARGE);
+      return;
+    }
+    onSave(fitted.value);
     onOpenChange(false);
   }
 
@@ -151,51 +224,98 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       description="Search for each place, or click the map to place the selected pin. Drag a pin to fine-tune."
       saveLabel="Save post map"
       canSave={canSave}
-      hint={canSave ? null : "Set both an origin and a destination."}
+      hint={saveHint}
       onSave={handleSave}
       map={
-        <MapView
-          mapRef={editor.mapRef}
-          className="h-full w-full rounded-none"
-          onClick={editor.onMapClick}
-          onLoad={editor.onMapLoad}
-          interactive
-          cooperativeGestures
-          restrictToPhilippines
-          showNavigationControl
-          initialViewState={editor.initialViewState}
-        >
-          {lineData && (
-            <Source id="post-map-line" type="geojson" data={lineData}>
-              <Layer
-                id="post-map-line-layer"
-                type="line"
-                paint={{
-                  "line-color": POST_MAP_LINE_COLOR,
-                  "line-width": 3,
-                  "line-opacity": 0.85,
-                }}
-                layout={{ "line-join": "round", "line-cap": "round" }}
-              />
-            </Source>
-          )}
+        <div className="relative h-full w-full">
+          <MapView
+            mapRef={editor.mapRef}
+            className="h-full w-full rounded-none"
+            onClick={editor.onMapClick}
+            onLoad={editor.onMapLoad}
+            interactive
+            cooperativeGestures
+            restrictToPhilippines
+            showNavigationControl
+            initialViewState={editor.initialViewState}
+          >
+            {lineData && (
+              <Source id="post-map-line" type="geojson" data={lineData}>
+                {/* Routed pair, or a straight line when routing is off: solid. */}
+                <Layer
+                  id="post-map-line-layer"
+                  type="line"
+                  filter={["any", ["==", ["get", "phase"], "ok"], ["==", ["get", "phase"], "idle"]]}
+                  paint={{
+                    "line-color": POST_MAP_LINE_COLOR,
+                    "line-width": 3,
+                    "line-opacity": 0.85,
+                  }}
+                  layout={{ "line-join": "round", "line-cap": "round" }}
+                />
+                {/* Routing: dimmed and dashed. */}
+                <Layer
+                  id="post-map-line-routing-layer"
+                  type="line"
+                  filter={["==", ["get", "phase"], "routing"]}
+                  paint={{
+                    "line-color": POST_MAP_LINE_COLOR,
+                    "line-width": 3,
+                    "line-opacity": 0.35,
+                    "line-dasharray": [2, 2],
+                  }}
+                  layout={{ "line-join": "round", "line-cap": "butt" }}
+                />
+                {/* No path found: dashed straight line. */}
+                <Layer
+                  id="post-map-line-failed-layer"
+                  type="line"
+                  filter={["==", ["get", "phase"], "failed"]}
+                  paint={{
+                    "line-color": POST_MAP_LINE_COLOR,
+                    "line-width": 3,
+                    "line-opacity": 0.85,
+                    "line-dasharray": [2, 2],
+                  }}
+                  layout={{ "line-join": "round", "line-cap": "butt" }}
+                />
+              </Source>
+            )}
 
-          {order.map((key, i) => {
-            const slot = editor.slot(key);
-            return isPlaced(slot) ? (
-              <Marker
-                key={key}
-                longitude={slot.lng}
-                latitude={slot.lat}
-                color={pinColor(i, order.length)}
-                draggable
-                onDragEnd={(e) => {
-                  editor.placeAt(key, e.lngLat.lat, e.lngLat.lng);
-                }}
-              />
-            ) : null;
-          })}
-        </MapView>
+            {order.map((key, i) => {
+              const slot = editor.slot(key);
+              const color = pinColor(i, order.length);
+              // The colour is read once, when MapLibre builds the marker, so a role change remounts it.
+              return isPlaced(slot) ? (
+                <Marker
+                  key={`${key}:${color}`}
+                  longitude={slot.lng}
+                  latitude={slot.lat}
+                  color={color}
+                  draggable
+                  onDragEnd={(e) => {
+                    editor.placeAt(key, e.lngLat.lat, e.lngLat.lng);
+                  }}
+                />
+              ) : null;
+            })}
+          </MapView>
+
+          {(routingCount > 0 || failedCount > 0) && (
+            <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col items-start gap-1">
+              {routingCount > 0 && (
+                <span role="status" className={ROUTE_CHIP_CLASS}>
+                  Routing…
+                </span>
+              )}
+              {failedCount > 0 && (
+                <span role="status" className={cn(ROUTE_CHIP_CLASS, "text-destructive")}>
+                  Couldn&apos;t find a street path — showing a straight line
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       }
       panel={
         <div className="space-y-2">
