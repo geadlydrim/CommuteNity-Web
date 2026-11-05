@@ -32,6 +32,7 @@ npm run db:types     # regenerate src/lib/supabase/database.types.ts from SUPABA
 - **Map data:** `posts.map_data` and `comments.map_data` are versioned JSON documents. The shape lives in Zod (`src/lib/schemas/`): read with `parsePostMap` / `parseGuide` (they handle every version ever written and report newer ones), write the `CURRENT_*_VERSION`, and to change the shape add a version plus a migrate step (ADR 0004). Version 2 adds post maps' `paths` (one per pin pair, `null` = straight line) and guide legs' `vias`, `expressways`, and `path`, all precision-5 polylines. The browser keeps `map_data` under 12 KB of JSON (`MAP_DATA_BUDGET_BYTES`), not the 16 KB CHECK, because jsonb stores coordinates larger. Pin bounds are the Philippines; don't silently widen them.
 - **Migrations:** add a new file under `supabase/migrations/`; never edit an applied one. Keep the `handle_new_user` and username-cooldown triggers intact.
 - **Styling tokens:** brand, mode, and status colors are CSS variables in `src/app/globals.css`. Vote green/red is not a brand color.
+- **Commits:** Conventional Commits, authored by the committer alone: the message ends with its body, with no `Co-authored-by` trailer.
 
 ## Guardrails
 
