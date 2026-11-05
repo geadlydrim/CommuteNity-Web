@@ -11,7 +11,7 @@ export const modeSchema = z.enum(TRANSPORT_MODES);
 export type TransportMode = z.infer<typeof modeSchema>;
 
 /** Modes shown in the guide-map builder UI (extend list here when ready). */
-export const ENABLED_MODES: TransportMode[] = ["walking", "bus", "jeepney", "uv_express", "p2p", "tricycle"];
+export const ENABLED_MODES: TransportMode[] = ["walking", "bus", "jeepney", "mrt", "lrt", "uv_express", "p2p", "tricycle"];
 
 /** Display label + brand color per mode. */
 export const MODE_META: Record<TransportMode, { label: string; color: string }> = {
