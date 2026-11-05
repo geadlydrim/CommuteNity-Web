@@ -4,7 +4,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { PostVoteControls } from "@/components/post-vote-controls";
 import { CommentThread } from "@/components/comment-thread";
 import { ShareButton } from "@/components/share-button";
-import { parsePostMap, type MapPin } from "@/lib/schemas/post-map";
+import { parsePostMap, type MapData } from "@/lib/schemas/post-map";
 // Direct import, not the "use client" barrel: the preview renders on the server.
 import { PostMapPreview } from "@/components/map";
 import { formatPostTime } from "@/lib/format-time";
@@ -19,7 +19,7 @@ type Props = {
    * post map comes from `renderMap` instead of the static thumbnail. Feed cards
    * omit it, so they never reference the interactive map.
    */
-  focus?: { renderMap: (pins: MapPin[]) => ReactNode };
+  focus?: { renderMap: (map: MapData) => ReactNode };
 };
 
 /**
@@ -76,7 +76,7 @@ export function PostCard({ post, initialUserVote, currentUserId, focus }: Props)
             The thumbnail lets clicks through to the card link; only its
             attribution link takes pointer events. */}
         {focus && postMap.status === "ok"
-          ? focus.renderMap(postMap.map.pins)
+          ? focus.renderMap(postMap.map)
           : (postMap.status === "ok" || postMap.status === "unknown-version") && (
               <div className="pointer-events-none relative z-10 mt-3 w-full">
                 <PostMapPreview mapData={post.map_data} />

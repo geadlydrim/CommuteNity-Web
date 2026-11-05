@@ -24,7 +24,7 @@ export function PostMapPreview({ mapData }: { mapData: unknown }) {
   const parsed = parsePostMap(mapData);
   switch (parsed.status) {
     case "ok":
-      return <StaticPostMap pins={parsed.map.pins} width={560} height={240} />;
+      return <StaticPostMap map={parsed.map} width={560} height={240} />;
     case "unknown-version":
       return <UnavailableMap />;
     default:

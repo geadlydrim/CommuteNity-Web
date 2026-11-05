@@ -7,6 +7,7 @@ import Map, {
   type MapRef,
   type ViewState,
 } from "react-map-gl/maplibre";
+import type { PaddingOptions } from "maplibre-gl";
 import { cn } from "@/lib/utils";
 import { PH_LAT_RANGE, PH_LNG_RANGE } from "@/lib/schemas/post-map";
 import { OSM_RASTER_STYLE, DEFAULT_VIEW_STATE } from "./osm-style";
@@ -26,10 +27,17 @@ export interface MapViewProps {
   /**
    * Uncontrolled starting camera — merged over Metro Manila defaults.
    * Map owns pan/zoom internally (no controlled viewState wiring).
+   * `bounds` fits the camera to a [[west, south], [east, north]] box at the
+   * container's real size (with `fitBoundsOptions`) and overrides center and
+   * zoom. MapLibre zoom counts 512-px world tiles, one less than the 256-px
+   * zoom of `post-map-geometry`, so never feed a `fitPointsToView` zoom here.
    */
   initialViewState?: Partial<
     Pick<ViewState, "longitude" | "latitude" | "zoom" | "bearing" | "pitch">
-  >;
+  > & {
+    bounds?: [[number, number], [number, number]];
+    fitBoundsOptions?: { padding?: number | PaddingOptions; maxZoom?: number };
+  };
   /** Tailwind classes for the outer container. Use to override the default height. */
   className?: string;
   /** Click handler on the basemap (builders place the active pin with it). */

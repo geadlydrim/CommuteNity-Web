@@ -1,38 +1,41 @@
 /**
- * StaticPostMap — post map thumbnail: the pins and the line through them,
+ * StaticPostMap — post map thumbnail: the pins and the line through them
+ * (each pair's stored street path, or a straight line when it has none),
  * drawn on the shared StaticTileCanvas (no WebGL; safe once per feed post).
  */
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
-import type { MapPin } from "@/lib/schemas/post-map";
-import { fitPinsToView } from "./post-map-geometry";
+import type { MapData } from "@/lib/schemas/post-map";
+import { fitPostMapToView, postMapLinePoints } from "./post-map-geometry";
 import { StaticPinDot, StaticTileCanvas } from "./static-tile-canvas";
 
 const PIN_RADIUS = 6;
 
 export interface StaticPostMapProps {
-  pins: MapPin[];
+  map: MapData;
   width?: number;
   height?: number;
   className?: string;
 }
 
 export function StaticPostMap({
-  pins,
+  map,
   width = 600,
   height = 240,
   className,
 }: StaticPostMapProps) {
+  const { pins } = map;
   if (pins.length === 0) return null;
 
   return (
     <StaticTileCanvas
-      fit={fitPinsToView(pins, width, height)}
+      fit={fitPostMapToView(map, width, height)}
       width={width}
       height={height}
       ariaLabel="Post map preview"
       className={className}
     >
       {(project) => {
+        const line = postMapLinePoints(map).map((p) => project(p.lat, p.lng));
         const projected = pins.map((p) => project(p.lat, p.lng));
         return (
           <>
@@ -44,7 +47,7 @@ export function StaticPostMap({
                 aria-hidden
               >
                 <polyline
-                  points={projected.map(({ x, y }) => `${x},${y}`).join(" ")}
+                  points={line.map(({ x, y }) => `${x},${y}`).join(" ")}
                   fill="none"
                   stroke={POST_MAP_LINE_COLOR}
                   strokeWidth={2.5}

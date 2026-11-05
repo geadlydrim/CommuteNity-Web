@@ -23,7 +23,7 @@ export interface CanvasPoint {
 export type ProjectFn = (lat: number, lng: number) => CanvasPoint;
 
 export interface StaticTileCanvasProps {
-  /** Center and integer zoom, e.g. from `fitPinsToView`. */
+  /** Center and integer zoom, e.g. from `fitPostMapToView` (pins plus stored path points). */
   fit: FitResult;
   /** Design size in pixels; the canvas scales to its container's width at this aspect ratio. */
   width: number;

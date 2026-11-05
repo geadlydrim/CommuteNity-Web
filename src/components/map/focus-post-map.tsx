@@ -8,14 +8,46 @@
  */
 import { useState } from "react";
 import { MapView, Marker, Popup, Source, Layer } from "./primitives";
-import { lineStringFromPins, fitPinsToView } from "./post-map-geometry";
+import {
+  lineStringFromPoints,
+  pointBounds,
+  postMapFramingPoints,
+  postMapLinePoints,
+} from "./post-map-geometry";
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
-import type { MapPin } from "@/lib/schemas/post-map";
+import type { MapData } from "@/lib/schemas/post-map";
 
-export function FocusPostMap({ pins }: { pins: MapPin[] }) {
+/**
+ * Room around the framed points, in container pixels: a pin marker is 27x41
+ * and anchored at its foot, so the top needs its full height, and the
+ * navigation control covers the top-right corner.
+ */
+const FRAME_PADDING = { top: 56, right: 56, bottom: 40, left: 40 } as const;
+/** A map whose pins all sit on one spot would otherwise zoom to the tile limit. */
+const FRAME_MAX_ZOOM = 15;
+
+/**
+ * The opening camera: pins plus every stored path point, fitted by MapLibre at
+ * the container's real size. (`fitPointsToView` counts 256-px tiles, one
+ * MapLibre zoom level deeper than its 512-px world, so its zoom can't be used.)
+ */
+function framingView(map: MapData) {
+  const box = pointBounds(postMapFramingPoints(map));
+  if (!box) return undefined;
+  return {
+    bounds: [
+      [box.minLng, box.minLat],
+      [box.maxLng, box.maxLat],
+    ] as [[number, number], [number, number]],
+    fitBoundsOptions: { padding: FRAME_PADDING, maxZoom: FRAME_MAX_ZOOM },
+  };
+}
+
+export function FocusPostMap({ map }: { map: MapData }) {
+  const { pins } = map;
   const [activePopup, setActivePopup] = useState<number | null>(null);
-  const fit = fitPinsToView(pins, 600, 320);
-  const lineData = pins.length >= 2 ? lineStringFromPins(pins) : null;
+  const [initialViewState] = useState(() => framingView(map));
+  const lineData = pins.length >= 2 ? lineStringFromPoints(postMapLinePoints(map)) : null;
 
   return (
     <div className="mt-3 w-full">
@@ -25,7 +57,7 @@ export function FocusPostMap({ pins }: { pins: MapPin[] }) {
         cooperativeGestures
         restrictToPhilippines
         showNavigationControl
-        initialViewState={fit}
+        initialViewState={initialViewState}
       >
         {lineData && (
           <Source id="focus-post-map-line" type="geojson" data={lineData}>
