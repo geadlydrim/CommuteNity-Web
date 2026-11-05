@@ -181,7 +181,17 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
     }
     return result;
   }, [placed]);
-  const routing = usePairRouting(pairs, seedPairs);
+  const { state: routing, hold: holdPairs, release: releasePairs } = usePairRouting(pairs, seedPairs, open);
+  /** The pairs a pin belongs to: the ones a drag of that pin changes. */
+  function pairIdsOf(key: string): string[] {
+    const i = placed.findIndex((p) => p.key === key);
+    const before = placed[i - 1];
+    const after = placed[i + 1];
+    return [
+      ...(i > 0 && before ? [pairId(before.key, key)] : []),
+      ...(after ? [pairId(key, after.key)] : []),
+    ];
+  }
   const phases = pairs.map((pair) => pairView(routing, pair).phase);
   const routingCount = phases.filter((phase) => phase === "routing").length;
   const failedCount = phases.filter((phase) => phase === "failed").length;
@@ -293,8 +303,11 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
                   latitude={slot.lat}
                   color={color}
                   draggable
+                  onDragStart={() => holdPairs(pairIdsOf(key))}
                   onDragEnd={(e) => {
+                    // The pins move only now, on release, so nothing routes during the drag.
                     editor.placeAt(key, e.lngLat.lat, e.lngLat.lng);
+                    releasePairs(pairIdsOf(key));
                   }}
                 />
               ) : null;
