@@ -11,9 +11,16 @@ import {
   worldX,
   worldY,
 } from "@/components/map/post-map-geometry";
-import { guideAllPins, guideMapFit } from "@/components/map/guide-geometry";
+import {
+  guideAllPins,
+  guideFramingPoints,
+  guideMapFit,
+  legLinePoints,
+  legSegments,
+  transferSegments,
+} from "@/components/map/guide-geometry";
 import { encodePath, type LatLng } from "@/lib/map/path";
-import type { GuideLeg } from "@/lib/schemas/guide-map";
+import type { GuideLeg, GuideTransfer } from "@/lib/schemas/guide-map";
 import type { MapData, MapPin } from "@/lib/schemas/post-map";
 
 const WIDTH = 600;
@@ -248,5 +255,121 @@ describe("guideMapFit", () => {
     const fit = guideMapFit([leg("a", QUIAPO, { ...QUIAPO })], WIDTH, HEIGHT);
 
     expect(fit).toEqual({ longitude: QUIAPO.lng, latitude: QUIAPO.lat, zoom: 14 });
+  });
+});
+
+describe("guide street paths", () => {
+  const leg = (
+    id: string,
+    origin: MapPin,
+    destination: MapPin,
+    path: string | null,
+    mode: GuideLeg["mode"] = "jeepney"
+  ): GuideLeg => ({ id, mode, origin, destination, vias: [], expressways: false, path });
+
+  it("frames a leg path that bulges past the pins", () => {
+    const legs = [leg("a", QUIAPO, CUBAO, encodePath(BULGE))];
+    const bounds = pointBounds(guideFramingPoints(legs));
+
+    expect(bounds).not.toBeNull();
+    expect(bounds!.minLat).toBeCloseTo(14.5, 9);
+    expect(bounds!.maxLat).toBeCloseTo(14.6197, 9);
+    expect(bounds!.minLng).toBeCloseTo(120.9842, 9);
+    expect(bounds!.maxLng).toBeCloseTo(121.2, 9);
+  });
+
+  it("centres and zooms on the pins plus the paths", () => {
+    const fit = guideMapFit([leg("a", QUIAPO, CUBAO, encodePath(BULGE))], WIDTH, HEIGHT);
+
+    expect(fit.latitude).toBeCloseTo((14.5 + 14.6197) / 2, 9);
+    expect(fit.longitude).toBeCloseTo((120.9842 + 121.2) / 2, 9);
+    expect(fits(BULGE, fit.zoom)).toBe(true);
+    expect(fits(BULGE, fit.zoom + 1)).toBe(false);
+    expect(fit.zoom).toBeLessThan(fitPinsToView([QUIAPO, CUBAO], WIDTH, HEIGHT).zoom);
+  });
+
+  it("lets null legs contribute only their pins", () => {
+    const legs = [leg("a", QUIAPO, CUBAO, null), leg("b", CUBAO, MAKATI, null)];
+
+    expect(guideFramingPoints(legs)).toEqual([
+      { lat: 14.5995, lng: 120.9842 },
+      { lat: 14.6197, lng: 121.0527 },
+      { lat: 14.6197, lng: 121.0527 },
+      { lat: 14.5547, lng: 121.0244 },
+    ]);
+  });
+
+  it("treats a stored path that doesn't decode like a null leg", () => {
+    const bad = leg("a", QUIAPO, CUBAO, "~");
+
+    expect(guideFramingPoints([bad])).toHaveLength(2);
+    expect(legLinePoints(bad)).toEqual([
+      { lat: 14.5995, lng: 120.9842 },
+      { lat: 14.6197, lng: 121.0527 },
+    ]);
+  });
+
+  it("draws a leg's stored path as written", () => {
+    const line = legLinePoints(leg("a", QUIAPO, CUBAO, encodePath(BULGE)));
+
+    expect(line).toHaveLength(4);
+    line.forEach((p, i) => {
+      expect(p.lat).toBeCloseTo(BULGE[i]!.lat, 9);
+      expect(p.lng).toBeCloseTo(BULGE[i]!.lng, 9);
+    });
+  });
+
+  it("draws a null leg as the straight line between its ends, in its mode colour", () => {
+    const segments = legSegments([leg("a", QUIAPO, CUBAO, null, "walking")]);
+
+    expect(segments).toEqual([
+      {
+        coords: [
+          [120.9842, 14.5995],
+          [121.0527, 14.6197],
+        ],
+        color: "#6b7280",
+      },
+    ]);
+  });
+
+  it("draws each leg's own path in its own mode colour", () => {
+    const segments = legSegments([
+      leg("a", QUIAPO, CUBAO, encodePath(BULGE), "uv_express"),
+      leg("b", CUBAO, MAKATI, null, "jeepney"),
+    ]);
+
+    expect(segments).toHaveLength(2);
+    expect(segments[0]!.coords).toHaveLength(4);
+    expect(segments[0]!.coords[1]![0]).toBeCloseTo(BULGE[1]!.lng, 9);
+    expect(segments[0]!.coords[1]![1]).toBeCloseTo(BULGE[1]!.lat, 9);
+    expect(segments[0]!.color).toBe("#06b6d4");
+    expect(segments[1]!.coords).toHaveLength(2);
+    expect(segments[1]!.color).toBe("#f59e0b");
+  });
+
+  it("keeps transfers straight between the leg ends, whatever the legs' paths", () => {
+    const legs = [
+      leg("a", QUIAPO, CUBAO, encodePath(BULGE)),
+      leg("b", MAKATI, QUIAPO, encodePath(BULGE)),
+    ];
+    const transfers: GuideTransfer[] = [
+      {
+        id: "t",
+        mode: "walking",
+        from: { legId: "a", end: "destination" },
+        to: { legId: "b", end: "origin" },
+      },
+    ];
+
+    expect(transferSegments(legs, transfers)).toEqual([
+      {
+        coords: [
+          [121.0527, 14.6197],
+          [121.0244, 14.5547],
+        ],
+        color: "#6b7280",
+      },
+    ]);
   });
 });

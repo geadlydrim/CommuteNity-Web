@@ -1,28 +1,47 @@
 /**
  * Geometry helpers for the guide map (multi-leg, multi-modal).
  *
- * Reuses worldX / worldY / fitPinsToView from post-map-geometry.ts.
+ * Reuses worldX / worldY / fitPointsToView / storedPathPoints from
+ * post-map-geometry.ts. A leg draws its stored street path, or the straight
+ * line between its ends when it has none (or the stored path doesn't decode).
  * No "use client" — plain math, importable anywhere.
  */
+import type { LatLng } from "@/lib/map/path";
+import { modeColor } from "@/lib/map/colors";
 import type { MapPin } from "@/lib/schemas/post-map";
 import type { GuideLeg, GuideTransfer } from "@/lib/schemas/guide-map";
-import { MODE_META } from "@/lib/schemas/modes";
-import { fitPinsToView, worldX, worldY, type FitResult } from "./post-map-geometry";
+import {
+  fitPointsToView,
+  storedPathPoints,
+  worldX,
+  worldY,
+  type FitResult,
+} from "./post-map-geometry";
 
 export { worldX, worldY };
 
 // ---------------------------------------------------------------------------
-// Pin helpers
+// Pin and framing helpers
 // ---------------------------------------------------------------------------
 
-/** Flatten every leg's origin + destination into a pin list (for fitPinsToView). */
+/** Flatten every leg's origin + destination into a pin list. */
 export function guideAllPins(legs: GuideLeg[]): MapPin[] {
   return legs.flatMap((l) => [l.origin, l.destination]);
 }
 
-/** Fit all guide map pins into a viewport. */
+/** Everything framing must keep in view: every leg's pins plus every stored path point. */
+export function guideFramingPoints(legs: GuideLeg[]): LatLng[] {
+  const points: LatLng[] = guideAllPins(legs).map(({ lat, lng }) => ({ lat, lng }));
+  for (const leg of legs) {
+    const decoded = storedPathPoints(leg.path);
+    if (decoded) for (const p of decoded) points.push(p);
+  }
+  return points;
+}
+
+/** Fit a guide into a viewport: its pins plus every leg's path points, so a path that bulges past its pins stays in frame. */
 export function guideMapFit(legs: GuideLeg[], width: number, height: number): FitResult {
-  return fitPinsToView(guideAllPins(legs), width, height);
+  return fitPointsToView(guideFramingPoints(legs), width, height);
 }
 
 // ---------------------------------------------------------------------------
@@ -35,14 +54,21 @@ export interface MapSegment {
   color: string;
 }
 
-/** One solid-line segment per leg, colored by transport mode. */
+/** The line drawn for one leg: its stored street path, or the straight line between its ends. */
+export function legLinePoints(leg: GuideLeg): LatLng[] {
+  return (
+    storedPathPoints(leg.path) ?? [
+      { lat: leg.origin.lat, lng: leg.origin.lng },
+      { lat: leg.destination.lat, lng: leg.destination.lng },
+    ]
+  );
+}
+
+/** One solid-line segment per leg, colored by transport mode; follows the leg's stored path when it has one. */
 export function legSegments(legs: GuideLeg[]): MapSegment[] {
   return legs.map((l) => ({
-    coords: [
-      [l.origin.lng, l.origin.lat],
-      [l.destination.lng, l.destination.lat],
-    ],
-    color: MODE_META[l.mode].color,
+    coords: legLinePoints(l).map((p): [number, number] => [p.lng, p.lat]),
+    color: modeColor(l.mode),
   }));
 }
 
@@ -63,7 +89,7 @@ export function transferSegments(
         [fromPin.lng, fromPin.lat],
         [toPin.lng, toPin.lat],
       ],
-      color: MODE_META[c.mode].color,
+      color: modeColor(c.mode),
     }];
   });
 }
