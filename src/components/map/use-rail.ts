@@ -3,37 +3,35 @@
  * before (the feed and a guide without rail legs never fetch it). The chunk is
  * a dynamic import from this app (`loadRail`); nothing asks Overpass.
  *
- * `idle` while no rail leg exists, `loading` until the chunk arrives, then
- * `ready` with the prepared rail or `failed` (rail legs stay straight). A later
- * `needed` after a failure tries again.
+ * `idle` while no rail leg exists, `loading` while the chunk is loading (first
+ * load or a retry), then `ready` with the prepared rail or `failed` (rail legs
+ * stay straight) once a load settles failed. A later `needed` after a failure
+ * tries again, reading `loading` until it settles.
  */
 import { useEffect, useState } from "react";
 import { loadRail } from "@/lib/rail/load";
-import type { RailData } from "@/lib/rail/slice";
-
-export type RailLoad =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "ready"; rail: RailData }
-  | { status: "failed" };
-
-// Stable, so a consumer memoizing on the result isn't invalidated on every render.
-const IDLE: RailLoad = { status: "idle" };
-const LOADING: RailLoad = { status: "loading" };
+import { railLoadOf, settledOnNeededChange, type RailLoad, type RailSettled } from "./rail-load-state";
 
 /** @param needed whether the guide has a rail leg; the load starts when this first holds. */
 export function useRail(needed: boolean): RailLoad {
-  const [loaded, setLoaded] = useState<{ status: "ready"; rail: RailData } | { status: "failed" } | null>(null);
+  const [settled, setSettled] = useState<RailSettled>(null);
+  const [wasNeeded, setWasNeeded] = useState(needed);
+
+  // Adjusted during render (not in the effect) so a retry never renders a stale `failed`.
+  if (wasNeeded !== needed) {
+    setWasNeeded(needed);
+    setSettled(settledOnNeededChange(settled));
+  }
 
   useEffect(() => {
     if (!needed) return;
     let cancelled = false;
     loadRail().then(
       (rail) => {
-        if (!cancelled) setLoaded({ status: "ready", rail });
+        if (!cancelled) setSettled({ status: "ready", rail });
       },
       () => {
-        if (!cancelled) setLoaded({ status: "failed" });
+        if (!cancelled) setSettled({ status: "failed" });
       }
     );
     return () => {
@@ -41,6 +39,5 @@ export function useRail(needed: boolean): RailLoad {
     };
   }, [needed]);
 
-  if (loaded) return loaded;
-  return needed ? LOADING : IDLE;
+  return railLoadOf(needed, settled);
 }
