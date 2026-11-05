@@ -78,6 +78,10 @@ _Avoid_: polyline, route line, snapped route
 An unnamed point a street path is forced through, made by dragging the path; it is not a place.
 _Avoid_: waypoint, bend, shape point, vertex
 
+**Station**:
+A named boarding point on an MRT or LRT line; a rail leg's line runs between two stations.
+_Avoid_: stop, terminal, platform
+
 ### Catalog (parked)
 
 **Catalog**:
@@ -90,7 +94,7 @@ _Avoid_: line, path (and never use it for a post map or guide)
 
 **Stop**:
 A catalog boarding or alighting point.
-_Avoid_: station, terminal, pin
+_Avoid_: terminal, pin (and never use it for a rail station)
 
 **Segment**:
 One stop-to-stop part of a route, with its fare.
