@@ -51,10 +51,21 @@ Then put `ROUTER_URL=http://127.0.0.1:8002` in `.env.local` and restart `npm run
 
 `ROUTER_SECRET` is optional: when set, `/api/route` sends it to the router as an `X-Router-Secret` header for a front proxy to check. A stopped or unreachable router makes `/api/route` answer 502 or 504 within 5 seconds; with `ROUTER_URL` unset it answers 503.
 
+### Rebuilding the rail file
+
+MRT and LRT legs follow the track from `src/lib/rail/rail-lines.json`, a small committed file (about 7 KB, 4 KB gzipped) of MRT-3, LRT-1, and LRT-2 built from the same Geofabrik extract the router uses. It loads only with the guide builder and is never fetched from Overpass. Rebuild it when a station opens or a relation changes:
+
+```bash
+scripts/router/download.sh   # if you don't have the extract yet
+scripts/rail/build-rail.sh   # needs python3; the first run makes a venv with pyosmium in ~/.cache/commutenity/rail/
+```
+
+The script reads the extract a few times (seconds), picks the lines' route relations by OSM ID, checks them against their `route_master`, and rewrites the file identically for the same extract. To add a line or direction, edit `LINES` in `scripts/rail/build_rail.py`. The data is © OpenStreetMap contributors under the ODbL; see `src/lib/rail/NOTICE.md`.
+
 Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run typecheck`.
 
 ### Continuous integration
 
 GitHub Actions (`.github/workflows/ci.yml`) runs lint, typecheck, build, and tests on every push and pull request. Set the repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (placeholders are used if unset; the build never contacts Supabase). Set the repository secret `SUPABASE_DB_URL` to run the database tests against that project inside rolled-back transactions; without it they are skipped.
 
-Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. The rail lines in `src/lib/rail/rail-lines.json` are an extract of that data under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) (see `src/lib/rail/NOTICE.md`).
