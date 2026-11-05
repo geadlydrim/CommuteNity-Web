@@ -132,7 +132,9 @@ function PostMapEditor({ open, onOpenChange, initialValue, onSave }: Props) {
       toast.error("Set both an origin and a destination.");
       return;
     }
-    const result = mapDataSchema.safeParse({ version: CURRENT_POST_MAP_VERSION, pins });
+    // Street paths aren't routed yet: every pair keeps its straight line (`null`).
+    const paths = pins.slice(1).map(() => null);
+    const result = mapDataSchema.safeParse({ version: CURRENT_POST_MAP_VERSION, pins, paths });
     if (!result.success) {
       toast.error(result.error.issues[0]?.message ?? "Invalid map data");
       return;
