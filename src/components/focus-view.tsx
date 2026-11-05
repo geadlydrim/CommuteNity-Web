@@ -21,7 +21,7 @@ export function FocusView({ post, currentUserId, className }: Props) {
         post={post}
         initialUserVote={post.viewerVote}
         currentUserId={currentUserId}
-        focus={{ renderMap: (pins) => <LazyFocusPostMap pins={pins} /> }}
+        focus={{ renderMap: (map) => <LazyFocusPostMap map={map} /> }}
       />
     </ul>
   );
