@@ -86,6 +86,10 @@ _Avoid_: edit mode, drawing mode
 A named boarding point on an MRT or LRT line; a rail leg's line runs between two stations.
 _Avoid_: stop, terminal, platform
 
+**Base map**:
+The map of streets, buildings, and places drawn underneath pins, street paths, and transfers; riders look at it but never edit it.
+_Avoid_: tiles, background, map style, basemap
+
 ### Catalog (parked)
 
 **Catalog**:
