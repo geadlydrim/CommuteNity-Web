@@ -90,6 +90,10 @@ _Avoid_: stop, terminal, platform
 The map of streets, buildings, and places drawn underneath pins, street paths, and transfers; riders look at it but never edit it.
 _Avoid_: tiles, background, map style, basemap
 
+**Thumbnail**:
+The static picture of a post map or guide shown on a post card or comment, drawn without a live map.
+_Avoid_: preview, static map, mini-map
+
 ### Catalog (parked)
 
 **Catalog**:
