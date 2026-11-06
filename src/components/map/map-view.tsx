@@ -7,7 +7,7 @@ import Map, {
   type MapRef,
   type ViewState,
 } from "react-map-gl/maplibre";
-import type { PaddingOptions } from "maplibre-gl";
+import type { PaddingOptions, StyleSpecification } from "maplibre-gl";
 import { cn } from "@/lib/utils";
 import { PH_LAT_RANGE, PH_LNG_RANGE } from "@/lib/schemas/post-map";
 import { OSM_RASTER_STYLE, DEFAULT_VIEW_STATE } from "./osm-style";
@@ -80,7 +80,8 @@ export function MapView({
   restrictToPhilippines = false,
   showNavigationControl = true,
   mapRef,
-}: MapViewProps) {
+  mapStyle,
+}: MapViewProps & { /** PROTOTYPE: base map style override. */ mapStyle?: StyleSpecification }) {
   return (
     // MapLibre collapses to 0px without an explicitly sized parent.
     // Default h-[400px] makes it "just work" when dropped on any page.
@@ -88,7 +89,7 @@ export function MapView({
       <Map
         ref={mapRef}
         // NOTE: prop is `mapStyle`, NOT `style`. `style` sets canvas container CSS only.
-        mapStyle={OSM_RASTER_STYLE}
+        mapStyle={mapStyle ?? OSM_RASTER_STYLE}
         initialViewState={{ ...DEFAULT_VIEW_STATE, ...initialViewState }}
         style={{ width: "100%", height: "100%" }}
         interactive={interactive}

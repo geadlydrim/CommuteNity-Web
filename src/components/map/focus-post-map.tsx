@@ -6,7 +6,7 @@
  * Pulls in MapLibre, so callers load it with `next/dynamic` to keep it out of
  * the feed bundle.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MapView, Marker, Popup, Source, Layer } from "./primitives";
 import {
   lineStringFromPoints,
@@ -16,6 +16,9 @@ import {
 } from "./post-map-geometry";
 import { POST_MAP_LINE_COLOR, pinColor } from "@/lib/map/colors";
 import type { MapData } from "@/lib/schemas/post-map";
+// PROTOTYPE: base map style variants (branch prototype/basemap-style).
+import { basemapStyle } from "./basemap-prototype/styles";
+import { BasemapPrototypeSwitcher, useBasemapPrototype } from "./basemap-prototype/switcher";
 
 /**
  * Room around the framed points, in container pixels: a pin marker is 27x41
@@ -48,9 +51,40 @@ export function FocusPostMap({ map }: { map: MapData }) {
   const [activePopup, setActivePopup] = useState<number | null>(null);
   const [initialViewState] = useState(() => framingView(map));
   const lineData = pins.length >= 2 ? lineStringFromPoints(postMapLinePoints(map)) : null;
+  const { variant, theme } = useBasemapPrototype();
+  const liveStyle = useMemo(() => basemapStyle(variant, theme), [variant, theme]);
+  const thumbStyle = useMemo(() => basemapStyle(variant, theme, true), [variant, theme]);
+  const [thumbView] = useState(() => {
+    const v = framingView(map);
+    return v && { ...v, fitBoundsOptions: { padding: 24, maxZoom: 15 } };
+  });
 
   return (
     <div className="mt-3 w-full">
+      <BasemapPrototypeSwitcher />
+      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-fuchsia-500">Prototype · thumbnail style</p>
+      <div className="mb-3 aspect-[600/320] w-full overflow-hidden rounded-lg">
+        <MapView
+          key={`thumb-${variant}-${theme}`}
+          className="h-full"
+          interactive={false}
+          showNavigationControl={false}
+          mapStyle={thumbStyle}
+          initialViewState={thumbView}
+        >
+          {lineData && (
+            <Source id="thumb-line" type="geojson" data={lineData}>
+              <Layer id="thumb-line-layer" type="line" paint={{ "line-color": POST_MAP_LINE_COLOR, "line-width": 3 }} layout={{ "line-join": "round", "line-cap": "round" }} />
+            </Source>
+          )}
+          {pins.map((pin, i) => (
+            <Marker key={i} longitude={pin.lng} latitude={pin.lat} anchor="center">
+              <span className="block h-3 w-3 rounded-full border-2 border-white" style={{ background: pinColor(i, pins.length) }} />
+            </Marker>
+          ))}
+        </MapView>
+      </div>
+      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-fuchsia-500">Prototype · live map</p>
       <MapView
         className="h-[220px] overflow-hidden rounded-lg sm:h-[320px]"
         interactive
@@ -58,6 +92,7 @@ export function FocusPostMap({ map }: { map: MapData }) {
         restrictToPhilippines
         showNavigationControl
         initialViewState={initialViewState}
+        mapStyle={liveStyle}
       >
         {lineData && (
           <Source id="focus-post-map-line" type="geojson" data={lineData}>
