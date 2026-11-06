@@ -10,13 +10,14 @@
 import { layers, namedFlavor, type Flavor } from "@protomaps/basemaps";
 import type { StyleSpecification } from "maplibre-gl";
 
-export type Variant = "A" | "B" | "C";
+export type Variant = "A" | "B" | "C" | "D";
 export type Theme = "light" | "dark";
 
 export const VARIANTS: Record<Variant, string> = {
   A: "Quiet grey (reference)",
   B: "Soft colour, text landmarks",
   C: "Bare",
+  D: "Decided: A colours, text landmarks, transit icons",
 };
 
 const TILES = "http://localhost:8081/protomaps-20261105-ph-z15/{z}/{x}/{y}.mvt";
@@ -82,6 +83,10 @@ const LANDMARKS: Record<Variant, Record<string, number>> = {
   },
   B: { station: 12, ferry_terminal: 13, mall: 13, hospital: 13, university: 14, marketplace: 15 },
   C: { station: 13 },
+  D: {
+    station: 13, ferry_terminal: 13, bus_station: 14, terminal: 14, jeepney_terminal: 14, tricycle_terminal: 15,
+    mall: 14, marketplace: 15, hospital: 14, university: 15, college: 15, school: 16, place_of_worship: 16,
+  },
 };
 
 const ICON: Record<string, string> = {
@@ -97,13 +102,16 @@ const ICON: Record<string, string> = {
 };
 
 /** Zoom from which barangay (neighbourhood / macrohood) names show. */
-const BARANGAY_FROM: Record<Variant, number> = { A: 14, B: 15, C: 15 };
+const BARANGAY_FROM: Record<Variant, number> = { A: 14, B: 15, C: 15, D: 15 };
+
+/** Decided variant D: icons only for transit landmarks. */
+const TRANSIT = ["station", "ferry_terminal", "bus_station", "terminal", "jeepney_terminal", "tricycle_terminal"];
 
 // Prototype: layers are edited as loose objects and handed back to MapLibre as-is.
 type AnyLayer = { id: string; layout?: object; paint?: object } & Record<string, unknown>;
 
 export function basemapStyle(variant: Variant, theme: Theme, thumbnail = false): StyleSpecification {
-  const flavor = variant === "A" ? quietGrey(theme) : variant === "B" ? softColour(theme) : bare(theme);
+  const flavor = variant === "A" || variant === "D" ? quietGrey(theme) : variant === "B" ? softColour(theme) : bare(theme);
   let ls = layers("protomaps", flavor, { lang: "en" }) as AnyLayer[];
 
   // Never draw ESA WorldCover (its own CC-BY credit).
@@ -120,16 +128,21 @@ export function basemapStyle(variant: Variant, theme: Theme, thumbnail = false):
       for (const k of kinds) zoomOf.push(k, marks[k]);
       zoomOf.push(99);
       const iconOf: unknown[] = ["match", ["get", "kind"]];
-      for (const [k, v] of Object.entries(ICON)) if (kinds.includes(k)) iconOf.push(k, v);
+      for (const [k, v] of Object.entries(ICON)) if (kinds.includes(k) && (variant !== "D" || TRANSIT.includes(k))) iconOf.push(k, v);
       iconOf.push("");
       const layout = { ...(l.layout as object), "icon-image": variant === "B" ? "" : iconOf, "text-size": 11 };
-      const textColor = theme === "dark" ? "#a7abb2" : variant === "A" ? "#6f6f6f" : "#5d5d5d";
+      const textColor = theme === "dark" ? "#a7abb2" : variant === "A" || variant === "D" ? "#6f6f6f" : "#5d5d5d";
       return {
         ...l,
         filter: ["all", ["in", ["get", "kind"], ["literal", kinds]], [">=", ["zoom"], zoomOf]],
         layout,
         paint: { ...(l.paint as object), "text-color": textColor },
       } as AnyLayer;
+    }
+    if (l.id === "places_subplace" && variant === "D") {
+      // Decided: barangay names from z15, smaller, not in capitals.
+      const layout = { ...(l.layout as object), "text-transform": "none", "text-letter-spacing": 0, "text-size": ["interpolate", ["linear"], ["zoom"], 15, 11, 18, 14] };
+      return { ...l, minzoom: 15, layout } as AnyLayer;
     }
     if (l.id === "places_subplace") return { ...l, minzoom: BARANGAY_FROM[variant] } as AnyLayer;
     return l;
@@ -138,6 +151,8 @@ export function basemapStyle(variant: Variant, theme: Theme, thumbnail = false):
   if (thumbnail) {
     // Thumbnail style: no landmarks, only major road and area names.
     const drop = ["pois", "roads_labels_minor", "roads_shields", "water_waterway_label", "water_label_lakes"];
+    // Decided: thumbnails drop barangay names too.
+    if (variant === "D") drop.push("places_subplace");
     ls = ls.filter((l) => !drop.includes(l.id));
   }
 
