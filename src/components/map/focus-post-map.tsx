@@ -19,6 +19,8 @@ import type { MapData } from "@/lib/schemas/post-map";
 // PROTOTYPE: base map style variants (branch prototype/basemap-style).
 import { basemapStyle } from "./basemap-prototype/styles";
 import { BasemapPrototypeSwitcher, useBasemapPrototype } from "./basemap-prototype/switcher";
+import { OverlayPrototype } from "./basemap-prototype/overlay-prototype";
+import { useSearchParams } from "next/navigation";
 
 /**
  * Room around the framed points, in container pixels: a pin marker is 27x41
@@ -58,6 +60,8 @@ export function FocusPostMap({ map }: { map: MapData }) {
     const v = framingView(map);
     return v && { ...v, fitBoundsOptions: { padding: 24, maxZoom: 15 } };
   });
+  const overlayMode = useSearchParams().has("overlay");
+  if (overlayMode) return <OverlayPrototype map={map} />;
 
   return (
     <div className="mt-3 w-full">

@@ -1,0 +1,98 @@
+[
+ {
+  "mode": "walking",
+  "origin": {
+   "lat": 14.5986,
+   "lng": 120.9838
+  },
+  "destination": {
+   "lat": 14.5992,
+   "lng": 120.9813
+  },
+  "path": "ahbxAmtlaV\\DPBF@@Kr@JKl@mAXQCWAANAFEFGt@I|AMpAEj@Gv@KhAOAQC"
+ },
+ {
+  "mode": "lrt",
+  "origin": {
+   "lat": 14.5992,
+   "lng": 120.9813
+  },
+  "destination": {
+   "lat": 14.5387,
+   "lng": 121.0006
+  },
+  "path": "_lbxAcdlaV`@C`AFf@JhCz@rATbGXn@?p@IbL{Br@W|Co@z@QtAOpFM`Hi@l@Ap@DnD^n@@p@GvAa@|XyMvd@qTxf@gUdAe@~f@uQzDuA`@Izr@_Kxf@eHpu@kK??p@A"
+ },
+ {
+  "mode": "mrt",
+  "origin": {
+   "lat": 14.5376,
+   "lng": 121.0016
+  },
+  "destination": {
+   "lat": 14.5493,
+   "lng": 121.0279
+  },
+  "path": "_kvwA_cpaV?y@u@_KmEaq@gAgJiAiF}@eDoB_GaB_E{BsEmCiEe`@wf@sJmL??d@jB"
+ },
+ {
+  "mode": "bus",
+  "origin": {
+   "lat": 14.5497,
+   "lng": 121.0275
+  },
+  "destination": {
+   "lat": 14.5502,
+   "lng": 121.0503
+  },
+  "path": "}vxwAgeuaVHGJBPR`@f@TXd@j@f@n@TS`@[BCBCFE~@hAvAhBVX^[PQSYSU]c@qDqEg@m@eAqAGIW]Y_@[c@{AoBb@a@VUDGDEJMBCFMFMJW@I@MBWf@}A~CkJj@gBPm@@EBEbAaDHW\\oAx@sCF]B_@@UQqCCa@AO]oFO}BCQAQA[AGCe@?AEc@IgAC_@?S@Y@SF[H_@P[PW`@a@XSnAy@`BeAf@[ZWJMBCTWNUZi@Rg@fBsEH]@c@?_@I_@Oi@CKK]CSA]Ce@?M@I@g@CUW@M?_@A_@AQCYCCAWEoBe@{Bk@UESEUGsCq@oCs@KCOEOEsHiBOESEaBa@YIWG]ISEkBc@QESEcBa@yA]ME{A[EAOABMNo@Py@\\}Ad@wBDQLDrA\\n@Nd@JzA\\PDNDrA\\H@HBx@PB@JBVFVF~@THBDQXmANq@F[BK"
+ },
+ {
+  "mode": "uv_express",
+  "origin": {
+   "lat": 14.551,
+   "lng": 121.0498
+  },
+  "destination": {
+   "lat": 14.5866,
+   "lng": 121.0612
+  },
+  "path": "g_ywAynyaVF@VF~@THBH@tA\\NDPBnAZLBLD`@JfAVh@LD@NBCLAB?@WhAq@~CKf@Kj@CJOEsHiBOESEaBa@YIWG]ISEkBc@QESEcBa@yA]ME{A[EAOAU?kAfF]|AENCJ]tAQp@On@K^IZMr@Kf@EZIb@GZO~CCVCVEPENIPSXCBiAv@{B`BWPURQVO\\Ul@@X@hD?dBATKnASvBQbAIf@EPCDCBG@E?GAeAoAGIg@o@OSMQ]a@CCc@k@q@y@i@q@a@g@o@w@g@o@e@i@wAiBMOqAaBEGyAcB]YKMMKo@g@m@g@k@c@e@[cAm@m@[WKeAe@]Qa@OMEm@Se@OOGi@OGC_@IuBa@oDq@A?]GyCg@}@MqE{@e@IKIEAiB[w@OqAUUEi@Is@McAYkBm@UIuAk@[M{@a@gAq@c@YSM}AcAoCiBkGeEiCgBOKsDcCw@i@q@[_@UwWoPwA{@aBy@kAi@gAe@oBq@y@UYI}Bo@wEgAkAWkCo@q@O_Dq@sBu@BOZwABMLm@@a@?uD?g@?IFIBE@ABCDCBCDADADAFAFAPDRDVB`@BXAB@j@ClEKT??S?KAQ?eA?]?S?o@?S?QN?F??G?C@C@AD?F?"
+ },
+ {
+  "mode": "p2p",
+  "origin": {
+   "lat": 14.5872,
+   "lng": 121.0605
+  },
+  "destination": {
+   "lat": 14.6197,
+   "lng": 121.0526
+  },
+  "path": "_a`xAsr{aVh@?LA@lB?H?RT?NAjACLAP?b@APAz@CfBGJ?^LLFJFLJFFPZJ`@?N?dBCvC?\\?RErEAT?R?f@Ah@GJIFMFOB]@}Bo@wEgAkAWkCo@q@O_Dq@{HiBu@Og\\uHwA[uA]}@M}@M}@I_AI}@E_AC}@A_A?_A@}@B}@BSBE?k@Dw@FWDYBm@HaAPq@JeAT{@VqA`@cMlEMD{I~C}DrAk@RkE`BgBp@a@T}RhHs@Tu@P}@ZOF_@LQFSH]LsBr@}Af@k@J_C|@c@PG@OF[L_@LSHa@NKDkBr@iA`@_@NaAZcDjAmAb@KBMDQHaA\\YJy@VQFcBn@e@P[J[Jc@Lu@aCUo@Qm@Sm@FCDA@Ax@[FCj@UjAi@NEPCHEtCgA@ALEHEr@Y"
+ },
+ {
+  "mode": "jeepney",
+  "origin": {
+   "lat": 14.6203,
+   "lng": 121.0517
+  },
+  "destination": {
+   "lat": 14.6301,
+   "lng": 121.0335
+  },
+  "path": "erfxA_{yaVAEw@yBEIEKOBODyB`A_A\\C@E@GBKJGBVt@BFzAvEXt@Vv@JV?BDb@DTBLBN?P?L?HAJANGNK^IROZAVc@dAMXSd@s@fBYn@IRYt@GLABUh@Qb@ADi@nA]z@EJIPq@`BKTQb@i@rAs@bBABGNc@dAUj@CJIVIXK`@CJE`@Ip@CZEd@?b@?p@@n@Dr@@`@@N?J@\\@R@N?LD`A?BBp@@V@h@@J?JDfADrABx@@P@PB|@@\\Bh@@XF`BDpA@`@Bf@@V?D?H@TBn@DtA@N?J@R@T@V@d@B`@@^Bj@?T@JS?m@GQAYEo@IIACAQCWCy@KGA{@MGAWEE?KAe@IC?YE]K_BUOIIKGKIMGOESGWKQARH^ENEFGHIFGBG@oB[]EUE_@GKAOCGAw@MUBUEoAQQCmAQCTYzB"
+ },
+ {
+  "mode": "tricycle",
+  "origin": {
+   "lat": 14.6305,
+   "lng": 121.0329
+  },
+  "destination": {
+   "lat": 14.6352,
+   "lng": 121.0298
+  },
+  "path": "gohxAqfvaVYzBAJCHEZmAnJCTiBWiBWgBWkB[{ASIAIA_BU{Cc@q@hF"
+ }
+]
