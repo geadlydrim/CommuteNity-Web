@@ -119,6 +119,8 @@ export function basemapStyle(variant: Variant, theme: Theme, thumbnail = false):
   // Bare: no buildings, no shields, no one-way arrows.
   if (variant === "C") ls = ls.filter((l) => l.id !== "buildings" && l.id !== "roads_shields");
   ls = ls.filter((l) => l.id !== "roads_oneway" && l.id !== "address_label");
+  // Decided (Overlay colours on the new base map): no route-number badges.
+  if (variant === "D") ls = ls.filter((l) => l.id !== "roads_shields");
 
   const marks = LANDMARKS[variant];
   const kinds = Object.keys(marks);
